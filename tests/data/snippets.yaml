@@ -1,0 +1,34 @@
+Python Path:
+    clear: True
+    prepend: [ "~/cgse/lib/python", "~/git/plato-test-scripts/src" ]
+    append: [ ]
+
+Environment:
+    TEST_ENVIRONMENT: this-is-just-a-test-variable
+
+Snippets:
+    print sys.path script:
+        category: configuration
+        script_name: print_sys_path.py
+        path: ../scripts
+        args: [ ]
+
+    print sys.path code:
+        category: configuration
+        code: |
+            import sys
+            print(sys.path)
+        path: ../scripts
+        args: [ ]
+
+    Check Environment:
+        script_name: check_environment.py
+        path: ../scripts
+
+    first-script:
+        script_name: first_script_with_kernel.py
+        path: ../scripts
+        
+    second-script:
+        script_name: second_script_with_kernel.py
+        path: ../scripts

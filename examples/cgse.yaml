@@ -1,0 +1,53 @@
+Python Path:
+    prepend: ['/cgse/lib/python', '~/git/plato-test-scripts']
+    append: []
+
+Startup:
+    script: '~/cgse_startup.py'
+
+Environment:
+    LD_LIBRARY_PATH: ~/lib
+    
+Imports:
+    reload: from egse.reload import reload_module, reload_function
+
+Apps:
+    Process Manager:
+        app_name: pm_ui
+        location: /cgse/bin
+        category: GUI
+        args: []
+    Configuration Manager Status:
+        app_name: cm_cs
+        location: /cgse/bin
+        category: Terminal
+        args: [['status', None]]
+    Terminal Logger:
+        app_name: textualog
+        location: /cgse/bin
+        category: Terminal
+        args: [['--log', <<filename>>)]]
+
+Scripts:
+    single position:
+
+
+Snippets:
+    single position:
+        category: commanding
+        code: |
+            from camtest.commanding.cam_aat_050_single_no_pointing import single_no_pointing
+            execute(single_no_pointing)
+    analyse single cube:
+        category: analysis
+        code: |
+            from camtest.analysis import convenience as cv
+            from camtest.analysis.functions.hartmann_utils import analysis_single_cube
+        
+            datadir = <<folder>>
+            obsid = <<int>>
+            sobsid = str(obsid).zfill(5)
+        
+            esize = analysis_single_cube(obsid=obsid, datadir=datadir, ref_size=23.82, layer_selection=None)
+        return:
+                vars: ['esize']

@@ -1,0 +1,38 @@
+Python Path:
+    prepend: ["~/cgse/lib/python", "~/git/plato-test-scripts/src"]
+    append: []
+
+Environment:
+    LD_LIBRARY_PATH: ~/git/plato-common-egse/src/egse/lib/ximc/libximc.framework
+    TEST_ENVIRONMENT: this-is-just-a-test-variable
+
+Scripts:
+    Long Running Command:
+        category: commanding
+        script_name: long_running_command.py
+        path: ../scripts
+        args: [['--duration', <<duration:int>>]]
+
+    Raise ValueError:
+        category: test-script
+        script_name: raise_a_value_error.py
+        path: ../scripts
+        args: [['--value', <<value:int>>]]
+        args_defaults: [['--value', 24]]
+
+    CGSE Version:
+        category: test-script
+        script_name: get_cgse_version.py
+        path: ../scripts
+        args: []
+
+    TS Version:
+        category: test-script
+        script_name: get_camtest_version.py
+        path: ../scripts
+        args: []
+
+    Check Environment:
+        category: test-script
+        script_name: check_environment.py
+        path: ../scripts

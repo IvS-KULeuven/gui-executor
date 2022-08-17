@@ -1,0 +1,25 @@
+Python Path:
+    prepend: ['/cgse/lib/python', '~/git/plato-test-scripts']
+    append: []
+
+Startup:
+    script: '~/cgse_startup.py'
+
+Apps:
+    app 01:
+        category: Terminal
+        path: ../apps
+        app_name: my_app_01
+
+Scripts:
+    script 01:
+        category: commanding
+        path: scripts
+        script_name: script_01.py
+
+Snippets:
+    snippet 01:
+        code: |
+            print("hello, World!")
+        return:
+            vars: []
