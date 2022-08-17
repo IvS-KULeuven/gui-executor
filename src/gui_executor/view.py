@@ -1,15 +1,23 @@
+from __future__ import annotations
+
 from functools import partial
+from pathlib import Path
 from typing import Callable
 from typing import Dict
 from typing import List
 
 from PyQt5.QtCore import QMetaObject
+from PyQt5.QtCore import QSize
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QRunnable
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QPainter
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QGroupBox
 from PyQt5.QtWidgets import QHBoxLayout
@@ -23,6 +31,25 @@ from PyQt5.QtWidgets import QWidget
 from .exec import get_arguments
 from .exec import Argument
 from .exec import ArgumentKind
+
+
+HERE = Path(__file__).parent.resolve()
+
+
+class VLine(QFrame):
+    """Presents a simple Vertical Bar that can be used in e.g. the status bar."""
+
+    def __init__(self):
+        super().__init__()
+        self.setFrameShape(self.VLine | self.Sunken)
+
+
+class HLine(QFrame):
+    """Presents a simple Horizontal Bar that can be used to separate widgets."""
+
+    def __init__(self):
+        super().__init__()
+        self.setFrameShape(self.HLine | self.Sunken)
 
 
 class FunctionThreadSignals(QObject):
@@ -65,11 +92,56 @@ class FunctionRunnable(QRunnable):
         QThreadPool.globalInstance().start(self)
 
 
-class DynamicButton(QPushButton):
-    def __init__(self, label: str, func: Callable):
-        super().__init__(label)
+class IconLabel(QLabel):
+
+    IconSize = QSize(16, 16)
+
+    def __init__(self, icon_path: Path | str, size: QSize = IconSize):
+        super().__init__()
+
+        self.icon_path = str(icon_path)
+        self.setFixedSize(size)
+
+    def paintEvent(self, *args, **kwargs):
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(Qt.NoPen)
+
+        renderer = QSvgRenderer()
+        renderer.load(self.icon_path)
+        renderer.render(painter)
+
+        painter.end()
+
+
+class DynamicButton(QWidget):
+
+    IconSize = QSize(30, 30)
+    HorizontalSpacing = 2
+
+    def __init__(self, label: str, func: Callable,
+                 icon_path: Path | str = None, final_stretch=True, size: QSize = IconSize):
+        super().__init__()
         self._function = func
         self._label = label
+        self._icon = None
+
+        self.icon_path = str(icon_path or HERE / "icons/023-evaluate.svg")
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        label_icon = IconLabel(icon_path=self.icon_path, size=size)
+        label_text = QLabel(label)
+
+        layout.addWidget(label_icon)
+        layout.addSpacing(self.HorizontalSpacing)
+        layout.addWidget(label_text)
+
+        if final_stretch:
+            layout.addStretch()
 
     @property
     def function(self) -> Callable:
@@ -156,6 +228,7 @@ class View(QMainWindow):
         self._layout_buttons = QVBoxLayout()
 
         self._layout_panels.addLayout(self._layout_buttons)
+        self._layout_panels.addWidget(HLine())
         self._current_args_panel: QWidget = None
 
         self.app_frame.setLayout(self._layout_panels)
@@ -163,6 +236,10 @@ class View(QMainWindow):
         self.setCentralWidget(self.app_frame)
 
     def run_function(self, func: Callable, args: List, kwargs: Dict):
+
+        # TODO:
+        #  * disable run button (should be activate again in function_complete?)
+
         self.function_thread = worker = FunctionRunnable(func, args, kwargs)
         self.function_thread.start()
 
@@ -171,20 +248,19 @@ class View(QMainWindow):
         worker.signals.error.connect(self.function_error)
 
     def add_function_button(self, func: Callable):
-        print(f"Creating a button for {func.__name__ = }")
 
         button = DynamicButton(func.__name__, func)
-        button.clicked.connect(partial(self.the_button_was_clicked, button))
+        button.mouseReleaseEvent = partial(self.the_button_was_clicked, button)
+        # button.clicked.connect(partial(self.the_button_was_clicked, button))
 
         self._buttons.append(button)
         self._layout_buttons.addWidget(button)
 
     def the_button_was_clicked(self, button: DynamicButton, *args, **kwargs):
 
-        print(f"{button = }, {args = }, {kwargs = }")
-
         # TODO
-        #   This should be done from the control or model and probably in the background?
+        #   * This should be done from the control or model and probably in the background?
+        #   * Add ArgumentsPanel in a tabbed widget? When should it be removed from the tabbed widget? ...
 
         ui_args = get_arguments(button.function)
 
@@ -209,7 +285,7 @@ class View(QMainWindow):
 
     @pyqtSlot()
     def function_complete(self):
-        ...
+        print("function execution finished.")
 
     @pyqtSlot(Exception)
     def function_error(self, msg: Exception):
