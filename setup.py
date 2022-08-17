@@ -93,9 +93,11 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
     ],
-    packages=["gui_executor"],
+    packages=["gui_executor", "gui_executor/icons"],
     package_dir={"": "src"},
-    package_data={"": ["examples/*.*"]},
+    package_data={
+        "": ["*.yaml", "*.png", "*.svg"],
+    },
     include_package_data=False,
     install_requires=["rich", "PyQt5"],
     entry_points={
