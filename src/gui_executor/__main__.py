@@ -30,20 +30,18 @@ from .view import View
 def main():
 
     parser = argparse.ArgumentParser(prog='gui-executor')
-    # parser.add_argument('--location', help='location of the Python modules and scripts')
+    parser.add_argument('--location', help='location of the Python modules and scripts')
     parser.add_argument('--module-path', help='module path of the Python modules and scripts')
     parser.add_argument('--config', help='a YAML file that configures the executor')
 
     args = parser.parse_args()
 
     # We have only implemented the --module-path option for now
+
     if args.module_path is None:
         print("You need to provide the --module-path option.")
         parser.print_help()
         return
-
-    print(f"{args = }")
-    print(f"{args.location = }, {args.module_path = }")
 
     if args.config:
         load_config(args.config)
