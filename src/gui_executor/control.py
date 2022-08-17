@@ -7,9 +7,9 @@ class Control:
         self._view = view
         self._model = model
 
-        self._modules = self._model.get_ui_modules()
+        modules = self._model.get_ui_modules()
 
-        self._funcs = self._model.get_ui_buttons_functions(self._modules["ui_test_script"])
-
-        for name, func in self._funcs.items():
-            self._view.add_function_button(func)
+        for _, mod in modules.items():
+            funcs = self._model.get_ui_buttons_functions(mod)
+            for name, func in funcs.items():
+                self._view.add_function_button(func)
