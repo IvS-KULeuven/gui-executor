@@ -1,4 +1,0 @@
-[gui_scripts]
-contingency_ui = gui_executor.__main__:contingency_ui
-gui-executor = gui_executor.__main__:main
-

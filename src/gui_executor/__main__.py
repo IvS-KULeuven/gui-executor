@@ -2,29 +2,45 @@ import argparse
 import sys
 
 from PyQt5.QtWidgets import QApplication
-from executor import ExternalCommand
+
 from .config import load_config
-from .view import View
 from .control import Control
 from .model import Model
+from .view import View
 
 
 # EXAMPLE:
-#   Use a function like this in your package and add it to the entry_points in the setup.py
-#   Replace 'contingency' by a package that contains the scripts you want to execute from the GUI.
-def contingency_ui():
-    cmd = ExternalCommand("gui-executor --module-path contingency", asynchronous=True)
-    cmd.start()
+#   Use a function like this in your package '__init__' file and add it to the entry_points in the setup.py.
+#   This function will load functions that are decorated with '@exec_ui' from all modules in 'camtest.contingency'
+#   and dynamically create the GUI executor for them.
+#
+#     def contingency_ui():
+#         cmd = ExternalCommand("gui-executor --module-path camtest.contingency", asynchronous=True)
+#         cmd.start()
+#
+#   Replace 'camtest.contingency' by a package that contains the scripts you want to execute from the GUI.
+#
+#       entry_points={
+#         "gui_scripts": [
+#             "contingency_ui=camtest.contingency.__init__:contingency_ui",
+#         ]
+#     },
 
 
 def main():
 
     parser = argparse.ArgumentParser(prog='gui-executor')
-    parser.add_argument('--location', help='location of the Python modules and scripts')
+    # parser.add_argument('--location', help='location of the Python modules and scripts')
     parser.add_argument('--module-path', help='module path of the Python modules and scripts')
     parser.add_argument('--config', help='a YAML file that configures the executor')
 
     args = parser.parse_args()
+
+    # We have only implemented the --module-path option for now
+    if args.module_path is None:
+        print("You need to provide the --module-path option.")
+        parser.print_help()
+        return
 
     print(f"{args = }")
     print(f"{args.location = }, {args.module_path = }")

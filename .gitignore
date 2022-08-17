@@ -1,0 +1,4 @@
+/build/
+/dist/
+/requirements-*.txt
+/src/gui_executor.egg-info/
