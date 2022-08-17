@@ -29,7 +29,8 @@ def main():
     print(f"{args = }")
     print(f"{args.location = }, {args.module_path = }")
 
-    load_config(args.config)
+    if args.config:
+        load_config(args.config)
 
     app = QApplication([])
 
