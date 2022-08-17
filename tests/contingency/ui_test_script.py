@@ -29,8 +29,8 @@ def func_with_args(x: int, y: float):
 
 @exec_ui()
 def func_with_only_kwargs(*, a: str, b: int = 42, c):
-    print(f"func_with_only_kwargs({a=}, {b=})")
-    return a, b
+    print(f"func_with_only_kwargs({a=}, {b=}, {c=})")
+    return a, b, c
 
 
 @exec_ui()

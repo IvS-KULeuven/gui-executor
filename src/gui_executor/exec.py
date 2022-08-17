@@ -29,7 +29,7 @@ class ArgumentKind(IntEnum):
 class Argument:
     def __init__(self, name: str, kind: int, annotation: Any, default: Any):
         self.name = name
-        self.kind = kind
+        self.kind: ArgumentKind = ArgumentKind(kind)
         self.annotation = annotation
         self.default = default
 

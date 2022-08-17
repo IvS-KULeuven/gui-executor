@@ -3,18 +3,26 @@ from typing import Callable
 from typing import Dict
 from typing import List
 
+from PyQt5.QtCore import QMetaObject
+from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QRunnable
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QFrame
+from PyQt5.QtWidgets import QGroupBox
+from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QWidget
 
 from .exec import get_arguments
+from .exec import Argument
+from .exec import ArgumentKind
 
 
 class FunctionThreadSignals(QObject):
@@ -75,28 +83,92 @@ class DynamicButton(QPushButton):
         return f"DynamicButton(\"{self.label}\", {self.function})"
 
 
+class ArgumentsPanel(QGroupBox):
+    def __init__(self, button: DynamicButton, ui_args: Dict[str, Argument]):
+        super().__init__(button.label)
+
+        self._button = button
+        self._args_fields = []
+        self._kwargs_fields = {}
+
+        # The arguments panel is a Widget with an input text field for each of the arguments.
+        # The text field is pre-filled with the default value if available.
+
+        vbox = QVBoxLayout()
+
+        for name, arg in ui_args.items():
+            input_field = QLineEdit()
+            input_field.setObjectName(name)
+            input_field.setPlaceholderText(str(arg.default) if arg.default else "")
+            if arg.kind == ArgumentKind.POSITIONAL_ONLY:
+                self._args_fields.append(input_field)
+            elif arg.kind in [ArgumentKind.POSITIONAL_OR_KEYWORD, ArgumentKind.KEYWORD_ONLY]:
+                self._kwargs_fields[name] = input_field
+            else:
+                print("ERROR: Only POSITIONAL_ONLY, POSITIONAL_OR_KEYWORD, and KEYWORD_ONLY arguments are supported!")
+            label = QLabel(name)
+            hbox = QHBoxLayout()
+            hbox.addWidget(label)
+            hbox.addWidget(input_field)
+            vbox.addLayout(hbox)
+
+        self.run_button = QPushButton("run")
+        vbox.addWidget(self.run_button, alignment=Qt.AlignRight)
+
+        self.setLayout(vbox)
+
+    @property
+    def function(self):
+        return self._button.function
+
+    @property
+    def args(self):
+        return [
+            arg.displayText()
+            for arg in self._args_fields
+        ]
+
+    @property
+    def kwargs(self):
+        return {
+            name: arg.displayText() or arg.placeholderText()
+            for name, arg in self._kwargs_fields.items()
+        }
+
+
 class View(QMainWindow):
     def __init__(self):
         super().__init__()
+
         self._buttons = []
+        self.function_thread: FunctionRunnable
+
         self.setWindowTitle("Contingency GUI")
 
-        self.setGeometry(300, 300, 300, 200)
+        # self.setGeometry(300, 300, 300, 200)
 
         # The main frame in which all the other frames are located, the outer Application frame
 
-        app_frame = QFrame()
-        app_frame.setObjectName("AppFrame")
+        self.app_frame = QFrame()
+        self.app_frame.setObjectName("AppFrame")
 
         self._layout_panels = QVBoxLayout()
         self._layout_buttons = QVBoxLayout()
 
         self._layout_panels.addLayout(self._layout_buttons)
-        self._current_args_panel = None
+        self._current_args_panel: QWidget = None
 
-        app_frame.setLayout(self._layout_panels)
+        self.app_frame.setLayout(self._layout_panels)
 
-        self.setCentralWidget(app_frame)
+        self.setCentralWidget(self.app_frame)
+
+    def run_function(self, func: Callable, args: List, kwargs: Dict):
+        self.function_thread = worker = FunctionRunnable(func, args, kwargs)
+        self.function_thread.start()
+
+        worker.signals.data.connect(self.function_output)
+        worker.signals.finished.connect(self.function_complete)
+        worker.signals.error.connect(self.function_error)
 
     def add_function_button(self, func: Callable):
         print(f"Creating a button for {func.__name__ = }")
@@ -116,34 +188,20 @@ class View(QMainWindow):
 
         ui_args = get_arguments(button.function)
 
-        # args, kwargs = request_arguments(ui_args)
+        args_panel = ArgumentsPanel(button, ui_args)
+        args_panel.run_button.clicked.connect(
+            lambda checked: self.run_function(args_panel.function, args_panel.args, args_panel.kwargs)
+        )
 
-        args = {
-            "func_with_args": ([23, 42], {}),
-            "compare_args": ([75, 75], {}),
-            "concatenate_args": (["hello, ", "World!"], {}),
-            "func_with_only_kwargs": ([], {'a': 21, 'c': 4}),
-            "long_duration_func": ([], {}),
-            "raise_a_value_error": ([], {}),
-        }
+        if self._current_args_panel:
+            self._layout_panels.replaceWidget(self._current_args_panel, args_panel)
+            self._current_args_panel.setParent(None)
+        else:
+            self._layout_panels.addWidget(args_panel)
 
-        filled_args = args.get(button.label)[0]
-        filled_kwargs = args.get(button.label)[1]
-
-        args_panel = QLabel(f"args[{button.label}] = {filled_args}, {filled_kwargs}")
-
-        if self._current_args_panel is not None:
-            self._layout_panels.removeWidget(self._current_args_panel)
-
-        self._layout_panels.addWidget(args_panel)
         self._current_args_panel = args_panel
-
-        self.function_thread = worker = FunctionRunnable(button.function, filled_args, filled_kwargs)
-        self.function_thread.start()
-
-        worker.signals.data.connect(self.function_output)
-        worker.signals.finished.connect(self.function_complete)
-        worker.signals.error.connect(self.function_error)
+        self.app_frame.adjustSize()
+        self.adjustSize()
 
     @pyqtSlot(object)
     def function_output(self, data: object):
