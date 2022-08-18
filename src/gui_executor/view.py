@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import errno
+import fcntl
 import os
+import select
 import sys
 import tempfile
 import textwrap
@@ -86,6 +89,22 @@ class FunctionThreadSignals(QObject):
     data = pyqtSignal(object)
 
 
+# Helper function to add the O_NONBLOCK flag to a file descriptor
+def make_async(fd):
+    fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+
+
+# Helper function to read some data from a file descriptor, ignoring EAGAIN errors
+def read_async(fd):
+    try:
+        return fd.read()
+    except IOError as exc:
+        if exc.errno != errno.EAGAIN:
+            raise exc
+        else:
+            return b''
+
+
 class FunctionRunnable(QRunnable):
     def __init__(self, func: Callable, args: List, kwargs: Dict):
         super().__init__()
@@ -94,7 +113,7 @@ class FunctionRunnable(QRunnable):
         self._args = args
         self._kwargs = kwargs
 
-    def run(self):
+    def run_(self):
         success = False
         self.signals.data.emit("-" * 20)
         self.signals.data.emit(
@@ -114,6 +133,78 @@ class FunctionRunnable(QRunnable):
             success = False
         finally:
             self.signals.finished.emit(self._func.__name__, success)
+
+    def run(self):
+        tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        tmp.write(textwrap.dedent(
+            f"""\
+                from {self._func.__ui_module__} import {self._func.__name__}
+                response = {self._func.__name__}({stringify_args(self._args)}{', ' if self._args else ''}{stringify_kwargs(self._kwargs)})
+                if response is not None:
+                    print(response)
+            """
+        ))
+        tmp.close()
+        self.signals.data.emit("-" * 20)
+        options = dict(capture=True, capture_stderr=True, asynchronous=True, buffered=False, input=True)
+        try:
+            with ExternalCommand(f"{sys.executable} {tmp.name}", **options) as cmd:
+                make_async(cmd.stdout)
+                make_async(cmd.stderr)
+
+                while True:
+                    # Wait for data to become available
+                    out, *_ = select.select([cmd.stdout, cmd.stderr], [], [])
+
+                    # Try reading some data from each
+                    line_out = read_async(cmd.stdout)
+                    line_err = read_async(cmd.stderr)
+
+                    if line_out:
+                        self.signals.data.emit(line_out.decode(cmd.encoding).rstrip())
+                    if line_err:
+                        self.signals.data.emit(line_err.decode(cmd.encoding).rstrip())
+
+                    if cmd.subprocess.poll() is not None:
+                        break
+
+                # while cmd.is_running:
+                #     if cmd.stdout.readable():
+                #         out = cmd.stdout.readline().decode(cmd.encoding)
+                #         self.signals.data.emit(out.rstrip())
+                #     if cmd.stderr.readable():
+                #         err = cmd.stderr.readline().decode(cmd.encoding)
+                #         self.signals.data.emit(err.rstrip())
+
+                # for out, err in itertools.zip_longest(
+                #         # iter(lambda: cmd.stdout.readline().decode(cmd.encoding), u''),
+                #         # iter(lambda: cmd.stderr.readline().decode(cmd.encoding), u'')
+                #         iter(lambda: cmd.stdout.readline().decode(cmd.encoding), u''),
+                #         iter(lambda: cmd.stderr.readline().decode(cmd.encoding), u'')
+                # ):
+                #     out and self.signals.data.emit(out.rstrip())
+                #     err and self.signals.data.emit(err.rstrip())
+
+            cmd.wait()
+
+        except ExternalCommandFailed as exc:
+            # self._console_panel.append(cmd.error_message)
+            # This error message is also available in the decoded_stderr.
+            self.signals.error.emit(exc)
+
+        # if out := cmd.decoded_stdout:
+        #     self._console_panel.append(out)
+        if err := cmd.decoded_stderr:
+            self.signals.data.emit(err)
+
+        if cmd.is_finished:
+            if cmd.failed:
+                self.signals.finished.emit(self._func.__name__, False)
+            else:
+                self.signals.finished.emit(self._func.__name__, True)
+
+        # print(f"{tmp.name = }")
+        os.unlink(tmp.name)
 
     def start(self):
         QThreadPool.globalInstance().start(self)
@@ -283,7 +374,7 @@ class View(QMainWindow):
         self._buttons = []
         self.function_thread: FunctionRunnable
 
-        self.setWindowTitle("Contingency GUI")
+        self.setWindowTitle("Contingency GUI")  # TODO: set proper name of the GUI
 
         # self.setGeometry(300, 300, 500, 200)
 
@@ -352,44 +443,6 @@ class View(QMainWindow):
         if response := self._kernel.run_snippet(snippet):
             self.function_output(response)
 
-    def run_function_in_process(self, func: Callable, args: List, kwargs: Dict):
-        tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        tmp.write(textwrap.dedent(
-            f"""\
-                from {func.__ui_module__} import {func.__name__}
-                response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})
-                if response is not None:
-                    print(response)
-            """
-        ))
-        tmp.close()
-        self._console_panel.append("-" * 20)
-        cmd = ExternalCommand(
-            f"{sys.executable} {tmp.name}",
-            capture=True, capture_stderr=True, asynchronous=True
-        )
-        try:
-            cmd.start()
-            cmd.wait()
-        except ExternalCommandFailed as exc:
-            # self._console_panel.append(cmd.error_message)
-            # This error message is also available in the decoded_stderr.
-            ...
-
-        if out := cmd.decoded_stdout:
-            self._console_panel.append(out)
-        if err := cmd.decoded_stderr:
-            self._console_panel.append(err)
-
-        if cmd.is_finished:
-            if cmd.failed:
-                self._console_panel.append(f"function '{func.__name__}' finished execution.")
-            else:
-                self._console_panel.append(f"function '{func.__name__}' failed with an error.")
-
-        # print(f"{tmp.name = }")
-        os.unlink(tmp.name)
-
     def add_function_button(self, func: Callable):
 
         button = DynamicButton(func.__name__, func)
@@ -409,7 +462,7 @@ class View(QMainWindow):
 
         args_panel = ArgumentsPanel(button, ui_args)
         args_panel.run_button.clicked.connect(
-            lambda checked: self.run_function_in_process(args_panel.function, args_panel.args, args_panel.kwargs)
+            lambda checked: self.run_function(args_panel.function, args_panel.args, args_panel.kwargs)
         )
 
         if self._current_args_panel:

@@ -1,4 +1,5 @@
 import sys
+import textwrap
 import time
 
 from gui_executor.exec import exec_ui
@@ -76,5 +77,11 @@ def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
         Nothing is returned.
     """
     for n in range(n_steps):
-        print(f"step {n}..")
+        print(f"step {n}..", flush=True)
         time.sleep(sleep)
+        if n == n_steps // 2:
+            print(textwrap.dedent("""\
+                    An error message...
+                    Line two of the error message
+                    ...end the last line of this error message
+                """), file=sys.stderr, flush=True)
