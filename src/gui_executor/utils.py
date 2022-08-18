@@ -167,3 +167,11 @@ def capture():
         sys.stderr = stderr
         data.stdout = out.getvalue()
         data.stderr = err.getvalue()
+
+
+def stringify_args(args):
+    return ", ".join([repr(arg) for arg in args])
+
+
+def stringify_kwargs(kwargs):
+    return ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])

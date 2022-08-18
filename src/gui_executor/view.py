@@ -32,6 +32,8 @@ from .exec import Argument
 from .exec import ArgumentKind
 from .exec import get_arguments
 from .utils import capture
+from .utils import stringify_args
+from .utils import stringify_kwargs
 
 HERE = Path(__file__).parent.resolve()
 
@@ -84,6 +86,10 @@ class FunctionRunnable(QRunnable):
 
     def run(self):
         success = False
+        self.signals.data.emit("-" * 20)
+        self.signals.data.emit(
+            f"Running function {self._func.__name__}({stringify_args(self._args)}{', ' if self._args else ''}"
+            f"{stringify_kwargs(self._kwargs)})...")
         try:
             with capture() as out:
                 response = self._func(*self._args, **self._kwargs)
