@@ -25,6 +25,7 @@ def compare_args(arg1, arg2):
 @exec_ui()
 def func_with_args(x: int, y: float):
     print(f"func_with_args({x=}, {y=})")
+    print(f"{type(x) = }, {type(y) = }")
     return x, y
 
 
@@ -62,7 +63,18 @@ def plot_sin(png_dir: str = "/Users/rik/Desktop"):
 
 @exec_ui()
 def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
+    """
+    This function goes through 'n_steps' steps and waits 'sleep' time between the steps.
+    At each step, the step number is printed, then the functions sleeps. The intended
+    use is to determine if we can catch the stdout while the function is running.
 
-    for n in range(int(n_steps)):
+    Args:
+        n_steps (int): number of steps to take [default: 10]
+        sleep (float): number of seconds to sleep between steps [default: 1.0]
+
+    Returns:
+        Nothing is returned.
+    """
+    for n in range(n_steps):
         print(f"step {n}..")
-        time.sleep(float(sleep))
+        time.sleep(sleep)

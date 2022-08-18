@@ -6,6 +6,7 @@ import tempfile
 import textwrap
 from functools import partial
 from pathlib import Path
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -17,6 +18,8 @@ from PyQt5.QtCore import QThreadPool
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtGui import QIntValidator
 from PyQt5.QtGui import QPainter
 from PyQt5.QtGui import QTextCursor
 from PyQt5.QtSvg import QSvgRenderer
@@ -189,6 +192,8 @@ class DynamicButton(QWidget):
         if final_stretch:
             layout.addStretch()
 
+        self.setToolTip(func.__doc__)
+
     @property
     def function(self) -> Callable:
         return self._function
@@ -206,7 +211,8 @@ class ArgumentsPanel(QGroupBox):
         super().__init__(button.label)
 
         self._button = button
-        self._args_fields = []
+        self._ui_args = ui_args
+        self._args_fields = {}
         self._kwargs_fields = {}
 
         # The arguments panel is a Widget with an input text field for each of the arguments.
@@ -218,8 +224,16 @@ class ArgumentsPanel(QGroupBox):
             input_field = QLineEdit()
             input_field.setObjectName(name)
             input_field.setPlaceholderText(str(arg.default) if arg.default else "")
+            if arg.annotation is not None:
+                input_field.setToolTip(f"The expected type is {arg.annotation.__name__}.")
+            else:
+                input_field.setToolTip("No type has been specified..")
+            if arg.annotation is int:
+                input_field.setValidator(QIntValidator())
+            elif arg.annotation is float:
+                input_field.setValidator(QDoubleValidator())
             if arg.kind == ArgumentKind.POSITIONAL_ONLY:
-                self._args_fields.append(input_field)
+                self._args_fields[name] = input_field
             elif arg.kind in [ArgumentKind.POSITIONAL_OR_KEYWORD, ArgumentKind.KEYWORD_ONLY]:
                 self._kwargs_fields[name] = input_field
             else:
@@ -242,16 +256,23 @@ class ArgumentsPanel(QGroupBox):
     @property
     def args(self):
         return [
-            arg.displayText()
-            for arg in self._args_fields
+            self._cast_arg(name, arg.displayText())
+            for name, arg in self._args_fields.items()
         ]
 
     @property
     def kwargs(self):
         return {
-            name: arg.displayText() or arg.placeholderText()
+            name: self._cast_arg(name, arg.displayText() or arg.placeholderText())
             for name, arg in self._kwargs_fields.items()
         }
+
+    def _cast_arg(self, name: str, value: Any):
+        arg = self._ui_args[name]
+        try:
+            return arg.annotation(value)
+        except (ValueError, TypeError):
+            return value
 
 
 class View(QMainWindow):
@@ -356,7 +377,6 @@ class View(QMainWindow):
             ...
 
         if out := cmd.decoded_stdout:
-            print(f"{out = }")
             self._console_panel.append(out)
         if err := cmd.decoded_stderr:
             self._console_panel.append(err)
