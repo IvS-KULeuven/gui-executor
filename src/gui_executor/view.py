@@ -6,17 +6,15 @@ from typing import Callable
 from typing import Dict
 from typing import List
 
-from PyQt5.QtCore import QMetaObject
-from PyQt5.QtCore import QSize
-from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QRunnable
+from PyQt5.QtCore import QSize
 from PyQt5.QtCore import QThreadPool
+from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QPainter
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QTextCursor
 from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QGroupBox
@@ -26,13 +24,13 @@ from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 
-from .exec import get_arguments
 from .exec import Argument
 from .exec import ArgumentKind
-
+from .exec import get_arguments
 
 HERE = Path(__file__).parent.resolve()
 
@@ -93,6 +91,27 @@ class FunctionRunnable(QRunnable):
 
     def start(self):
         QThreadPool.globalInstance().start(self)
+
+
+class ConsoleOutput(QTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setReadOnly(True)
+        self.setLineWrapMode(QTextEdit.NoWrap)
+        self.insertPlainText("")
+
+    @pyqtSlot(str)
+    def append(self, text):
+        self.moveCursor(QTextCursor.End)
+        current = self.toPlainText()
+
+        if current == "":
+            self.insertPlainText(text)
+        else:
+            self.insertPlainText("\n" + text)
+
+        sb = self.verticalScrollBar()
+        sb.setValue(sb.maximum())
 
 
 class IconLabel(QLabel):
@@ -241,7 +260,12 @@ class View(QMainWindow):
 
         self._layout_panels.addLayout(self._layout_buttons)
         self._layout_panels.addWidget(HLine())
-        self._current_args_panel: QWidget = None
+        self._current_args_panel: QWidget = QWidget()
+        self._current_args_panel.hide()
+        self._layout_panels.addWidget(self._current_args_panel)
+        self._console_panel = ConsoleOutput()
+        self._layout_panels.addWidget(HLine())
+        self._layout_panels.addWidget(self._console_panel)
 
         self.app_frame.setLayout(self._layout_panels)
 
@@ -293,7 +317,7 @@ class View(QMainWindow):
 
     @pyqtSlot(object)
     def function_output(self, data: object):
-        print(data)
+        self._console_panel.append(str(data))
 
     @pyqtSlot()
     def function_complete(self):
