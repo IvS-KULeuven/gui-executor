@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os
+import sys
+import tempfile
+import textwrap
 from functools import partial
 from pathlib import Path
 from typing import Callable
@@ -27,10 +31,13 @@ from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
+from executor import ExternalCommand
+from executor import ExternalCommandFailed
 
 from .exec import Argument
 from .exec import ArgumentKind
 from .exec import get_arguments
+from .kernel import MyKernel
 from .utils import capture
 from .utils import stringify_args
 from .utils import stringify_kwargs
@@ -251,6 +258,7 @@ class View(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self._kernel: MyKernel = None
         self._buttons = []
         self.function_thread: FunctionRunnable
 
@@ -288,6 +296,13 @@ class View(QMainWindow):
 
         self.setCentralWidget(self.app_frame)
 
+        # QTimer.singleShot(1000, self.start_kernel)
+
+    def start_kernel(self, force: bool = False):
+        self._console_panel.append("Starting Kernel...")
+        if force or self._kernel is None:
+            self._kernel = MyKernel()
+
     def run_function(self, func: Callable, args: List, kwargs: Dict):
 
         # TODO:
@@ -299,6 +314,61 @@ class View(QMainWindow):
         worker.signals.data.connect(self.function_output)
         worker.signals.finished.connect(self.function_complete)
         worker.signals.error.connect(self.function_error)
+
+    def run_function_in_kernel(self, func: Callable, args: List, kwargs: Dict):
+        self._kernel = self._kernel or MyKernel()
+
+        snippet = textwrap.dedent(
+            f"""\
+                import sys
+                print(sys.path, flush=True)
+                from {func.__ui_module__} import {func.__name__}
+                {func.__name__}(
+                    {stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)}
+                )
+            """
+        )
+        if response := self._kernel.run_snippet(snippet):
+            self.function_output(response)
+
+    def run_function_in_process(self, func: Callable, args: List, kwargs: Dict):
+        tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        tmp.write(textwrap.dedent(
+            f"""\
+                from {func.__ui_module__} import {func.__name__}
+                response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})
+                if response is not None:
+                    print(response)
+            """
+        ))
+        tmp.close()
+        self._console_panel.append("-" * 20)
+        cmd = ExternalCommand(
+            f"{sys.executable} {tmp.name}",
+            capture=True, capture_stderr=True, asynchronous=True
+        )
+        try:
+            cmd.start()
+            cmd.wait()
+        except ExternalCommandFailed as exc:
+            # self._console_panel.append(cmd.error_message)
+            # This error message is also available in the decoded_stderr.
+            ...
+
+        if out := cmd.decoded_stdout:
+            print(f"{out = }")
+            self._console_panel.append(out)
+        if err := cmd.decoded_stderr:
+            self._console_panel.append(err)
+
+        if cmd.is_finished:
+            if cmd.failed:
+                self._console_panel.append(f"function '{func.__name__}' finished execution.")
+            else:
+                self._console_panel.append(f"function '{func.__name__}' failed with an error.")
+
+        # print(f"{tmp.name = }")
+        os.unlink(tmp.name)
 
     def add_function_button(self, func: Callable):
 
@@ -319,7 +389,7 @@ class View(QMainWindow):
 
         args_panel = ArgumentsPanel(button, ui_args)
         args_panel.run_button.clicked.connect(
-            lambda checked: self.run_function(args_panel.function, args_panel.args, args_panel.kwargs)
+            lambda checked: self.run_function_in_process(args_panel.function, args_panel.args, args_panel.kwargs)
         )
 
         if self._current_args_panel:

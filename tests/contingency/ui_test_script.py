@@ -47,3 +47,22 @@ def raise_a_value_error():
     print("This message is sent to stderr.", file=sys.stderr)
     time.sleep(1.0)
     raise ValueError("Exception raised as an example..")
+
+
+@exec_ui()
+def plot_sin(png_dir: str = "/Users/rik/Desktop"):
+    import matplotlib.pyplot as plt
+    import math
+
+    plt.plot([math.sin(x) for x in range(100)])
+    plt.savefig(f"{png_dir}/sin.png")
+
+    print(f"Plot 'sin.png'' saved in {png_dir}")
+
+
+@exec_ui()
+def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
+
+    for n in range(int(n_steps)):
+        print(f"step {n}..")
+        time.sleep(float(sleep))

@@ -60,6 +60,8 @@ def exec_ui(
             return response
         wrapper.__ui_kind__ = kind
         wrapper.__ui_description__ = description
+        wrapper.__ui_file__ = func.__code__.co_filename
+        wrapper.__ui_module__ = func.__module__
         return wrapper
 
     return decorator
