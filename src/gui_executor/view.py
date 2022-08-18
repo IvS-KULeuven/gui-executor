@@ -60,14 +60,15 @@ class FunctionThreadSignals(QObject):
     Supported signals are:
 
     finished
-        No data
+        str: the function name
+        bool: if the function was successfully executed, i.e. no exception was raised
     error
-        `str` Exception string
+        str: Exception string
     data
         any object that was returned by the function
     """
 
-    finished = pyqtSignal()
+    finished = pyqtSignal(str, bool)
     error = pyqtSignal(Exception)
     data = pyqtSignal(object)
 
@@ -81,13 +82,16 @@ class FunctionRunnable(QRunnable):
         self._kwargs = kwargs
 
     def run(self):
+        success = False
         try:
             response = self._func(*self._args, **self._kwargs)
             self.signals.data.emit(response)
+            success = True
         except Exception as exc:
             self.signals.error.emit(exc)
+            success = False
         finally:
-            self.signals.finished.emit()
+            self.signals.finished.emit(self._func.__name__, success)
 
     def start(self):
         QThreadPool.globalInstance().start(self)
@@ -319,10 +323,13 @@ class View(QMainWindow):
     def function_output(self, data: object):
         self._console_panel.append(str(data))
 
-    @pyqtSlot()
-    def function_complete(self):
-        print("function execution finished.")
+    @pyqtSlot(str, bool)
+    def function_complete(self, name: str, success: bool):
+        if success:
+            self._console_panel.append(f"function '{name}' execution finished.")
+        else:
+            self._console_panel.append(f"function '{name}' raised an Exception.")
 
     @pyqtSlot(Exception)
     def function_error(self, msg: Exception):
-        print(msg)
+        self._console_panel.append(f"{msg.__class__.__name__}: {msg}")
