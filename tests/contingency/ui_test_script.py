@@ -1,7 +1,8 @@
+import sys
 import time
-from typing import Dict
 
 from gui_executor.exec import exec_ui
+
 
 # The reason for the two simple functions concatenate_args and compare_args is to
 # be able to test that more than the first function is found.
@@ -42,4 +43,7 @@ def long_duration_func():
 
 @exec_ui()
 def raise_a_value_error():
+    print("This function will raise a ValueError after 1s...")
+    print("This message is sent to stderr.", file=sys.stderr)
+    time.sleep(1.0)
     raise ValueError("Exception raised as an example..")

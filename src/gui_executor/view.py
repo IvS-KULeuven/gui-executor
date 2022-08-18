@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import QWidget
 from .exec import Argument
 from .exec import ArgumentKind
 from .exec import get_arguments
+from .utils import capture
 
 HERE = Path(__file__).parent.resolve()
 
@@ -84,10 +85,15 @@ class FunctionRunnable(QRunnable):
     def run(self):
         success = False
         try:
-            response = self._func(*self._args, **self._kwargs)
+            with capture() as out:
+                response = self._func(*self._args, **self._kwargs)
+            self.signals.data.emit(out.stdout)
+            self.signals.data.emit(out.stderr)
             self.signals.data.emit(response)
             success = True
         except Exception as exc:
+            self.signals.data.emit(out.stdout)
+            self.signals.data.emit(out.stderr)
             self.signals.error.emit(exc)
             success = False
         finally:
@@ -103,6 +109,7 @@ class ConsoleOutput(QTextEdit):
         self.setReadOnly(True)
         self.setLineWrapMode(QTextEdit.NoWrap)
         self.insertPlainText("")
+        self.setMinimumSize(0, 300)
 
     @pyqtSlot(str)
     def append(self, text):

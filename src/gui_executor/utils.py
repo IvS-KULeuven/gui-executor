@@ -4,6 +4,8 @@ import contextlib
 import inspect
 import os
 import re
+import sys
+from io import StringIO
 from pathlib import Path
 from typing import List
 from typing import Tuple
@@ -143,3 +145,25 @@ def sys_path(path: Path | str):
         yield
     finally:
         sys.path.pop(0)
+
+
+class Data(object):
+    pass
+
+
+@contextlib.contextmanager
+def capture():
+    stdout = sys.stdout
+    stderr = sys.stderr
+    out = StringIO()
+    err = StringIO()
+    sys.stdout = out
+    sys.stderr = err
+    data = Data()
+    try:
+        yield data
+    finally:
+        sys.stdout = stdout
+        sys.stderr = stderr
+        data.stdout = out.getvalue()
+        data.stderr = err.getvalue()
