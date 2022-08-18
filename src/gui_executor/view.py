@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 
@@ -41,7 +42,7 @@ class VLine(QFrame):
 
     def __init__(self):
         super().__init__()
-        self.setFrameShape(self.VLine | self.Sunken)
+        self.setFrameShape(QFrame.VLine | QFrame.Sunken)
 
 
 class HLine(QFrame):
@@ -49,7 +50,9 @@ class HLine(QFrame):
 
     def __init__(self):
         super().__init__()
-        self.setFrameShape(self.HLine | self.Sunken)
+        self.setLineWidth(0)
+        self.setMidLineWidth(1)
+        self.setFrameShape(QFrame.HLine | QFrame.Sunken)
 
 
 class FunctionThreadSignals(QObject):
@@ -217,12 +220,21 @@ class View(QMainWindow):
 
         self.setWindowTitle("Contingency GUI")
 
-        # self.setGeometry(300, 300, 300, 200)
+        # self.setGeometry(300, 300, 500, 200)
 
         # The main frame in which all the other frames are located, the outer Application frame
 
         self.app_frame = QFrame()
         self.app_frame.setObjectName("AppFrame")
+
+        # We don't want this QFrame to shrink below 500 pixels, therefore set a minimum horizontal size
+        # and set the policy such that it can still expand from this minimum size. This will be used
+        # when we use adjustSize after replacing the arguments panel.
+
+        self.app_frame.setMinimumSize(500, 0)
+        sp = self.app_frame.sizePolicy()
+        sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
+        self.app_frame.setSizePolicy(sp)
 
         self._layout_panels = QVBoxLayout()
         self._layout_buttons = QVBoxLayout()
