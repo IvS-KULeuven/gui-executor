@@ -20,24 +20,31 @@ from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QRunnable
 from PyQt5.QtCore import QSize
 from PyQt5.QtCore import QThreadPool
+from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtGui import QPainter
 from PyQt5.QtGui import QTextCursor
 from PyQt5.QtSvg import QSvgRenderer
+from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QFrame
+from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QGroupBox
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QTextEdit
+from PyQt5.QtWidgets import QToolBar
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 from executor import ExternalCommand
@@ -49,6 +56,7 @@ from .exec import Argument
 from .exec import ArgumentKind
 from .exec import get_arguments
 from .kernel import MyKernel
+from .kernel import start_qtconsole
 from .utils import capture
 from .utils import create_code_snippet
 from .utils import stringify_args
@@ -127,10 +135,12 @@ class FunctionRunnable(QRunnable):
 
     def run(self):
         # We can in the future decide based on exec_ui arguments in how to run the function
-        # self.run_function()
-        self.run_external_command()
+        # self.run_in_current_interpreter()
+        # self.run_in_kernel()
+        # self.run_in_qprocess()
+        self.run_in_external_command()
 
-    def run_function(self):
+    def run_in_current_interpreter(self):
         # This runs the function within the current Python interpreter. This might be a security risk
         # if you allow to run functions that are not under your control.
         success = False
@@ -153,7 +163,13 @@ class FunctionRunnable(QRunnable):
         finally:
             self.signals.finished.emit(self._func.__name__, success)
 
-    def run_external_command(self):
+    def run_in_kernel(self):
+        ...
+
+    def run_in_qprocess(self):
+        ...
+
+    def run_in_external_command(self):
         tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
         tmp.write(create_code_snippet(self._func, self._args, self._kwargs))
         tmp.close()
@@ -336,8 +352,9 @@ class ArgumentsPanel(QGroupBox):
         # The text field is pre-filled with the default value if available.
 
         vbox = QVBoxLayout()
+        grid = QGridLayout()
 
-        for name, arg in ui_args.items():
+        for idx, (name, arg) in enumerate(ui_args.items()):
             input_field = QLineEdit()
             input_field.setObjectName(name)
             input_field.setPlaceholderText(str(arg.default) if arg.default else "")
@@ -355,14 +372,26 @@ class ArgumentsPanel(QGroupBox):
                 self._kwargs_fields[name] = input_field
             else:
                 print("ERROR: Only POSITIONAL_ONLY, POSITIONAL_OR_KEYWORD, and KEYWORD_ONLY arguments are supported!")
-            label = QLabel(name)
-            hbox = QHBoxLayout()
-            hbox.addWidget(label)
-            hbox.addWidget(input_field)
-            vbox.addLayout(hbox)
 
+            label = QLabel(name)
+            type_hint = QLabel(f"[{arg.annotation.__name__}]" if arg.annotation is not None else None)
+            type_hint.setStyleSheet("color: gray")
+
+            grid.addWidget(label, idx, 0)
+            grid.addWidget(input_field, idx, 1)
+            grid.addWidget(type_hint, idx, 2)
+
+        vbox.addLayout(grid)
+
+        hbox = QHBoxLayout()
+        self.kernel_checkbox = QCheckBox("run in kernel")
+        self.kernel_checkbox.setCheckState(Qt.Checked if self.function.__ui_use_kernel__ else Qt.Unchecked)
         self.run_button = QPushButton("run")
-        vbox.addWidget(self.run_button, alignment=Qt.AlignRight)
+        hbox.addWidget(self.kernel_checkbox)
+        hbox.addStretch()
+        hbox.addWidget(self.run_button)
+
+        vbox.addLayout(hbox)
 
         self.setLayout(vbox)
 
@@ -384,6 +413,10 @@ class ArgumentsPanel(QGroupBox):
             for name, arg in self._kwargs_fields.items()
         }
 
+    @property
+    def use_kernel(self):
+        return self.kernel_checkbox.checkState() == Qt.Checked
+
     def _cast_arg(self, name: str, value: Any):
         arg = self._ui_args[name]
         try:
@@ -396,6 +429,7 @@ class View(QMainWindow):
     def __init__(self, app_name: str = None):
         super().__init__()
 
+        self._qt_console: Optional[ExternalCommand] = None
         self._kernel: Optional[MyKernel] = None
         self._buttons = []
         self.function_thread: FunctionRunnable
@@ -434,19 +468,62 @@ class View(QMainWindow):
 
         self.setCentralWidget(self.app_frame)
 
-        # QTimer.singleShot(1000, self.start_kernel)
+        QTimer.singleShot(500, self.start_kernel)
 
         self._rich_console = Console(force_terminal=False, force_jupyter=False)
 
-    def start_kernel(self, force: bool = False):
+        self._toolbar = QToolBar()
+        self.addToolBar(self._toolbar)
+
+        # Add a button to the toolbar to restart the kernel
+
+        kernel_button = QAction(QIcon(str(HERE / "icons/reload-kernel.svg")), "Restart the Jupyter kernel", self)
+        kernel_button.setStatusTip("Restart the Jupyter kernel")
+        kernel_button.triggered.connect(partial(self.start_kernel, False))
+        kernel_button.setCheckable(False)
+        self._toolbar.addAction(kernel_button)
+
+        # Add a button to the toolbar to start the qtconsole
+
+        qtconsole_button = QAction(QIcon(str(HERE / "icons/command.svg")), "Start Qt Console", self)
+        qtconsole_button.setStatusTip("Start the QT Console")
+        qtconsole_button.triggered.connect(self.start_qt_console)
+        qtconsole_button.setCheckable(False)
+        self._toolbar.addAction(qtconsole_button)
+
+    def start_kernel(self, force: bool = False) -> MyKernel:
 
         # Starting the kernel will need a proper PYTHONPATH for importing the packages
 
-        self._console_panel.append("Starting Kernel...")
         if force or self._kernel is None:
             self._kernel = MyKernel()
+            self._console_panel.append("New kernel started...")
+        else:
+            button = QMessageBox.question(
+                self,
+                "Restart Jupyter kernel", "A kernel is running, should a new kernel be started?"
+            )
+            if button == QMessageBox.Yes:
+                self._kernel = MyKernel()
+                self._console_panel.append("New kernel started...")
 
-    def run_function(self, func: Callable, args: List, kwargs: Dict):
+        return self._kernel
+
+    def start_qt_console(self):
+        if self._qt_console is not None and self._qt_console.is_running:
+            dialog = QMessageBox.information(self, "Qt Console", "There is already a Qt Console running.")
+        else:
+            self._qt_console = start_qtconsole(self._kernel or self.start_kernel())
+
+    def run_function(self, func: Callable, args: List, kwargs: Dict, use_kernel: bool):
+        if use_kernel:
+            # remember kernel setting for this function
+            func.__ui_use_kernel__ = True
+            self.run_function_in_kernel(func, args, kwargs)
+        else:
+            self.run_function_in_thread(func, args, kwargs)
+
+    def run_function_in_thread(self, func: Callable, args: List, kwargs: Dict):
 
         # TODO:
         #  * disable run button (should be activate again in function_complete?)
@@ -486,7 +563,7 @@ class View(QMainWindow):
 
         args_panel = ArgumentsPanel(button, ui_args)
         args_panel.run_button.clicked.connect(
-            lambda checked: self.run_function(args_panel.function, args_panel.args, args_panel.kwargs)
+            lambda checked: self.run_function(args_panel.function, args_panel.args, args_panel.kwargs, args_panel.use_kernel)
         )
 
         if self._current_args_panel:

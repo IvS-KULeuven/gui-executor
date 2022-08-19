@@ -40,16 +40,18 @@ def exec_ui(
         description: str = None,
         icon = None,
         input_request: Tuple[str, ...] = ("Continue [Y/n]", "Abort [Y/n]"),
+        use_kernel: bool = False,
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
     the function is decorated as a UI Button which will appear in the UI as a button to execute the function.
 
     Args:
-        kind: identifies the function and what it can be used for
+        kind: identifies the function and what it can be used for [default = BUTTON]
         description: short function description intended to be used as tooltip or similar
         icon: an icon PNG to use for the button [size hints?]
         input_request: a tuple contain the string to detect when input is asked for
+        use_kernel: use the Jupyter kernel when running this function
 
     Returns:
         The wrapper function object.
@@ -57,7 +59,7 @@ def exec_ui(
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # only use a wrapper if you need extra code to be run here
+            # you can put extra code to be run here, based on the arguments to exec_ui
             response = func(*args, **kwargs)
             # or here
             return response
@@ -66,6 +68,7 @@ def exec_ui(
         wrapper.__ui_file__ = func.__code__.co_filename
         wrapper.__ui_module__ = func.__module__
         wrapper.__ui_input_request__ = input_request
+        wrapper.__ui_use_kernel__ = use_kernel
         return wrapper
 
     return decorator

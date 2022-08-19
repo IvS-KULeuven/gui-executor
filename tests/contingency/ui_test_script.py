@@ -8,7 +8,6 @@ from gui_executor.exec import exec_ui
 # The reason for the two simple functions concatenate_args and compare_args is to
 # be able to test that more than the first function is found.
 
-
 @exec_ui(description="button function to concat arguments")
 def concatenate_args(arg1, arg2):
     """Concatenates the two arguments with the '+' operator."""
@@ -52,14 +51,58 @@ def raise_a_value_error():
 
 
 @exec_ui()
-def plot_sin(png_dir: str = "/Users/rik/Desktop"):
+def plot_sin(save: bool = False, png_dir: str = "/Users/rik/Desktop"):
+    """
+    Create a simple plot and return fig, and ax.
+
+    The figure can be inspected in the Qt Console as follows:
+
+        fig, ax = response
+        fig  #
+
+    The, you can add/change the figure to your needs:
+
+        import numpy as np
+
+        t = np.linspace(0,2*np.pi,100)
+        h, a = 2, 2
+        k, b = 2, 3
+        x_2 = h + a*np.cos(t)
+        y_2 = k + b*np.sin(t)
+        ax.plot(x_2,y_2)
+        ax.legend(['Eq 1', 'Eq 2'])
+        fig
+
+    """
     import matplotlib.pyplot as plt
-    import math
+    import numpy as np
 
-    plt.plot([math.sin(x) for x in range(100)])
-    plt.savefig(f"{png_dir}/sin.png")
+    x_1 = np.linspace(-.5, 3.3, 50)
+    y_1 = x_1 ** 2 - 2 * x_1 + 1
 
-    print(f"Plot 'sin.png'' saved in {png_dir}")
+    fig, ax = plt.subplots()
+    plt.title('Reusing this figure', fontsize=20)
+    ax.plot(x_1, y_1)
+    ax.set_xlabel('x', fontsize=18)
+    ax.set_ylabel('y', fontsize=18, rotation=0, labelpad=10)
+    ax.legend(['Eq 1'])
+    ax.axis('equal')
+
+    print("Returning 'fig, and 'ax'...")
+
+    return fig, ax
+
+
+@exec_ui(use_kernel=True)
+def run_function_in_kernel(msg: str = "add your message here"):
+    """
+    When a function is executed in the kernel, its return value is available in
+    the QtConsole in the 'response' variable (which will be overwritten).
+    """
+    print("Use in conjunction with qtconsole.")
+    print("Return value will be available in QtConsole as 'response'...")
+
+    return f"Message from 'run_function_in_kernel': {msg}"
 
 
 @exec_ui(input_request=("Continue? > ", "Abort? > "))
