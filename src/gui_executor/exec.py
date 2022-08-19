@@ -11,6 +11,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
+from typing import Tuple
 
 
 class Kind(IntEnum):
@@ -37,7 +38,8 @@ class Argument:
 def exec_ui(
         kind: Kind = Kind.BUTTON,
         description: str = None,
-        icon = None
+        icon = None,
+        input_request: Tuple[str, ...] = ("Continue [Y/n]", "Abort [Y/n]"),
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
@@ -47,6 +49,7 @@ def exec_ui(
         kind: identifies the function and what it can be used for
         description: short function description intended to be used as tooltip or similar
         icon: an icon PNG to use for the button [size hints?]
+        input_request: a tuple contain the string to detect when input is asked for
 
     Returns:
         The wrapper function object.
@@ -62,6 +65,7 @@ def exec_ui(
         wrapper.__ui_description__ = description
         wrapper.__ui_file__ = func.__code__.co_filename
         wrapper.__ui_module__ = func.__module__
+        wrapper.__ui_input_request__ = input_request
         return wrapper
 
     return decorator

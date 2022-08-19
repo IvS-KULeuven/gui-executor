@@ -14,6 +14,7 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QRunnable
@@ -117,6 +118,12 @@ class FunctionRunnable(QRunnable):
         self._func = func
         self._args = args
         self._kwargs = kwargs
+        self._check_for_input = False
+        self._input_patterns = []
+
+    def check_for_input(self, patterns: Tuple):
+        self._check_for_input = True
+        self._input_patterns = [pattern.rstrip() for pattern in patterns]
 
     def run(self):
         # We can in the future decide based on exec_ui arguments in how to run the function
@@ -171,9 +178,8 @@ class FunctionRunnable(QRunnable):
                     if line_out:
                         self.signals.data.emit(line := line_out.decode(cmd.encoding).rstrip())
                         # Try to detect when the process is requesting input.
-                        # TODO: this hardcode Continue shall be an exec_ui argument
                         # TODO: request input from user through QLineEdit field...
-                        if 'Continue' in line:
+                        if self._check_for_input and any(pattern in line for pattern in self._input_patterns):
                             time.sleep(1.0)
                             cmd.subprocess.stdin.write(b'Y\n')
                     if line_err:
@@ -446,6 +452,7 @@ class View(QMainWindow):
         #  * disable run button (should be activate again in function_complete?)
 
         self.function_thread = worker = FunctionRunnable(func, args, kwargs)
+        self.function_thread.check_for_input(func.__ui_input_request__)
         self.function_thread.start()
 
         worker.signals.data.connect(self.function_output)

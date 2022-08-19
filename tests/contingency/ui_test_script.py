@@ -62,12 +62,15 @@ def plot_sin(png_dir: str = "/Users/rik/Desktop"):
     print(f"Plot 'sin.png'' saved in {png_dir}")
 
 
-@exec_ui()
+@exec_ui(input_request=("Continue? > ", "Abort? > "))
 def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
     """
     This function goes through 'n_steps' steps and waits 'sleep' time between the steps.
     At each step, the step number is printed, then the functions sleeps. The intended
     use is to determine if we can catch the stdout while the function is running.
+
+    The function asks for user input in step 3 and step 7. When the response in step 7 is 'Y'
+    the process will end.
 
     Args:
         n_steps (int): number of steps to take [default: 10]
@@ -88,3 +91,8 @@ def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
                     Line two of the error message
                     ...end the last line of this error message
                 """), file=sys.stderr, flush=True)
+        elif n == 7:
+            response = input("Abort? > ")
+            print(response)
+            if response.lower() == 'y':
+                raise RuntimeError("Function was aborted!")
