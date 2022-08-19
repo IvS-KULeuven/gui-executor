@@ -37,6 +37,7 @@ def main():
     parser.add_argument('--module-path', help='module path of the Python modules and scripts')
     parser.add_argument('--config', help='a YAML file that configures the executor')
     parser.add_argument('--logo', help='path to logo PNG or SVG file')
+    parser.add_argument('--app-name', help='the name of the GUI app, will go in the window title')
 
     args = parser.parse_args()
 
@@ -53,7 +54,7 @@ def main():
     app = QApplication([])
     app.setWindowIcon(QIcon(args.logo or str(HERE / "icons/tasks.svg")))
 
-    view = View()
+    view = View(args.app_name or "GUI Executor")
     model = Model(args.module_path)
     Control(view, model)
 

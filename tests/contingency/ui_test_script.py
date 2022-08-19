@@ -38,7 +38,7 @@ def func_with_only_kwargs(*, a: str, b: int = 42, c):
 
 @exec_ui()
 def long_duration_func():
-    print("Sleeping for 10s..")
+    print("Sleeping for 10s..", flush=True)
     time.sleep(10)
     return "Done"
 
@@ -79,7 +79,10 @@ def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
     for n in range(n_steps):
         print(f"step {n}..", flush=True)
         time.sleep(sleep)
-        if n == n_steps // 2:
+        if n == 3:
+            response = input("Continue? > ")
+            print(response)
+        elif n == 5:
             print(textwrap.dedent("""\
                     An error message...
                     Line two of the error message

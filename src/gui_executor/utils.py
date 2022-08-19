@@ -5,8 +5,11 @@ import inspect
 import os
 import re
 import sys
+import textwrap
 from io import StringIO
 from pathlib import Path
+from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Tuple
 
@@ -175,3 +178,15 @@ def stringify_args(args):
 
 def stringify_kwargs(kwargs):
     return ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+
+
+def create_code_snippet(func: Callable, args: List, kwargs: Dict):
+
+    return textwrap.dedent(
+        f"""\
+            from {func.__ui_module__} import {func.__name__}
+            response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})
+            if response is not None:
+                print(response)
+        """
+    )

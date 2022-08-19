@@ -6,13 +6,14 @@ import os
 import select
 import sys
 import tempfile
-import textwrap
+import time
 from functools import partial
 from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
+from typing import Optional
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QRunnable
@@ -22,6 +23,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtGui import QPainter
 from PyQt5.QtGui import QTextCursor
@@ -39,12 +41,15 @@ from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 from executor import ExternalCommand
 from executor import ExternalCommandFailed
+from rich.console import Console
+from rich.text import Text
 
 from .exec import Argument
 from .exec import ArgumentKind
 from .exec import get_arguments
 from .kernel import MyKernel
 from .utils import capture
+from .utils import create_code_snippet
 from .utils import stringify_args
 from .utils import stringify_kwargs
 
@@ -113,7 +118,14 @@ class FunctionRunnable(QRunnable):
         self._args = args
         self._kwargs = kwargs
 
-    def run_(self):
+    def run(self):
+        # We can in the future decide based on exec_ui arguments in how to run the function
+        # self.run_function()
+        self.run_external_command()
+
+    def run_function(self):
+        # This runs the function within the current Python interpreter. This might be a security risk
+        # if you allow to run functions that are not under your control.
         success = False
         self.signals.data.emit("-" * 20)
         self.signals.data.emit(
@@ -134,20 +146,16 @@ class FunctionRunnable(QRunnable):
         finally:
             self.signals.finished.emit(self._func.__name__, success)
 
-    def run(self):
+    def run_external_command(self):
         tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        tmp.write(textwrap.dedent(
-            f"""\
-                from {self._func.__ui_module__} import {self._func.__name__}
-                response = {self._func.__name__}({stringify_args(self._args)}{', ' if self._args else ''}{stringify_kwargs(self._kwargs)})
-                if response is not None:
-                    print(response)
-            """
-        ))
+        tmp.write(create_code_snippet(self._func, self._args, self._kwargs))
         tmp.close()
+
         self.signals.data.emit("-" * 20)
+
         options = dict(capture=True, capture_stderr=True, asynchronous=True, buffered=False, input=True)
         try:
+            # We could actually just use SubProcess here to with the correct settings
             with ExternalCommand(f"{sys.executable} {tmp.name}", **options) as cmd:
                 make_async(cmd.stdout)
                 make_async(cmd.stderr)
@@ -161,12 +169,20 @@ class FunctionRunnable(QRunnable):
                     line_err = read_async(cmd.stderr)
 
                     if line_out:
-                        self.signals.data.emit(line_out.decode(cmd.encoding).rstrip())
+                        self.signals.data.emit(line := line_out.decode(cmd.encoding).rstrip())
+                        # Try to detect when the process is requesting input.
+                        # TODO: this hardcode Continue shall be an exec_ui argument
+                        # TODO: request input from user through QLineEdit field...
+                        if 'Continue' in line:
+                            time.sleep(1.0)
+                            cmd.subprocess.stdin.write(b'Y\n')
                     if line_err:
-                        self.signals.data.emit(line_err.decode(cmd.encoding).rstrip())
+                        self.signals.data.emit(line := line_err.decode(cmd.encoding).rstrip())
 
                     if cmd.subprocess.poll() is not None:
                         break
+
+                # Previous attempts that didn't work as expected. Need to document this....
 
                 # while cmd.is_running:
                 #     if cmd.stdout.readable():
@@ -216,7 +232,11 @@ class ConsoleOutput(QTextEdit):
         self.setReadOnly(True)
         self.setLineWrapMode(QTextEdit.NoWrap)
         self.insertPlainText("")
-        self.setMinimumSize(0, 300)
+        self.setMinimumSize(600, 300)
+        monospaced_font = QFont("Courier New")
+        monospaced_font.setStyleHint(QFont.Monospace)
+        monospaced_font.setPointSize(14)  # TODO: should be a setting
+        self.setFont(monospaced_font)
 
     @pyqtSlot(str)
     def append(self, text):
@@ -367,14 +387,14 @@ class ArgumentsPanel(QGroupBox):
 
 
 class View(QMainWindow):
-    def __init__(self):
+    def __init__(self, app_name: str = None):
         super().__init__()
 
-        self._kernel: MyKernel = None
+        self._kernel: Optional[MyKernel] = None
         self._buttons = []
         self.function_thread: FunctionRunnable
 
-        self.setWindowTitle("Contingency GUI")  # TODO: set proper name of the GUI
+        self.setWindowTitle(app_name or "GUI Executor")
 
         # self.setGeometry(300, 300, 500, 200)
 
@@ -387,7 +407,7 @@ class View(QMainWindow):
         # and set the policy such that it can still expand from this minimum size. This will be used
         # when we use adjustSize after replacing the arguments panel.
 
-        self.app_frame.setMinimumSize(500, 0)
+        self.app_frame.setMinimumSize(500, 0)  # TODO: should be a setting
         sp = self.app_frame.sizePolicy()
         sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
         self.app_frame.setSizePolicy(sp)
@@ -410,7 +430,12 @@ class View(QMainWindow):
 
         # QTimer.singleShot(1000, self.start_kernel)
 
+        self._rich_console = Console(force_terminal=False, force_jupyter=False)
+
     def start_kernel(self, force: bool = False):
+
+        # Starting the kernel will need a proper PYTHONPATH for importing the packages
+
         self._console_panel.append("Starting Kernel...")
         if force or self._kernel is None:
             self._kernel = MyKernel()
@@ -430,16 +455,8 @@ class View(QMainWindow):
     def run_function_in_kernel(self, func: Callable, args: List, kwargs: Dict):
         self._kernel = self._kernel or MyKernel()
 
-        snippet = textwrap.dedent(
-            f"""\
-                import sys
-                print(sys.path, flush=True)
-                from {func.__ui_module__} import {func.__name__}
-                {func.__name__}(
-                    {stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)}
-                )
-            """
-        )
+        snippet = create_code_snippet(func, args, kwargs)
+
         if response := self._kernel.run_snippet(snippet):
             self.function_output(response)
 
@@ -488,4 +505,7 @@ class View(QMainWindow):
 
     @pyqtSlot(Exception)
     def function_error(self, msg: Exception):
-        self._console_panel.append(f"{msg.__class__.__name__}: {msg}")
+        text = Text.styled(f"{msg.__class__.__name__}: {msg}", style="bold red")
+        with self._rich_console.capture() as capture:
+            self._rich_console.print(text)
+        self._console_panel.append(capture.get())
