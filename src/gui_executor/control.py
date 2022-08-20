@@ -1,3 +1,5 @@
+import rich
+
 from .model import Model
 from .view import View
 
@@ -10,6 +12,10 @@ class Control:
         modules = self._model.get_ui_modules()
 
         for _, mod in modules.items():
-            funcs = self._model.get_ui_buttons_functions(mod)
-            for name, func in funcs.items():
-                self._view.add_function_button(func)
+            try:
+                funcs = self._model.get_ui_buttons_functions(mod)
+                for name, func in funcs.items():
+                    self._view.add_function_button(func)
+            except ModuleNotFoundError as exc:
+                rich.print(f"[red]{exc.__class__.__name__}: {exc}[/]")
+                rich.print(f"Skipping '{mod}'...")
