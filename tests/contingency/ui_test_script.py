@@ -50,8 +50,8 @@ def raise_a_value_error():
     raise ValueError("Exception raised as an example..")
 
 
-@exec_ui()
-def plot_sin(save: bool = False, png_dir: str = "/Users/rik/Desktop"):
+@exec_ui(use_kernel=True)
+def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_filename: str = "plot.png"):
     """
     Create a simple plot and return fig, and ax.
 
@@ -87,6 +87,10 @@ def plot_sin(save: bool = False, png_dir: str = "/Users/rik/Desktop"):
     ax.set_ylabel('y', fontsize=18, rotation=0, labelpad=10)
     ax.legend(['Eq 1'])
     ax.axis('equal')
+
+    if save:
+        print(f"Saving plot to {png_dir}/{png_filename} ...")
+        plt.savefig(f"{png_dir}/{png_filename}")
 
     print("Returning 'fig, and 'ax'...")
 
@@ -139,3 +143,8 @@ def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
             print(response)
             if response.lower() == 'y':
                 raise RuntimeError("Function was aborted!")
+
+
+@exec_ui()
+def bool_arg(x: bool = True):
+    print(f"{x = }")

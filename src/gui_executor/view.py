@@ -355,17 +355,22 @@ class ArgumentsPanel(QGroupBox):
         grid = QGridLayout()
 
         for idx, (name, arg) in enumerate(ui_args.items()):
-            input_field = QLineEdit()
-            input_field.setObjectName(name)
-            input_field.setPlaceholderText(str(arg.default) if arg.default else "")
-            if arg.annotation is not None:
-                input_field.setToolTip(f"The expected type is {arg.annotation.__name__}.")
+            if arg.annotation is bool:
+                input_field = QCheckBox("")
+                input_field.setCheckState(Qt.Checked if arg.default else Qt.Unchecked)
             else:
-                input_field.setToolTip("No type has been specified..")
-            if arg.annotation is int:
-                input_field.setValidator(QIntValidator())
-            elif arg.annotation is float:
-                input_field.setValidator(QDoubleValidator())
+                input_field = QLineEdit()
+                input_field.setObjectName(name)
+                input_field.setPlaceholderText(str(arg.default) if arg.default else "")
+                if arg.annotation is not None:
+                    input_field.setToolTip(f"The expected type is {arg.annotation.__name__}.")
+                else:
+                    input_field.setToolTip("No type has been specified..")
+                if arg.annotation is int:
+                    input_field.setValidator(QIntValidator())
+                elif arg.annotation is float:
+                    input_field.setValidator(QDoubleValidator())
+
             if arg.kind == ArgumentKind.POSITIONAL_ONLY:
                 self._args_fields[name] = input_field
             elif arg.kind in [ArgumentKind.POSITIONAL_OR_KEYWORD, ArgumentKind.KEYWORD_ONLY]:
@@ -377,6 +382,9 @@ class ArgumentsPanel(QGroupBox):
             type_hint = QLabel(f"[{arg.annotation.__name__}]" if arg.annotation is not None else None)
             type_hint.setStyleSheet("color: gray")
 
+            # Stretch the middle column of the grid. That is needed when there is only one argument and it's a bool
+            # i.e. a CheckBox. If we do not stretch, the checkbox will be centered.
+            grid.setColumnStretch(1, 1)
             grid.addWidget(label, idx, 0)
             grid.addWidget(input_field, idx, 1)
             grid.addWidget(type_hint, idx, 2)
@@ -402,23 +410,29 @@ class ArgumentsPanel(QGroupBox):
     @property
     def args(self):
         return [
-            self._cast_arg(name, arg.displayText())
-            for name, arg in self._args_fields.items()
+            self._cast_arg(name, field)
+            for name, field in self._args_fields.items()
         ]
 
     @property
     def kwargs(self):
         return {
-            name: self._cast_arg(name, arg.displayText() or arg.placeholderText())
-            for name, arg in self._kwargs_fields.items()
+            name: self._cast_arg(name, field)
+            for name, field in self._kwargs_fields.items()
         }
 
     @property
     def use_kernel(self):
         return self.kernel_checkbox.checkState() == Qt.Checked
 
-    def _cast_arg(self, name: str, value: Any):
+    def _cast_arg(self, name: str, field: QLineEdit | QCheckBox):
         arg = self._ui_args[name]
+
+        if arg.annotation is bool:
+            return field.checkState() == Qt.Checked
+
+        value = field.displayText() or field.placeholderText()
+
         try:
             return arg.annotation(value)
         except (ValueError, TypeError):
@@ -539,10 +553,14 @@ class View(QMainWindow):
     def run_function_in_kernel(self, func: Callable, args: List, kwargs: Dict):
         self._kernel = self._kernel or MyKernel()
 
+        self.function_output("-" * 20)
+
         snippet = create_code_snippet(func, args, kwargs)
 
         if response := self._kernel.run_snippet(snippet):
             self.function_output(response)
+
+        self.function_complete(func.__name__, True)
 
     def add_function_button(self, func: Callable):
 
