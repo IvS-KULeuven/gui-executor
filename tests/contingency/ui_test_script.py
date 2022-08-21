@@ -58,9 +58,9 @@ def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_fil
     The figure can be inspected in the Qt Console as follows:
 
         fig, ax = response
-        fig  #
+        fig
 
-    The, you can add/change the figure to your needs:
+    Then, you can add/change the figure to your needs:
 
         import numpy as np
 

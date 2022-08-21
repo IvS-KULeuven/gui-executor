@@ -332,6 +332,11 @@ class DynamicButton(QWidget):
         return self._function
 
     @property
+    def module_name(self) -> str:
+        """Returns the name of the module where the function resides."""
+        return self._function.__ui_module__
+
+    @property
     def label(self) -> str:
         return self._label
 
@@ -439,6 +444,37 @@ class ArgumentsPanel(QGroupBox):
             return value
 
 
+class FunctionButtonsPanel(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        # The modules are arranged in a vertical layout and each of the functions in that module is arranged in a
+        # horizontal layout. Modules are added when a new button is added for a not yet existing module.
+
+        self.modules: Dict[str, QGridLayout] = {}
+        self.buttons: Dict[str, int] = {}
+        self.module_layout = QVBoxLayout()
+
+        self.setLayout(self.module_layout)
+
+    def add_button(self, button: DynamicButton):
+        module_name = button.module_name
+        if module_name not in self.modules:
+            grid = QGridLayout()
+            gbox = QGroupBox(module_name)
+            gbox.setLayout(grid)
+            self.module_layout.addWidget(gbox)
+            self.modules[module_name] = grid
+            self.buttons[module_name] = 0
+
+        self.buttons[module_name] += 1
+        button_count = self.buttons[module_name]
+
+        row = (button_count - 1) // 3
+        col = (button_count - 1) % 3
+        self.modules[module_name].addWidget(button, row, col)
+
+
 class View(QMainWindow):
     def __init__(self, app_name: str = None):
         super().__init__()
@@ -467,9 +503,9 @@ class View(QMainWindow):
         self.app_frame.setSizePolicy(sp)
 
         self._layout_panels = QVBoxLayout()
-        self._layout_buttons = QVBoxLayout()
+        self._layout_buttons = FunctionButtonsPanel()
 
-        self._layout_panels.addLayout(self._layout_buttons)
+        self._layout_panels.addWidget(self._layout_buttons)
         self._layout_panels.addWidget(HLine())
         self._current_args_panel: QWidget = QWidget()
         self._current_args_panel.hide()
@@ -569,7 +605,7 @@ class View(QMainWindow):
         # button.clicked.connect(partial(self.the_button_was_clicked, button))
 
         self._buttons.append(button)
-        self._layout_buttons.addWidget(button)
+        self._layout_buttons.add_button(button)
 
     def the_button_was_clicked(self, button: DynamicButton, *args, **kwargs):
 
