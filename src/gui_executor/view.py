@@ -452,6 +452,8 @@ class FunctionButtonsPanel(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.n_cols = 4  # This must be a setting or configuration option
+
         # The modules are arranged in a vertical layout and each of the functions in that module is arranged in a
         # horizontal layout. Modules are added when a new button is added for a not yet existing module.
 
@@ -465,6 +467,9 @@ class FunctionButtonsPanel(QWidget):
         module_name = button.module_name
         if module_name not in self.modules:
             grid = QGridLayout()
+            # Make sure all columns have equal width
+            for idx in range(self.n_cols):
+                grid.setColumnStretch(idx, 1)
             gbox = QGroupBox(module_name)
             gbox.setLayout(grid)
             self.module_layout.addWidget(gbox)
@@ -474,8 +479,8 @@ class FunctionButtonsPanel(QWidget):
         self.buttons[module_name] += 1
         button_count = self.buttons[module_name]
 
-        row = (button_count - 1) // 3
-        col = (button_count - 1) % 3
+        row = (button_count - 1) // self.n_cols
+        col = (button_count - 1) % self.n_cols
         self.modules[module_name].addWidget(button, row, col)
 
 
@@ -535,9 +540,7 @@ class View(QMainWindow):
 
         self._layout_panels = QVBoxLayout()
         self._layout_buttons = FunctionButtonsPanel()
-        self._layout_kernels = KernelPanel()
 
-        self._layout_panels.addWidget(self._layout_kernels)
         self._layout_panels.addWidget(self._layout_buttons)
         self._layout_panels.addWidget(HLine())
         self._current_args_panel: QWidget = QWidget()
@@ -556,6 +559,7 @@ class View(QMainWindow):
         self._rich_console = Console(force_terminal=False, force_jupyter=False)
 
         self._toolbar = QToolBar()
+        self._toolbar.setIconSize(QSize(40, 40))
         self.addToolBar(self._toolbar)
 
         # Add a button to the toolbar to restart the kernel
@@ -573,6 +577,8 @@ class View(QMainWindow):
         qtconsole_button.triggered.connect(self.start_qt_console)
         qtconsole_button.setCheckable(False)
         self._toolbar.addAction(qtconsole_button)
+        self.kernel_panel = KernelPanel()
+        self._toolbar.addWidget(self.kernel_panel)
 
     def start_kernel(self, force: bool = False) -> MyKernel:
 
@@ -591,7 +597,7 @@ class View(QMainWindow):
         return self._kernel
 
     def _start_new_kernel(self):
-        name = self._layout_kernels.selected_kernel
+        name = self.kernel_panel.selected_kernel
         self._kernel = MyKernel(name)
         self._console_panel.append(f"New kernel '{name}' started...")
         info = self._kernel.get_kernel_info()
