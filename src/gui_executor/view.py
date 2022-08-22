@@ -25,6 +25,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtGui import QCursor
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QIcon
@@ -262,6 +263,9 @@ class ConsoleOutput(QTextEdit):
         monospaced_font.setPointSize(14)  # TODO: should be a setting
         self.setFont(monospaced_font)
 
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.__contextMenu)
+
     @pyqtSlot(str)
     def append(self, text):
         self.moveCursor(QTextCursor.End)
@@ -271,13 +275,23 @@ class ConsoleOutput(QTextEdit):
             console.print(text)
 
         exported_html = console.export_html(
-            inline_styles=True, code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}\n</pre>"
+            inline_styles=True,
+            code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}\n</pre>"
         )
 
         self.insertHtml(exported_html)
 
         sb = self.verticalScrollBar()
         sb.setValue(sb.maximum())
+
+    def __contextMenu(self):
+        self._normalMenu = self.createStandardContextMenu()
+        self._addCustomMenuItems(self._normalMenu)
+        self._normalMenu.exec_(QCursor.pos())
+
+    def _addCustomMenuItems(self, menu):
+        menu.addSeparator()
+        menu.addAction(u'Clear', self.clear)
 
 
 class IconLabel(QLabel):
