@@ -9,7 +9,6 @@ import tempfile
 import time
 from functools import partial
 from pathlib import Path
-from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -263,12 +262,16 @@ class ConsoleOutput(QTextEdit):
     @pyqtSlot(str)
     def append(self, text):
         self.moveCursor(QTextCursor.End)
-        current = self.toPlainText()
 
-        if current == "":
-            self.insertPlainText(text)
-        else:
-            self.insertPlainText("\n" + text)
+        console = Console(record=True, force_terminal=False, force_jupyter=False)
+        with console.capture():
+            console.print(text)
+
+        exported_html = console.export_html(
+            inline_styles=True, code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}\n</pre>"
+        )
+
+        self.insertHtml(exported_html)
 
         sb = self.verticalScrollBar()
         sb.setValue(sb.maximum())
@@ -627,8 +630,8 @@ class View(QMainWindow):
             self._layout_panels.addWidget(args_panel)
 
         self._current_args_panel = args_panel
-        self.app_frame.adjustSize()
-        self.adjustSize()
+        # self.app_frame.adjustSize()
+        # self.adjustSize()
 
     @pyqtSlot(object)
     def function_output(self, data: object):
@@ -644,6 +647,4 @@ class View(QMainWindow):
     @pyqtSlot(Exception)
     def function_error(self, msg: Exception):
         text = Text.styled(f"{msg.__class__.__name__}: {msg}", style="bold red")
-        with self._rich_console.capture() as capture:
-            self._rich_console.print(text)
-        self._console_panel.append(capture.get())
+        self._console_panel.append(msg)

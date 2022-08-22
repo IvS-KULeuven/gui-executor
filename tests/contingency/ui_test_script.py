@@ -119,6 +119,9 @@ def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
     The function asks for user input in step 3 and step 7. When the response in step 7 is 'Y'
     the process will end.
 
+    Do not run this function in the kernel, because the kernel doesn't allow user
+    interactions and the App will hang indefinitely.
+
     Args:
         n_steps (int): number of steps to take [default: 10]
         sleep (float): number of seconds to sleep between steps [default: 1.0]
