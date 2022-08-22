@@ -78,7 +78,7 @@ class MyKernel:
     def flush(self):
         while True:
             try:
-                _ = self._client.get_iopub_msg(block=True, timeout=0.2)
+                _ = self._client.get_iopub_msg(timeout=0.2)
             except queue.Empty:
                 break
 
