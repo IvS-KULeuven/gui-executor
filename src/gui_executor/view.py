@@ -6,6 +6,7 @@ import os
 import select
 import sys
 import tempfile
+import textwrap
 import time
 from functools import partial
 from pathlib import Path
@@ -471,8 +472,16 @@ class FunctionButtonsPanel(QWidget):
             # Make sure all columns have equal width
             for idx in range(self.n_cols):
                 grid.setColumnStretch(idx, 1)
-            gbox = QGroupBox(module_name)
+            gbox = QGroupBox(module_name.rsplit(".", 1)[-1])
             gbox.setLayout(grid)
+            gbox.setStyleSheet(textwrap.dedent("""
+                QGroupBox
+                {
+                    font-size: 14px;
+                    font-weight: light;
+                    color: grey;
+                }
+            """))
             self.module_layout.addWidget(gbox)
             self.modules[module_name] = grid
             self.buttons[module_name] = 0
