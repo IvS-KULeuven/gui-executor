@@ -23,6 +23,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QIcon
@@ -579,6 +580,10 @@ class View(QMainWindow):
         self._toolbar.addAction(qtconsole_button)
         self.kernel_panel = KernelPanel()
         self._toolbar.addWidget(self.kernel_panel)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        if self._kernel:
+            self._kernel.shutdown()
 
     def start_kernel(self, force: bool = False) -> MyKernel:
 

@@ -44,7 +44,8 @@ def long_duration_func():
 
 @exec_ui()
 def raise_a_value_error():
-    print("This function will raise a ValueError after 1s...")
+    """This function just raises a ValueError after it first sleeps for 1s."""
+    print("This function will raise a ValueError after 1s...", flush=True)
     print("This message is sent to stderr.", file=sys.stderr)
     time.sleep(1.0)
     raise ValueError("Exception raised as an example..")

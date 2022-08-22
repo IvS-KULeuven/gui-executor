@@ -40,6 +40,9 @@ class MyKernel:
     def is_alive(self) -> bool:
         return self._kernel.is_alive()
 
+    def shutdown(self):
+        self._kernel.shutdown_kernel(now=True)
+
     @staticmethod
     def get_kernel_specs():
         return jupyter_client.kernelspec.find_kernel_specs()
