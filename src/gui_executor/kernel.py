@@ -2,6 +2,8 @@ import logging
 import queue
 import textwrap
 
+import jupyter_client.kernelspec
+import rich
 from executor import ExternalCommand
 from executor import ExternalCommandFailed
 from jupyter_client.manager import KernelManager
@@ -38,10 +40,16 @@ class MyKernel:
     def is_alive(self) -> bool:
         return self._kernel.is_alive()
 
-    def get_info(self):
+    @staticmethod
+    def get_kernel_specs():
+        return jupyter_client.kernelspec.find_kernel_specs()
+
+    def get_kernel_info(self):
         msg_id = self._client.kernel_info()
-        reply = self._get_response(msg_id)
-        return self._get_output()
+        # rich.print(f"get_info() -> {msg_id = }")
+        reply = self._client.get_shell_msg()
+        # rich.print("get_info() -> reply = ", reply)
+        return reply
 
     def get_connection_file(self):
         return self._kernel.connection_file
@@ -85,7 +93,7 @@ class MyKernel:
     def get_error(self) -> str:
         return self._error
 
-    def _get_response(self, msg_id: str) -> dict:
+    def _get_response(self, msg_id: str = None) -> dict:
         return self._client.get_shell_msg(msg_id)
 
     def _get_output(self, timeout: float = 1.0) -> str:
@@ -153,9 +161,12 @@ def do_test_my_kernel(name: str = "python3"):
             print(out)
 
 
-def start_qtconsole(kernel: MyKernel):
+def start_qtconsole(kernel: MyKernel, buffer_size: int = 5000, console_height: int = 42, console_width: int = 128):
     connection_file = kernel.get_connection_file()
-    cmd_line = f"jupyter qtconsole --existing {connection_file}"
+    cmd_line = (f"jupyter qtconsole --ConsoleWidget.buffer_size={buffer_size} "
+                f"--ConsoleWidget.console_height={console_height} "
+                f"--ConsoleWidget.console_width={console_width} "
+                f"--existing {connection_file}")
 
     cmd = ExternalCommand(
         f"{cmd_line}", capture=True, capture_stderr=True, asynchronous=True)

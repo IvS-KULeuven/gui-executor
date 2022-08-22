@@ -1,6 +1,7 @@
 import textwrap
 
 import pytest
+import rich
 
 from gui_executor.kernel import MyKernel
 
@@ -52,7 +53,10 @@ def test_kernel_after_initialisation(kernel):
 
 def test_kernel_info(kernel):
 
-    info = kernel.get_info()
+    rich.print()
 
-    print()
-    print(f"{info = }")
+    info = kernel.get_kernel_info()
+    rich.print(info)
+
+    specs = kernel.get_kernel_specs()
+    rich.print(specs)

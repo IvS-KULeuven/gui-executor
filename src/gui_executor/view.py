@@ -32,6 +32,7 @@ from PyQt5.QtGui import QTextCursor
 from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QGroupBox
@@ -478,6 +479,33 @@ class FunctionButtonsPanel(QWidget):
         self.modules[module_name].addWidget(button, row, col)
 
 
+class KernelPanel(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(0, 0, 0, 0)
+
+        kernel_specs = list(MyKernel.get_kernel_specs())
+        try:
+            idx = kernel_specs.index("python3")
+        except ValueError:
+            idx = 0
+        self.kernel_list = QComboBox()
+        self.kernel_list.addItems(list(kernel_specs))
+        self.kernel_list.setCurrentIndex(idx)
+
+        hbox.addStretch(1)
+        hbox.addWidget(QLabel("available kernels"))
+        hbox.addWidget(self.kernel_list)
+
+        self.setLayout(hbox)
+
+    @property
+    def selected_kernel(self) -> str:
+        return self.kernel_list.currentText()
+
+
 class View(QMainWindow):
     def __init__(self, app_name: str = None):
         super().__init__()
@@ -507,7 +535,9 @@ class View(QMainWindow):
 
         self._layout_panels = QVBoxLayout()
         self._layout_buttons = FunctionButtonsPanel()
+        self._layout_kernels = KernelPanel()
 
+        self._layout_panels.addWidget(self._layout_kernels)
         self._layout_panels.addWidget(self._layout_buttons)
         self._layout_panels.addWidget(HLine())
         self._current_args_panel: QWidget = QWidget()
@@ -549,18 +579,24 @@ class View(QMainWindow):
         # Starting the kernel will need a proper PYTHONPATH for importing the packages
 
         if force or self._kernel is None:
-            self._kernel = MyKernel()
-            self._console_panel.append("New kernel started...")
+            self._start_new_kernel()
         else:
             button = QMessageBox.question(
                 self,
                 "Restart Jupyter kernel", "A kernel is running, should a new kernel be started?"
             )
             if button == QMessageBox.Yes:
-                self._kernel = MyKernel()
-                self._console_panel.append("New kernel started...")
-
+                self._console_panel.append('-' * 50)
+                self._start_new_kernel()
         return self._kernel
+
+    def _start_new_kernel(self):
+        name = self._layout_kernels.selected_kernel
+        self._kernel = MyKernel(name)
+        self._console_panel.append(f"New kernel '{name}' started...")
+        info = self._kernel.get_kernel_info()
+        if 'banner' in info['content']:
+            self._console_panel.append(info['content']['banner'])
 
     def start_qt_console(self):
         if self._qt_console is not None and self._qt_console.is_running:
