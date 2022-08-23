@@ -25,6 +25,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtGui import QContextMenuEvent
 from PyQt5.QtGui import QCursor
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
@@ -43,6 +44,7 @@ from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMenu
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QSizePolicy
@@ -53,6 +55,7 @@ from PyQt5.QtWidgets import QWidget
 from executor import ExternalCommand
 from executor import ExternalCommandFailed
 from rich.console import Console
+from rich.syntax import Syntax
 from rich.text import Text
 
 from .exec import Argument
@@ -317,6 +320,47 @@ class IconLabel(QLabel):
         painter.end()
 
 
+class SourceCodeWindow(QWidget):
+    def __init__(self, func: Callable):
+        super().__init__()
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0,)
+        try:
+            source_code_filename = func.__wrapped__.__code__.co_filename
+            source_line = func.__wrapped__.__code__.co_firstlineno
+        except AttributeError:
+            source_code_filename = func.__code__.co_filename
+            source_line = func.__code__.co_firstlineno
+        source_code = Path(source_code_filename).read_text()
+
+        text_edit = QTextEdit()
+
+        console = Console(record=True, width=1200)
+        syntax = Syntax(source_code, "python", theme='default')
+
+        with console.capture():
+            console.print(syntax)
+
+        exported_html = console.export_html(
+            inline_styles=True,
+            code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}\n</pre>"
+        )
+
+        text_edit.setFontFamily('Courier')
+        text_edit.insertHtml(exported_html)
+
+        document = text_edit.document()
+        cursor = QTextCursor(document)
+        cursor.setPosition(source_line)
+        # cursor.movePosition()
+        text_edit.setTextCursor(cursor)
+        layout.addWidget(text_edit)
+
+        self.setMinimumSize(1200, 600)
+        self.setGeometry(100, 100, 1200, 600)
+        self.setLayout(layout)
+
+
 class DynamicButton(QWidget):
 
     IconSize = QSize(30, 30)
@@ -346,6 +390,18 @@ class DynamicButton(QWidget):
             layout.addStretch()
 
         self.setToolTip(func.__doc__)
+
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+        context_menu = QMenu(self)
+
+        view_source_action = context_menu.addAction("View source ...")
+        view_source_action.triggered.connect(self.view_source)
+
+        context_menu.exec_(event.globalPos())
+
+    def view_source(self):
+        self.source_code_window = SourceCodeWindow(self.function)
+        self.source_code_window.show()
 
     @property
     def function(self) -> Callable:
