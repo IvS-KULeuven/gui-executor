@@ -36,7 +36,7 @@ class ListList(TypeObject):
     def __init__(self, literals: List[Union[str, Callable]], defaults: List = None):
         super().__init__()
         self._literals = literals
-        self._defaults = defaults
+        self._defaults = defaults or []
 
     def __repr__(self):
         return f"ListList({self._literals} = {self._defaults})"
