@@ -99,7 +99,7 @@ setup(
         "": ["*.yaml", "*.png", "*.svg"],
     },
     include_package_data=False,
-    install_requires=["rich", "PyQt5"],
+    install_requires=["rich", "PyQt5", "executor"],
     entry_points={
         "gui_scripts": [
             "gui-executor=gui_executor.__main__:main",

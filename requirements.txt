@@ -9,6 +9,8 @@ jupyter-core
 qtconsole
 pyzmq==23.2.0
 
+# Packages I used for testing
+
 pytest
 pytest-order
 lorem-text

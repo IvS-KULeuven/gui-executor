@@ -61,12 +61,15 @@ from rich.text import Text
 from .exec import Argument
 from .exec import ArgumentKind
 from .exec import get_arguments
+from .gui import IconLabel
 from .kernel import MyKernel
 from .kernel import start_qtconsole
 from .utils import capture
 from .utils import create_code_snippet
 from .utils import stringify_args
 from .utils import stringify_kwargs
+from .utypes import TypeObject
+from .utypes import UQWidget
 
 HERE = Path(__file__).parent.resolve()
 
@@ -297,29 +300,6 @@ class ConsoleOutput(QTextEdit):
         menu.addAction(u'Clear', self.clear)
 
 
-class IconLabel(QLabel):
-
-    IconSize = QSize(16, 16)
-
-    def __init__(self, icon_path: Path | str, size: QSize = IconSize):
-        super().__init__()
-
-        self.icon_path = str(icon_path)
-        self.setFixedSize(size)
-
-    def paintEvent(self, *args, **kwargs):
-
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(Qt.NoPen)
-
-        renderer = QSvgRenderer()
-        renderer.load(self.icon_path)
-        renderer.render(painter)
-
-        painter.end()
-
-
 class SourceCodeWindow(QWidget):
     def __init__(self, func: Callable):
         super().__init__()
@@ -439,6 +419,8 @@ class ArgumentsPanel(QGroupBox):
             if arg.annotation is bool:
                 input_field = QCheckBox("")
                 input_field.setCheckState(Qt.Checked if arg.default else Qt.Unchecked)
+            elif isinstance(arg.annotation, TypeObject):
+                input_field: QWidget = arg.annotation.get_widget()
             else:
                 input_field = QLineEdit()
                 input_field.setObjectName(name)
@@ -463,12 +445,16 @@ class ArgumentsPanel(QGroupBox):
             type_hint = QLabel(f"[{arg.annotation.__name__}]" if arg.annotation is not None else None)
             type_hint.setStyleSheet("color: gray")
 
+            # label.setStyleSheet("border:1px solid #111111; ")
+            # input_field.setStyleSheet("border:1px solid #111111; ")
+            # type_hint.setStyleSheet("border:1px solid #111111; ")
+
             # Stretch the middle column of the grid. That is needed when there is only one argument and it's a bool
             # i.e. a CheckBox. If we do not stretch, the checkbox will be centered.
             grid.setColumnStretch(1, 1)
-            grid.addWidget(label, idx, 0)
-            grid.addWidget(input_field, idx, 1)
-            grid.addWidget(type_hint, idx, 2)
+            grid.addWidget(label, idx, 0, alignment=Qt.AlignTop)
+            grid.addWidget(input_field, idx, 1, alignment=Qt.AlignTop)
+            grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignTop)
 
         vbox.addLayout(grid)
 
@@ -483,6 +469,8 @@ class ArgumentsPanel(QGroupBox):
         vbox.addLayout(hbox)
 
         self.setLayout(vbox)
+
+        # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
 
     @property
     def function(self):
@@ -506,18 +494,20 @@ class ArgumentsPanel(QGroupBox):
     def use_kernel(self):
         return self.kernel_checkbox.checkState() == Qt.Checked
 
-    def _cast_arg(self, name: str, field: QLineEdit | QCheckBox):
+    def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | UQWidget):
         arg = self._ui_args[name]
 
         if arg.annotation is bool:
             return field.checkState() == Qt.Checked
+        elif isinstance(arg.annotation, TypeObject):
+            return field.get_value()
+        else:
+            value = field.displayText() or field.placeholderText()
 
-        value = field.displayText() or field.placeholderText()
-
-        try:
-            return arg.annotation(value)
-        except (ValueError, TypeError):
-            return value
+            try:
+                return arg.annotation(value)
+            except (ValueError, TypeError):
+                return value
 
 
 class FunctionButtonsPanel(QWidget):
