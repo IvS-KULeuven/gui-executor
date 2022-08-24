@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 from functools import partial
 from pathlib import Path
 from typing import Callable
@@ -8,6 +9,8 @@ from typing import Optional
 from typing import Union
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLabel
@@ -30,15 +33,16 @@ class ListList(TypeObject):
     """
     A TypeObject for a List of Lists.
     """
-    def __init__(self, literals: List[Union[str, Callable]]):
+    def __init__(self, literals: List[Union[str, Callable]], defaults: List = None):
         super().__init__()
         self._literals = literals
+        self._defaults = defaults
 
     def __repr__(self):
-        return f"ListList({self._literals})"
+        return f"ListList({self._literals} = {self._defaults})"
 
     def __iter__(self):
-        return iter(self._literals)
+        return iter(itertools.zip_longest(self._literals, self._defaults))
 
     def get_widget(self):
         return ListListWidget(self)
@@ -60,7 +64,7 @@ class ListListWidget(UQWidget):
         self._rows: List[List] = []
         self._rows_layout = QVBoxLayout()
 
-        row, fields = self._row('+')
+        row, fields = self._row('+', expand_default=True)
 
         self._rows_layout.addWidget(row)
         self._rows_layout.setContentsMargins(0, 0, 0, 0)
@@ -73,18 +77,31 @@ class ListListWidget(UQWidget):
         return [
             [
                 self._cast_arg(f, t)
-                for f, t in zip(field, self._type_object)
+                for f, (t, d) in zip(field, self._type_object)
             ] for field in self._rows
         ]
 
-    def _row(self, row_button: str):
+    def _row(self, row_button: str, expand_default: bool = False):
         widget = QWidget()
 
         hbox = QHBoxLayout()
 
         fields = []
-        for x in self._type_object:
-            field = QCheckBox() if x is bool else QLineEdit()
+        for x, y in self._type_object:
+            if not expand_default:
+                y = None
+            if x is bool:
+                field = QCheckBox()
+                field.setCheckState(Qt.Checked if y is not None else Qt.Unchecked)
+            else:
+                field = QLineEdit()
+                field.setPlaceholderText(str(y) if y is not None else "")
+
+            if x is int:
+                field.setValidator(QIntValidator())
+            elif x is float:
+                field.setValidator(QDoubleValidator())
+
             fields.append(field)
             type_hint = QLabel(x if isinstance(x, str) else x.__name__)
             type_hint.setStyleSheet("color: gray")
