@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import errno
 import fcntl
 import os
@@ -505,6 +506,8 @@ class ArgumentsPanel(QGroupBox):
             value = field.displayText() or field.placeholderText()
 
             try:
+                if arg.annotation is tuple or arg.annotation is list:
+                    return ast.literal_eval(value)
                 return arg.annotation(value)
             except (ValueError, TypeError):
                 return value
