@@ -2,6 +2,9 @@ import sys
 import textwrap
 import time
 
+from faker import Faker
+from rich.table import Table
+
 from gui_executor.exec import exec_ui
 
 
@@ -51,7 +54,7 @@ def raise_a_value_error():
     raise ValueError("Exception raised as an example..")
 
 
-@exec_ui(use_kernel=True)
+@exec_ui(use_kernel=False)
 def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_filename: str = "plot.png"):
     """
     Create a simple plot and return fig, and ax.
@@ -90,12 +93,71 @@ def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_fil
     ax.axis('equal')
 
     if save:
-        print(f"Saving plot to {png_dir}/{png_filename} ...")
+        print(f"Saving plot to {png_dir}/{png_filename} ...", flush=True)
         plt.savefig(f"{png_dir}/{png_filename}")
 
-    print("Returning 'fig, and 'ax'...")
+    print("Returning 'fig, and 'ax'...", flush=True)
 
     return fig, ax
+
+
+@exec_ui()
+def two_simple_plots():
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import math
+
+    # Data for plot 1
+
+    t = np.arange(0.0, 2.0, 0.01)
+    s = 1 + np.sin(2 * np.pi * t)
+
+    fig1, ax = plt.subplots()
+    ax.plot(t, s)
+
+    ax.set(
+        xlabel='time (s)', ylabel='voltage (mV)',
+        title='About as simple as it gets, folks')
+    ax.grid()
+
+    # Data for plot 2
+
+    n_points = 100
+    xa = [i * 12 / 100 for i in range(n_points)]
+    ya = [math.sin(x) * math.exp(-x/4) for x in xa]
+
+    fig2, ax = plt.subplots()
+    ax.plot(xa, ya)
+
+    return fig1, fig2
+
+
+@exec_ui()
+def a_simple_table():
+
+    table = Table(title="Configuration")
+
+    table.add_column("Name", justify="left", style="cyan", no_wrap=True)
+    table.add_column("Value", justify="right", style="green")
+
+    faker = Faker()
+    for _ in range(20):
+        table.add_row(faker.name(), faker.address())
+
+    return table
+
+
+def some_text():
+    from lorem_text import lorem
+
+    return lorem.paragraphs(5)
+
+@exec_ui()
+def a_plot_a_table_and_some_text():
+    fig, ax = simple_plot()
+    table = a_simple_table()
+    text = some_text()
+    return fig, table, text
 
 
 @exec_ui(use_kernel=True)

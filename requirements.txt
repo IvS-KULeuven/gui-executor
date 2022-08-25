@@ -11,6 +11,11 @@ pyzmq==23.2.0
 
 # Packages I used for testing
 
-pytest
+pytest~=7.1.2
 pytest-order
 lorem-text
+
+matplotlib~=3.5.3
+setuptools~=63.1.0
+
+Faker~=14.1.0

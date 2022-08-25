@@ -36,6 +36,7 @@ from PyQt5.QtGui import QPainter
 from PyQt5.QtGui import QTextCursor
 from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QButtonGroup
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QFrame
@@ -48,6 +49,7 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QMenu
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QRadioButton
 from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtWidgets import QToolBar
@@ -181,7 +183,7 @@ class FunctionRunnable(QRunnable):
 
     def run_in_external_command(self):
         tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        tmp.write(create_code_snippet(self._func, self._args, self._kwargs))
+        tmp.write(create_code_snippet(self._func, self._args, self._kwargs, call_func=False))
         tmp.close()
 
         self.signals.data.emit("-" * 20)
@@ -189,7 +191,7 @@ class FunctionRunnable(QRunnable):
         options = dict(capture=True, capture_stderr=True, asynchronous=True, buffered=False, input=True)
         try:
             # We could actually just use SubProcess here to with the correct settings
-            with ExternalCommand(f"{sys.executable} {tmp.name}", **options) as cmd:
+            with ExternalCommand(f"{sys.executable} {HERE/'script_app.py'} --script {tmp.name}", **options) as cmd:
                 make_async(cmd.stdout)
                 make_async(cmd.stderr)
 
@@ -251,8 +253,8 @@ class FunctionRunnable(QRunnable):
             else:
                 self.signals.finished.emit(self._func.__name__, True)
 
-        # print(f"{tmp.name = }")
-        os.unlink(tmp.name)
+        print(f"{tmp.name = }")
+        # os.unlink(tmp.name)
 
     def start(self):
         QThreadPool.globalInstance().start(self)
@@ -460,10 +462,17 @@ class ArgumentsPanel(QGroupBox):
         vbox.addLayout(grid)
 
         hbox = QHBoxLayout()
-        self.kernel_checkbox = QCheckBox("run in kernel")
-        self.kernel_checkbox.setCheckState(Qt.Checked if self.function.__ui_use_kernel__ else Qt.Unchecked)
+        button_group = QButtonGroup()
+        self.kernel_rb = QRadioButton("Run in kernel")
+        self.kernel_rb.setChecked(self.function.__ui_use_kernel__)
+        self.app_rb = QRadioButton("Run ia App")
+        self.app_rb.setChecked(not self.function.__ui_use_kernel__)
+        button_group.addButton(self.kernel_rb, 1)
+        button_group.addButton(self.app_rb, 2)
+
         self.run_button = QPushButton("run")
-        hbox.addWidget(self.kernel_checkbox)
+        hbox.addWidget(self.kernel_rb)
+        hbox.addWidget(self.app_rb)
         hbox.addStretch()
         hbox.addWidget(self.run_button)
 
@@ -493,7 +502,7 @@ class ArgumentsPanel(QGroupBox):
 
     @property
     def use_kernel(self):
-        return self.kernel_checkbox.checkState() == Qt.Checked
+        return self.kernel_rb.isChecked()
 
     def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | UQWidget):
         arg = self._ui_args[name]
