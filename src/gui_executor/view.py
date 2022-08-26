@@ -49,6 +49,7 @@ from PyQt5.QtWidgets import QMenu
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QRadioButton
+from PyQt5.QtWidgets import QScrollArea
 from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtWidgets import QToolBar
@@ -603,9 +604,14 @@ class ArgumentsPanel(QGroupBox):
                 return value
 
 
-class FunctionButtonsPanel(QWidget):
+class FunctionButtonsPanel(QScrollArea):
     def __init__(self):
         super().__init__()
+
+        self.setWidgetResizable(True)
+        self.setMinimumSize(600, 300)
+
+        widget = QWidget()
 
         self.n_cols = 4  # This must be a setting or configuration option
 
@@ -616,7 +622,9 @@ class FunctionButtonsPanel(QWidget):
         self.buttons: Dict[str, int] = {}
         self.module_layout = QVBoxLayout()
 
-        self.setLayout(self.module_layout)
+        widget.setLayout(self.module_layout)
+
+        self.setWidget(widget)
 
     def add_button(self, button: DynamicButton):
         module_name = button.module_name
@@ -696,7 +704,7 @@ class View(QMainWindow):
         # and set the policy such that it can still expand from this minimum size. This will be used
         # when we use adjustSize after replacing the arguments panel.
 
-        self.app_frame.setMinimumSize(500, 0)  # TODO: should be a setting
+        self.app_frame.setMinimumSize(600, 0)  # TODO: should be a setting
         sp = self.app_frame.sizePolicy()
         sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
         self.app_frame.setSizePolicy(sp)
