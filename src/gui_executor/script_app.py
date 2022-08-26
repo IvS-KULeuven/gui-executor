@@ -8,20 +8,24 @@ import sys
 from pathlib import Path
 
 import matplotlib
+from PyQt5.QtCore import QSize
 from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from rich.protocol import is_renderable
 
 from gui_executor.view import ConsoleOutput
 
 matplotlib.use("Qt5Agg")
+
+HERE = Path(__file__).parent.resolve()
 
 
 class PlotCanvas(FigureCanvasQTAgg):
@@ -81,10 +85,20 @@ class MainWindow(QMainWindow):
             hbox.setContentsMargins(0, 0, 0, 0)
 
             for fig in figures:
+                canvas_box = QVBoxLayout()
+                canvas_box.setContentsMargins(0, 0, 0, 0)
                 sc = PlotCanvas(fig)
-                hbox.addWidget(sc)
+                toolbar = NavigationToolbar(sc, self)
+                toolbar.setIconSize(QSize(18, 18))  # TODO: this should be configurable
+                canvas_box.addWidget(sc)
+                canvas_box.addWidget(toolbar)
+                hbox.addLayout(canvas_box)
 
-            self.figures_layout.addLayout(hbox)
+            widget = QWidget()
+            widget.setLayout(hbox)
+            # widget.setMinimumSize(600, 480)
+
+            self.figures_layout.addWidget(widget)
 
         if renderables:
 
@@ -95,9 +109,11 @@ class MainWindow(QMainWindow):
                 text_widget = ConsoleOutput()
                 text_widget.append(text)
                 hbox.addWidget(text_widget)
+
             self.text_layout.addLayout(hbox)
 
         self.main_widget.adjustSize()
+        self.adjustSize()
 
 
 def main():
@@ -111,7 +127,8 @@ def main():
         parser.print_help()
         return
 
-    app = QApplication(sys.argv)
+    app = QApplication([])
+    app.setWindowIcon(QIcon(str(HERE / "icons/script_app.svg")))
 
     main_window = MainWindow(script=Path(args.script))
     main_window.show()
