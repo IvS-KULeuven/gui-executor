@@ -57,6 +57,16 @@ class MyKernel:
     def get_connection_file(self):
         return self._kernel.connection_file
 
+    def get_connection_info(self):
+        info = self._kernel.get_connection_info(session=True)
+        info.update(
+            dict(
+                connection_file=self._kernel.connection_file,
+                parent=self._kernel,
+            )
+        )
+        return info
+
     def run_snippet(self, snippet: str) -> str:
 
         # Flush the IOPub channel before executing the command. This is needed because another

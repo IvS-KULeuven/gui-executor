@@ -18,6 +18,7 @@ from typing import Optional
 from typing import Tuple
 
 from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QProcess
 from PyQt5.QtCore import QRunnable
 from PyQt5.QtCore import QSize
 from PyQt5.QtCore import QThreadPool
@@ -32,9 +33,7 @@ from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QIntValidator
-from PyQt5.QtGui import QPainter
 from PyQt5.QtGui import QTextCursor
-from PyQt5.QtSvg import QSvgRenderer
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QButtonGroup
 from PyQt5.QtWidgets import QCheckBox
@@ -57,10 +56,14 @@ from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 from executor import ExternalCommand
 from executor import ExternalCommandFailed
+from jupyter_client import KernelClient
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.text import Text
 
+from . import RUNNABLE_APP
+from . import RUNNABLE_KERNEL
+from . import RUNNABLE_SCRIPT
 from .exec import Argument
 from .exec import ArgumentKind
 from .exec import get_arguments
@@ -115,22 +118,6 @@ class FunctionThreadSignals(QObject):
     data = pyqtSignal(object)
 
 
-# Helper function to add the O_NONBLOCK flag to a file descriptor
-def make_async(fd):
-    fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
-
-
-# Helper function to read some data from a file descriptor, ignoring EAGAIN errors
-def read_async(fd):
-    try:
-        return fd.read()
-    except IOError as exc:
-        if exc.errno != errno.EAGAIN:
-            raise exc
-        else:
-            return b''
-
-
 class FunctionRunnable(QRunnable):
     def __init__(self, func: Callable, args: List, kwargs: Dict):
         super().__init__()
@@ -144,13 +131,6 @@ class FunctionRunnable(QRunnable):
     def check_for_input(self, patterns: Tuple):
         self._check_for_input = True
         self._input_patterns = [pattern.rstrip() for pattern in patterns]
-
-    def run(self):
-        # We can in the future decide based on exec_ui arguments in how to run the function
-        # self.run_in_current_interpreter()
-        # self.run_in_kernel()
-        # self.run_in_qprocess()
-        self.run_in_external_command()
 
     def run_in_current_interpreter(self):
         # This runs the function within the current Python interpreter. This might be a security risk
@@ -175,33 +155,39 @@ class FunctionRunnable(QRunnable):
         finally:
             self.signals.finished.emit(self._func.__name__, success)
 
-    def run_in_kernel(self):
-        ...
+    def start(self):
+        QThreadPool.globalInstance().start(self)
 
-    def run_in_qprocess(self):
-        ...
+    @property
+    def func_name(self):
+        return self._func.__name__
 
-    def run_in_external_command(self):
+
+class FunctionRunnableExternalCommand(FunctionRunnable):
+    def __init__(self, func: Callable, args: List, kwargs: Dict):
+        super().__init__(func, args, kwargs)
+
+    def run(self):
         tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        tmp.write(create_code_snippet(self._func, self._args, self._kwargs, call_func=False))
+        tmp.write(create_code_snippet(self._func, self._args, self._kwargs, call_func=True))
         tmp.close()
 
-        self.signals.data.emit("-" * 20)
+        self.signals.data.emit(f"----- Starting ExternalCommand running {self.func_name}")
 
         options = dict(capture=True, capture_stderr=True, asynchronous=True, buffered=False, input=True)
         try:
             # We could actually just use SubProcess here to with the correct settings
-            with ExternalCommand(f"{sys.executable} {HERE/'script_app.py'} --script {tmp.name}", **options) as cmd:
-                make_async(cmd.stdout)
-                make_async(cmd.stderr)
+            with ExternalCommand(f"{sys.executable} {tmp.name}", **options) as cmd:
+                self.make_async(cmd.stdout)
+                self.make_async(cmd.stderr)
 
                 while True:
                     # Wait for data to become available
                     out, *_ = select.select([cmd.stdout, cmd.stderr], [], [])
 
                     # Try reading some data from each
-                    line_out = read_async(cmd.stdout)
-                    line_err = read_async(cmd.stderr)
+                    line_out = self.read_async(cmd.stdout)
+                    line_err = self.read_async(cmd.stderr)
 
                     if line_out:
                         self.signals.data.emit(line := line_out.decode(cmd.encoding).rstrip())
@@ -215,25 +201,6 @@ class FunctionRunnable(QRunnable):
 
                     if cmd.subprocess.poll() is not None:
                         break
-
-                # Previous attempts that didn't work as expected. Need to document this....
-
-                # while cmd.is_running:
-                #     if cmd.stdout.readable():
-                #         out = cmd.stdout.readline().decode(cmd.encoding)
-                #         self.signals.data.emit(out.rstrip())
-                #     if cmd.stderr.readable():
-                #         err = cmd.stderr.readline().decode(cmd.encoding)
-                #         self.signals.data.emit(err.rstrip())
-
-                # for out, err in itertools.zip_longest(
-                #         # iter(lambda: cmd.stdout.readline().decode(cmd.encoding), u''),
-                #         # iter(lambda: cmd.stderr.readline().decode(cmd.encoding), u'')
-                #         iter(lambda: cmd.stdout.readline().decode(cmd.encoding), u''),
-                #         iter(lambda: cmd.stderr.readline().decode(cmd.encoding), u'')
-                # ):
-                #     out and self.signals.data.emit(out.rstrip())
-                #     err and self.signals.data.emit(err.rstrip())
 
             cmd.wait()
 
@@ -253,11 +220,102 @@ class FunctionRunnable(QRunnable):
             else:
                 self.signals.finished.emit(self._func.__name__, True)
 
-        print(f"{tmp.name = }")
-        # os.unlink(tmp.name)
+        # print(f"{tmp.name = }")
+        os.unlink(tmp.name)
 
-    def start(self):
-        QThreadPool.globalInstance().start(self)
+    @staticmethod
+    def make_async(fd):
+        # Helper function to add the O_NONBLOCK flag to a file descriptor
+        fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+
+    @staticmethod
+    def read_async(fd) -> bytes:
+        # Helper function to read some data from a file descriptor, ignoring EAGAIN errors
+        try:
+            return fd.read()
+        except IOError as exc:
+            if exc.errno != errno.EAGAIN:
+                raise exc
+            else:
+                return b''
+
+
+class FunctionRunnableKernel(FunctionRunnable):
+    def __init__(self, kernel: MyKernel, func: Callable, args: List, kwargs: Dict):
+        super().__init__(func, args, kwargs)
+        self._kernel: MyKernel = kernel
+        self.startup_timeout = 60  # seconds
+        self.client: Optional[KernelClient] = None
+
+    def run(self):
+
+        self._kernel = self._kernel or MyKernel()
+
+        self.signals.data.emit(f"----- Running script '{self.func_name}' in kernel")
+
+        snippet = create_code_snippet(self._func, self._args, self._kwargs)
+
+        if response := self._kernel.run_snippet(snippet):
+            self.signals.data.emit(response)
+
+        self.signals.finished.emit(self.func_name, True)
+
+
+class FunctionRunnableQProcess(FunctionRunnable):
+    def __init__(self, func: Callable, args: List, kwargs: Dict):
+        super().__init__(func, args, kwargs)
+
+        self._process = None
+
+    def run(self):
+        tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        tmp.write(create_code_snippet(self._func, self._args, self._kwargs, call_func=False))
+        tmp.close()
+
+        self.signals.data.emit("----- Starting QProcess running script_app")
+
+        try:
+            self._process = QProcess()
+            self._process.readyReadStandardOutput.connect(self.handle_stdout)
+            self._process.readyReadStandardError.connect(self.handle_stderr)
+            # use this if you want to monitor the Process progress
+            # self._process.stateChanged.connect(self.handle_state)
+            self._process.finished.connect(self.process_finished)
+            self._process.start(f"{sys.executable}", [f"{HERE/'script_app.py'}", "--script", f"{tmp.name}"])
+
+            self._process.waitForFinished()
+
+        except (Exception,) as exc:
+            self.signals.error.emit(exc)
+
+        # print(f"{tmp.name = }")
+        os.unlink(tmp.name)
+
+    def handle_stdout(self):
+        data = self._process.readAllStandardOutput()
+        stdout = bytes(data).decode("utf8")
+        self.signals.data.emit(stdout)
+
+        if self._check_for_input and any(pattern in stdout for pattern in self._input_patterns):
+            time.sleep(1.0)
+            self._process.write(b'Y\n')
+
+    def handle_stderr(self):
+        data = self._process.readAllStandardError()
+        stderr = bytes(data).decode("utf8")
+        self.signals.data.emit(stderr)
+
+    def handle_state(self, state):
+        states = {
+            QProcess.NotRunning: 'Not running',
+            QProcess.Starting: 'Starting',
+            QProcess.Running: 'Running',
+        }
+        state_name = states[state]
+        self.signals.data.emit(f"State changed: {state_name}")
+
+    def process_finished(self):
+        self._process = None
 
 
 class ConsoleOutput(QTextEdit):
@@ -463,16 +521,27 @@ class ArgumentsPanel(QGroupBox):
 
         hbox = QHBoxLayout()
         button_group = QButtonGroup()
+
         self.kernel_rb = QRadioButton("Run in kernel")
-        self.kernel_rb.setChecked(self.function.__ui_use_kernel__)
-        self.app_rb = QRadioButton("Run ia App")
-        self.app_rb.setChecked(not self.function.__ui_use_kernel__)
-        button_group.addButton(self.kernel_rb, 1)
-        button_group.addButton(self.app_rb, 2)
+        self.kernel_rb.clicked.connect(partial(self.runnable_clicked, RUNNABLE_KERNEL))
+        self.kernel_rb.setChecked(self.function.__ui_runnable__ == RUNNABLE_KERNEL)
+
+        self.app_rb = QRadioButton("Run in GUI App")
+        self.kernel_rb.clicked.connect(partial(self.runnable_clicked, RUNNABLE_APP))
+        self.app_rb.setChecked(self.function.__ui_runnable__ == RUNNABLE_APP)
+
+        self.script_rb = QRadioButton("Run as script")
+        self.kernel_rb.clicked.connect(partial(self.runnable_clicked, RUNNABLE_SCRIPT))
+        self.script_rb.setChecked(self.function.__ui_runnable__ == RUNNABLE_SCRIPT)
+
+        button_group.addButton(self.kernel_rb, RUNNABLE_KERNEL)
+        button_group.addButton(self.app_rb, RUNNABLE_APP)
+        button_group.addButton(self.script_rb, RUNNABLE_SCRIPT)
 
         self.run_button = QPushButton("run")
         hbox.addWidget(self.kernel_rb)
         hbox.addWidget(self.app_rb)
+        hbox.addWidget(self.script_rb)
         hbox.addStretch()
         hbox.addWidget(self.run_button)
 
@@ -481,6 +550,9 @@ class ArgumentsPanel(QGroupBox):
         self.setLayout(vbox)
 
         # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
+
+    def runnable_clicked(self, runnable: int):
+        self.function.__ui_runnable__ = runnable
 
     @property
     def function(self):
@@ -501,8 +573,17 @@ class ArgumentsPanel(QGroupBox):
         }
 
     @property
-    def use_kernel(self):
-        return self.kernel_rb.isChecked()
+    def runnable(self):
+        if self.kernel_rb.isChecked():
+            return RUNNABLE_KERNEL
+        elif self.app_rb.isChecked():
+            return RUNNABLE_APP
+        elif self.script_rb.isChecked():
+            return RUNNABLE_SCRIPT
+        else:
+            # If non is selected, automatically select plain script
+            self.script_rb.setChecked(True)
+            return RUNNABLE_SCRIPT
 
     def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | UQWidget):
         arg = self._ui_args[name]
@@ -516,9 +597,9 @@ class ArgumentsPanel(QGroupBox):
 
             try:
                 if arg.annotation is tuple or arg.annotation is list:
-                    return ast.literal_eval(value)
+                    return ast.literal_eval(value) if value else arg.annotation()
                 return arg.annotation(value)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, SyntaxError):
                 return value
 
 
@@ -696,20 +777,18 @@ class View(QMainWindow):
         else:
             self._qt_console = start_qtconsole(self._kernel or self.start_kernel())
 
-    def run_function(self, func: Callable, args: List, kwargs: Dict, use_kernel: bool):
-        if use_kernel:
-            # remember kernel setting for this function
-            func.__ui_use_kernel__ = True
-            self.run_function_in_kernel(func, args, kwargs)
-        else:
-            self.run_function_in_thread(func, args, kwargs)
-
-    def run_function_in_thread(self, func: Callable, args: List, kwargs: Dict):
+    def run_function(self, func: Callable, args: List, kwargs: Dict, runnable_type: int):
 
         # TODO:
         #  * disable run button (should be activate again in function_complete?)
 
-        self.function_thread = worker = FunctionRunnable(func, args, kwargs)
+        runnable = {
+            RUNNABLE_KERNEL: partial(FunctionRunnableKernel, self._kernel),
+            RUNNABLE_APP: FunctionRunnableQProcess,
+            RUNNABLE_SCRIPT: FunctionRunnableExternalCommand,
+        }
+
+        self.function_thread = worker = runnable[runnable_type](func, args, kwargs)
         self.function_thread.check_for_input(func.__ui_input_request__)
         self.function_thread.start()
 
@@ -748,7 +827,9 @@ class View(QMainWindow):
 
         args_panel = ArgumentsPanel(button, ui_args)
         args_panel.run_button.clicked.connect(
-            lambda checked: self.run_function(args_panel.function, args_panel.args, args_panel.kwargs, args_panel.use_kernel)
+            lambda checked: self.run_function(
+                args_panel.function, args_panel.args, args_panel.kwargs, args_panel.runnable
+            )
         )
 
         if self._current_args_panel:

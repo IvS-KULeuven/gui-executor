@@ -54,7 +54,7 @@ def raise_a_value_error():
     raise ValueError("Exception raised as an example..")
 
 
-@exec_ui(use_kernel=False)
+@exec_ui(use_gui_app=True)
 def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_filename: str = "plot.png"):
     """
     Create a simple plot and return fig, and ax.
@@ -101,7 +101,7 @@ def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_fil
     return fig, ax
 
 
-@exec_ui()
+@exec_ui(use_gui_app=True)
 def two_simple_plots():
     import matplotlib.pyplot as plt
     import numpy as np
@@ -132,7 +132,7 @@ def two_simple_plots():
     return fig1, fig2
 
 
-@exec_ui()
+@exec_ui(use_gui_app=True)
 def a_simple_table():
 
     table = Table(title="Configuration")
@@ -152,7 +152,8 @@ def some_text():
 
     return lorem.paragraphs(5)
 
-@exec_ui()
+
+@exec_ui(use_gui_app=True)
 def a_plot_a_table_and_some_text():
     fig, ax = simple_plot()
     table = a_simple_table()

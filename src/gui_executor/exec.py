@@ -13,6 +13,8 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
+from . import RUNNABLE_KERNEL, RUNNABLE_APP, RUNNABLE_SCRIPT
+
 
 class Kind(IntEnum):
     BUTTON = 0b00000001
@@ -38,9 +40,10 @@ class Argument:
 def exec_ui(
         kind: Kind = Kind.BUTTON,
         description: str = None,
-        icon = None,
         input_request: Tuple[str, ...] = ("Continue [Y/n]", "Abort [Y/n]"),
         use_kernel: bool = False,
+        use_gui_app: bool = False,
+        use_script_app: bool = False,
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
@@ -49,9 +52,10 @@ def exec_ui(
     Args:
         kind: identifies the function and what it can be used for [default = BUTTON]
         description: short function description intended to be used as tooltip or similar
-        icon: an icon PNG to use for the button [size hints?]
         input_request: a tuple contain the string to detect when input is asked for
         use_kernel: use the Jupyter kernel when running this function
+        use_gui_app: run the script in a GUI app (enables showing plots and table etc.
+        use_script_app: run the script as a plain Python script [this is the default if none is specified]
 
     Returns:
         The wrapper function object.
@@ -68,7 +72,15 @@ def exec_ui(
         wrapper.__ui_file__ = func.__code__.co_filename
         wrapper.__ui_module__ = func.__module__
         wrapper.__ui_input_request__ = input_request
-        wrapper.__ui_use_kernel__ = use_kernel
+        if use_script_app:
+            wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
+        elif use_kernel:
+            wrapper.__ui_runnable__ = RUNNABLE_KERNEL
+        elif use_gui_app:
+            wrapper.__ui_runnable__ = RUNNABLE_APP
+        else:
+            wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
+
         return wrapper
 
     return decorator
