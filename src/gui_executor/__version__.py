@@ -1,6 +1,6 @@
 """
 The one and only place for the version number.
 """
-VERSION = (0, 2, 5)
+VERSION = (0, 2, 6)
 
 __version__ = '.'.join(map(str, VERSION))
