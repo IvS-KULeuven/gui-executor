@@ -632,6 +632,7 @@ class FunctionButtonsPanel(QScrollArea):
         self.modules: Dict[str, QGridLayout] = {}
         self.buttons: Dict[str, int] = {}
         self.module_layout = QVBoxLayout()
+        self.module_layout.setSpacing(25)
 
         widget.setLayout(self.module_layout)
 
@@ -648,11 +649,17 @@ class FunctionButtonsPanel(QScrollArea):
             gbox = QGroupBox(display_name)
             gbox.setLayout(grid)
             gbox.setStyleSheet(textwrap.dedent("""
-                QGroupBox
-                {
-                    font-size: 14px;
+                QGroupBox {
+                    font-size: 18px;
                     font-weight: light;
                     color: grey;
+                    margin-top: 25px;
+                }
+                QGroupBox::title {
+                    subcontrol-origin: margin;
+                    left: 10px;
+                    padding-top: 0px;
+                    padding-bottom: 0px
                 }
             """))
             self.module_layout.addWidget(gbox)
