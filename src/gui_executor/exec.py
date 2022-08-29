@@ -161,6 +161,19 @@ def find_modules(module_path: str) -> Dict[str, Any]:
     }
 
 
+def get_script_module(script_location: str, exec_module: bool = True) -> Dict[str, Any]:
+    script_path = Path(script_location).resolve()
+
+    loader = importlib.machinery.SourceFileLoader(script_path.stem, str(script_path))
+    spec = importlib.util.spec_from_loader(script_path.stem, loader)
+    script = importlib.util.module_from_spec(spec)
+
+    if exec_module:
+        loader.exec_module(script)
+
+    return {script_path.stem: script}
+
+
 # Why I use my own class Arguments instead of just inspect.Parameter?
 # * because I don't want to be dependent on inspect.Parameter.empty in my apps
 # * because Argument might get more info from the exec_ui decorator, like e.g. units
