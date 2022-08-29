@@ -3,8 +3,10 @@ import rich
 from gui_executor.utypes import ListList
 from gui_executor.exec import exec_ui
 
+UI_MODULE_DISPLAY_NAME = "Arguments Panel"
 
-@exec_ui()
+
+@exec_ui(display_name="ListList")
 def list_of_lists(
         x_list: ListList([int, str, str])
 ):
@@ -13,7 +15,7 @@ def list_of_lists(
     return x_list
 
 
-@exec_ui()
+@exec_ui(display_name="ListList with Defaults")
 def list_of_lists_with_defaults(
         x_list: ListList([int, float, str], [42, 2.54, "Test data"])
 ):

@@ -422,7 +422,7 @@ class DynamicButton(QWidget):
         self.setLayout(layout)
 
         label_icon = IconLabel(icon_path=self.icon_path, size=size)
-        label_text = QLabel(label)
+        label_text = QLabel(self.function_display_name)
 
         layout.addWidget(label_icon)
         layout.addSpacing(self.HorizontalSpacing)
@@ -453,6 +453,17 @@ class DynamicButton(QWidget):
     def module_name(self) -> str:
         """Returns the name of the module where the function resides."""
         return self._function.__ui_module__
+
+    @property
+    def module_display_name(self) -> str:
+        try:
+            return sys.modules[self._function.__ui_module__].UI_MODULE_DISPLAY_NAME
+        except AttributeError:
+            return self.module_name.rsplit(".", 1)[-1]
+
+    @property
+    def function_display_name(self) -> str:
+        return self._function.__ui_display_name__ or self.label or self._function.__name__
 
     @property
     def label(self) -> str:
@@ -629,11 +640,12 @@ class FunctionButtonsPanel(QScrollArea):
     def add_button(self, button: DynamicButton):
         module_name = button.module_name
         if module_name not in self.modules:
+            display_name = button.module_display_name
             grid = QGridLayout()
             # Make sure all columns have equal width
             for idx in range(self.n_cols):
                 grid.setColumnStretch(idx, 1)
-            gbox = QGroupBox(module_name.rsplit(".", 1)[-1])
+            gbox = QGroupBox(display_name)
             gbox.setLayout(grid)
             gbox.setStyleSheet(textwrap.dedent("""
                 QGroupBox

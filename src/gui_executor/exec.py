@@ -40,6 +40,7 @@ class Argument:
 def exec_ui(
         kind: Kind = Kind.BUTTON,
         description: str = None,
+        display_name: str = None,
         input_request: Tuple[str, ...] = ("Continue [Y/n]", "Abort [Y/n]"),
         use_kernel: bool = False,
         use_gui_app: bool = False,
@@ -69,6 +70,7 @@ def exec_ui(
             return response
         wrapper.__ui_kind__ = kind
         wrapper.__ui_description__ = description
+        wrapper.__ui_display_name__ = display_name
         wrapper.__ui_file__ = func.__code__.co_filename
         wrapper.__ui_module__ = func.__module__
         wrapper.__ui_input_request__ = input_request
