@@ -8,9 +8,9 @@ import select
 import sys
 import tempfile
 import textwrap
-import time
 from functools import partial
 from pathlib import Path
+from queue import Queue
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -112,15 +112,18 @@ class FunctionThreadSignals(QObject):
         str: Exception string
     data
         any object that was returned by the function
+    input:
+        input request from sub-process
     """
 
     finished = pyqtSignal(str, bool)
     error = pyqtSignal(Exception)
     data = pyqtSignal(object)
+    input = pyqtSignal(str)
 
 
 class FunctionRunnable(QRunnable):
-    def __init__(self, func: Callable, args: List, kwargs: Dict):
+    def __init__(self, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
         super().__init__()
         self.signals = FunctionThreadSignals()
         self._func = func
@@ -128,6 +131,7 @@ class FunctionRunnable(QRunnable):
         self._kwargs = kwargs
         self._check_for_input = False
         self._input_patterns = []
+        self._input_queue: Queue = input_queue
 
     def check_for_input(self, patterns: Tuple):
         self._check_for_input = True
@@ -159,14 +163,22 @@ class FunctionRunnable(QRunnable):
     def start(self):
         QThreadPool.globalInstance().start(self)
 
+    def handle_input_request(self, message: str = None) -> str:
+        self.signals.input.emit(message)
+
+        response = self._input_queue.get()
+        self._input_queue.task_done()
+
+        return response
+
     @property
     def func_name(self):
         return self._func.__name__
 
 
 class FunctionRunnableExternalCommand(FunctionRunnable):
-    def __init__(self, func: Callable, args: List, kwargs: Dict):
-        super().__init__(func, args, kwargs)
+    def __init__(self, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
+        super().__init__(func, args, kwargs, input_queue)
 
     def run(self):
         tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
@@ -195,8 +207,8 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
                         # Try to detect when the process is requesting input.
                         # TODO: request input from user through QLineEdit field...
                         if self._check_for_input and any(pattern in line for pattern in self._input_patterns):
-                            time.sleep(1.0)
-                            cmd.subprocess.stdin.write(b'Y\n')
+                            response = self.handle_input_request(line_out.decode())
+                            cmd.subprocess.stdin.write(bytes(f'{response}\n'.encode()))
                     if line_err:
                         self.signals.data.emit(line := line_err.decode(cmd.encoding).rstrip())
 
@@ -242,8 +254,8 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
 
 
 class FunctionRunnableKernel(FunctionRunnable):
-    def __init__(self, kernel: MyKernel, func: Callable, args: List, kwargs: Dict):
-        super().__init__(func, args, kwargs)
+    def __init__(self, kernel: MyKernel, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
+        super().__init__(func, args, kwargs, input_queue)
         self._kernel: MyKernel = kernel
         self.startup_timeout = 60  # seconds
         self.client: Optional[KernelClient] = None
@@ -263,8 +275,8 @@ class FunctionRunnableKernel(FunctionRunnable):
 
 
 class FunctionRunnableQProcess(FunctionRunnable):
-    def __init__(self, func: Callable, args: List, kwargs: Dict):
-        super().__init__(func, args, kwargs)
+    def __init__(self, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
+        super().__init__(func, args, kwargs, input_queue)
 
         self._process = None
 
@@ -298,8 +310,8 @@ class FunctionRunnableQProcess(FunctionRunnable):
         self.signals.data.emit(stdout)
 
         if self._check_for_input and any(pattern in stdout for pattern in self._input_patterns):
-            time.sleep(1.0)
-            self._process.write(b'Y\n')
+            response = self.handle_input_request(stdout)
+            self._process.write(bytes(f'{response}\n'.encode()))
 
     def handle_stderr(self):
         data = self._process.readAllStandardError()
@@ -709,6 +721,7 @@ class View(QMainWindow):
         self._kernel: Optional[MyKernel] = None
         self._buttons = []
         self.function_thread: FunctionRunnable
+        self.input_queue: Queue = Queue()
 
         self.setWindowTitle(app_name or "GUI Executor")
 
@@ -815,13 +828,14 @@ class View(QMainWindow):
             RUNNABLE_SCRIPT: FunctionRunnableExternalCommand,
         }
 
-        self.function_thread = worker = runnable[runnable_type](func, args, kwargs)
+        self.function_thread = worker = runnable[runnable_type](func, args, kwargs, self.input_queue)
         self.function_thread.check_for_input(func.__ui_input_request__)
         self.function_thread.start()
 
         worker.signals.data.connect(self.function_output)
         worker.signals.finished.connect(self.function_complete)
         worker.signals.error.connect(self.function_error)
+        worker.signals.input.connect(self.input_request)
 
     def run_function_in_kernel(self, func: Callable, args: List, kwargs: Dict):
         self._kernel = self._kernel or MyKernel()
@@ -884,3 +898,17 @@ class View(QMainWindow):
     def function_error(self, msg: Exception):
         text = Text.styled(f"{msg.__class__.__name__}: {msg}", style="bold red")
         self._console_panel.append(msg)
+
+    @pyqtSlot(str)
+    def input_request(self, msg: str):
+        button = QMessageBox.question(
+            self,
+            "Input Request from Script",
+            "There was an input request from the running script. "
+            "The question is in the output console of the main GUI.\n\n"
+            "Please answer the question with Yes or No."
+        )
+        if button == QMessageBox.Yes:
+            self.input_queue.put("Y")
+        elif button == QMessageBox.No:
+            self.input_queue.put("N")

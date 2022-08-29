@@ -201,6 +201,8 @@ def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
         if n == 3:
             response = input("Continue? > ")
             print(response)
+            if response.lower() == 'n':
+                raise RuntimeError("No further steps requested.")
         elif n == 5:
             print(textwrap.dedent("""\
                     An error message...
