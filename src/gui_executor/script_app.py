@@ -6,6 +6,8 @@ import importlib.machinery
 import importlib.util
 import sys
 from pathlib import Path
+from typing import Any
+from typing import List
 
 import matplotlib
 from PyQt5.QtCore import QSize
@@ -19,13 +21,20 @@ from PyQt5.QtWidgets import QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
-from rich.protocol import is_renderable
 
 from gui_executor.view import ConsoleOutput
 
 matplotlib.use("Qt5Agg")
 
 HERE = Path(__file__).parent.resolve()
+
+
+def is_renderable(check_object: Any) -> bool:
+    """Check if an object may be rendered by Rich, but ignore plain strings."""
+    return (
+        hasattr(check_object, "__rich__")
+        or hasattr(check_object, "__rich_console__")
+    )
 
 
 class PlotCanvas(FigureCanvasQTAgg):
@@ -37,12 +46,9 @@ class MainWindow(QMainWindow):
     def __init__(self, script: Path):
         super().__init__()
 
-        ratio = 16 / 9
-        width = 960
+        self.ratio = 16 / 9
 
         self.script: Path = script
-
-        QTimer.singleShot(500, self.run_script)
 
         self.figures_layout = QHBoxLayout()
         self.figures_layout.setContentsMargins(0, 0, 0, 0)
@@ -58,10 +64,12 @@ class MainWindow(QMainWindow):
         self.main_widget: QWidget = QWidget()
         self.main_widget.setLayout(self.main_layout)
 
-        self.setMinimumSize(width, int(width / ratio))
+        self.setGeometry(100, 100, width := 960, int(width / self.ratio))
         self.setCentralWidget(self.main_widget)
 
         self.show()
+
+        QTimer.singleShot(500, self.run_script)
 
     def run_script(self):
 
@@ -70,10 +78,10 @@ class MainWindow(QMainWindow):
         script = importlib.util.module_from_spec(spec)
         loader.exec_module(script)
 
-        response = script.main()
+        response = script.main()  # <----- This line runs the actual script!
 
         if isinstance(response, tuple):
-            figures = [x for x in response if isinstance(x, Figure)]
+            figures: List[Figure] = [x for x in response if isinstance(x, Figure)]
             renderables = [x for x in response if is_renderable(x)]
         else:
             figures = [response] if isinstance(response, Figure) else []
@@ -95,8 +103,9 @@ class MainWindow(QMainWindow):
                 hbox.addLayout(canvas_box)
 
             widget = QWidget()
+            width = 960
             widget.setLayout(hbox)
-            # widget.setMinimumSize(600, 480)
+            widget.setMinimumSize(width, int(width / self.ratio))
 
             self.figures_layout.addWidget(widget)
 
@@ -111,9 +120,6 @@ class MainWindow(QMainWindow):
                 hbox.addWidget(text_widget)
 
             self.text_layout.addLayout(hbox)
-
-        self.main_widget.adjustSize()
-        self.adjustSize()
 
 
 def main():
