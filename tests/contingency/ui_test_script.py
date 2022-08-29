@@ -15,6 +15,8 @@ from gui_executor.exec import exec_ui
 def concatenate_args(arg1, arg2):
     """Concatenates the two arguments with the '+' operator."""
     print(f"concatenate_args({arg1=}, {arg2=})")
+    if arg1 is None or arg2 is None:
+        raise ValueError("One of the arguments is empty and returns None, both arguments should contain a value")
     return arg1 + arg2
 
 

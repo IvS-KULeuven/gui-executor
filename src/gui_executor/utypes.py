@@ -136,7 +136,9 @@ class ListListWidget(UQWidget):
         if literal is bool:
             return field.checkState() == Qt.Checked
 
-        value = field.displayText() or field.placeholderText()
+        if not (value := field.displayText() or field.placeholderText()):
+            return None
+
         try:
             return literal(value)
         except (ValueError, TypeError) as exc:

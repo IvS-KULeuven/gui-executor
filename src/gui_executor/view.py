@@ -605,15 +605,15 @@ class ArgumentsPanel(QGroupBox):
         elif isinstance(arg.annotation, TypeObject):
             return field.get_value()
         else:
-            value = field.displayText() or field.placeholderText()
 
+            if not (value := field.displayText() or field.placeholderText()):
+                return None
             try:
                 if arg.annotation is tuple or arg.annotation is list:
                     return ast.literal_eval(value) if value else arg.annotation()
                 return arg.annotation(value)
             except (ValueError, TypeError, SyntaxError):
                 return value
-
 
 class FunctionButtonsPanel(QScrollArea):
     def __init__(self):
