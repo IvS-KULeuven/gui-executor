@@ -99,7 +99,10 @@ setup(
         "": ["*.yaml", "*.png", "*.svg"],
     },
     include_package_data=False,
-    install_requires=["rich", "PyQt5", "executor"],
+    install_requires=["rich", "PyQt5", "executor", "pyyaml", "matplotlib"],
+    extras_require={
+        "test": ["faker", "lorem-text"],
+    },
     entry_points={
         "gui_scripts": [
             "gui-executor=gui_executor.__main__:main",

@@ -2,7 +2,6 @@ import sys
 import textwrap
 import time
 
-from faker import Faker
 from rich.table import Table
 
 from gui_executor.exec import exec_ui
@@ -137,6 +136,8 @@ def two_simple_plots():
 @exec_ui(use_gui_app=True)
 def a_simple_table():
 
+    from faker import Faker
+
     table = Table(title="Configuration")
 
     table.add_column("Name", justify="left", style="cyan", no_wrap=True)
@@ -207,7 +208,7 @@ def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
             print(textwrap.dedent("""\
                     An error message...
                     Line two of the error message
-                    ...end the last line of this error message
+                    ...and the last line of this error message
                 """), file=sys.stderr, flush=True)
         elif n == 7:
             response = input("Abort? > ")
