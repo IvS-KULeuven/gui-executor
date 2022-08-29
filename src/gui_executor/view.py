@@ -79,6 +79,7 @@ from .utypes import TypeObject
 from .utypes import UQWidget
 
 HERE = Path(__file__).parent.resolve()
+DEBUG = False
 
 
 class VLine(QFrame):
@@ -106,6 +107,7 @@ class FunctionThreadSignals(QObject):
     Supported signals are:
 
     finished
+        object: the reference for the runnable, i.e. self
         str: the function name
         bool: if the function was successfully executed, i.e. no exception was raised
     error
@@ -116,7 +118,7 @@ class FunctionThreadSignals(QObject):
         input request from sub-process
     """
 
-    finished = pyqtSignal(str, bool)
+    finished = pyqtSignal(object, str, bool)
     error = pyqtSignal(Exception)
     data = pyqtSignal(object)
     input = pyqtSignal(str)
@@ -158,7 +160,7 @@ class FunctionRunnable(QRunnable):
             self.signals.error.emit(exc)
             success = False
         finally:
-            self.signals.finished.emit(self._func.__name__, success)
+            self.signals.finished.emit(self, self._func.__name__, success)
 
     def start(self):
         QThreadPool.globalInstance().start(self)
@@ -221,6 +223,9 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
             # self._console_panel.append(cmd.error_message)
             # This error message is also available in the decoded_stderr.
             self.signals.error.emit(exc)
+        finally:
+            # print(f"{tmp.name = }")
+            os.unlink(tmp.name)
 
         # if out := cmd.decoded_stdout:
         #     self._console_panel.append(out)
@@ -229,12 +234,11 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
 
         if cmd.is_finished:
             if cmd.failed:
-                self.signals.finished.emit(self._func.__name__, False)
+                self.signals.finished.emit(self, self._func.__name__, False)
             else:
-                self.signals.finished.emit(self._func.__name__, True)
-
-        # print(f"{tmp.name = }")
-        os.unlink(tmp.name)
+                self.signals.finished.emit(self, self._func.__name__, True)
+        else:
+            self.signals.error.emit(RuntimeError(f"Command {self._func.__name__} should have been finished!"))
 
     @staticmethod
     def make_async(fd):
@@ -271,7 +275,7 @@ class FunctionRunnableKernel(FunctionRunnable):
         if response := self._kernel.run_snippet(snippet):
             self.signals.data.emit(response)
 
-        self.signals.finished.emit(self.func_name, True)
+        self.signals.finished.emit(self, self.func_name, True)
 
 
 class FunctionRunnableQProcess(FunctionRunnable):
@@ -296,13 +300,16 @@ class FunctionRunnableQProcess(FunctionRunnable):
             self._process.finished.connect(self.process_finished)
             self._process.start(f"{sys.executable}", [f"{HERE/'script_app.py'}", "--script", f"{tmp.name}"])
 
-            self._process.waitForFinished()
+            # waitForFinished() has a 30s timeout by default. Use -1 to disable the timeout, otherwise the result
+            # will be a: QProcess: Destroyed while process ("...venv/bin/python") is still running. .. after 30 seconds.
+            self._process.waitForFinished(-1)
 
         except (Exception,) as exc:
             self.signals.error.emit(exc)
-
-        # print(f"{tmp.name = }")
-        os.unlink(tmp.name)
+        finally:
+            self.signals.finished.emit(self, self._func.__name__, True)
+            # print(f"{tmp.name = }")
+            os.unlink(tmp.name)
 
     def handle_stdout(self):
         data = self._process.readAllStandardOutput()
@@ -720,8 +727,11 @@ class View(QMainWindow):
         self._qt_console: Optional[ExternalCommand] = None
         self._kernel: Optional[MyKernel] = None
         self._buttons = []
-        self.function_thread: FunctionRunnable
         self.input_queue: Queue = Queue()
+
+        # Keep a record of the GUI Apps, because if their reference is garbage collected they will crash
+
+        self._gui_apps = []
 
         self.setWindowTitle(app_name or "GUI Executor")
 
@@ -786,6 +796,7 @@ class View(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._kernel:
             self._kernel.shutdown()
+        event.accept()
 
     def start_kernel(self, force: bool = False) -> MyKernel:
 
@@ -828,14 +839,17 @@ class View(QMainWindow):
             RUNNABLE_SCRIPT: FunctionRunnableExternalCommand,
         }
 
-        self.function_thread = worker = runnable[runnable_type](func, args, kwargs, self.input_queue)
-        self.function_thread.check_for_input(func.__ui_input_request__)
-        self.function_thread.start()
+        worker = runnable[runnable_type](func, args, kwargs, self.input_queue)
+        worker.check_for_input(func.__ui_input_request__)
+        worker.start()
 
         worker.signals.data.connect(self.function_output)
         worker.signals.finished.connect(self.function_complete)
         worker.signals.error.connect(self.function_error)
         worker.signals.input.connect(self.input_request)
+
+        DEBUG and self._console_panel.append(f"[blue]Added '{worker.func_name}' to list of runnable threads.[/blue]")
+        self._gui_apps.append(worker)
 
     def run_function_in_kernel(self, func: Callable, args: List, kwargs: Dict):
         self._kernel = self._kernel or MyKernel()
@@ -887,12 +901,19 @@ class View(QMainWindow):
     def function_output(self, data: object):
         self._console_panel.append(str(data))
 
-    @pyqtSlot(str, bool)
-    def function_complete(self, name: str, success: bool):
+    @pyqtSlot(object, str, bool)
+    def function_complete(self, runnable: FunctionRunnable, name: str, success: bool):
         if success:
             self._console_panel.append(f"function '{name}' execution finished.")
         else:
             self._console_panel.append(f"function '{name}' raised an Exception.")
+
+        try:
+            self._gui_apps.remove(runnable)
+            DEBUG and self._console_panel.append(
+                f"[green]Removed '{runnable.func_name}' from list of runnable threads.[/green]")
+        except ValueError:
+            self._console_panel.append(f"[red]Couldn't find '{runnable.func_name}' on list of runnable threads..[/red]")
 
     @pyqtSlot(Exception)
     def function_error(self, msg: Exception):
