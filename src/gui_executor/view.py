@@ -458,7 +458,7 @@ class DynamicButton(QWidget):
     def module_display_name(self) -> str:
         try:
             return sys.modules[self._function.__ui_module__].UI_MODULE_DISPLAY_NAME
-        except AttributeError:
+        except (AttributeError, KeyError):
             return self.module_name.rsplit(".", 1)[-1]
 
     @property
