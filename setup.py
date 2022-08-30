@@ -99,7 +99,10 @@ setup(
         "": ["*.yaml", "*.png", "*.svg"],
     },
     include_package_data=False,
-    install_requires=["rich", "PyQt5", "executor", "pyyaml", "matplotlib"],
+    install_requires=[
+        "rich>=12.5", "PyQt5", "executor", "pyyaml", "matplotlib",
+        "jupyter-client==6.1.12", "jupyter-core==4.11.1", "qtconsole"
+    ],
     extras_require={
         "test": ["faker", "lorem-text"],
     },
