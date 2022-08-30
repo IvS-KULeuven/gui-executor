@@ -35,6 +35,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QButtonGroup
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QComboBox
@@ -51,6 +52,7 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QRadioButton
 from PyQt5.QtWidgets import QScrollArea
 from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QSplitter
 from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtWidgets import QToolBar
 from PyQt5.QtWidgets import QVBoxLayout
@@ -492,9 +494,13 @@ class DynamicButton(QWidget):
         return f"DynamicButton(\"{self.label}\", {self.function})"
 
 
-class ArgumentsPanel(QGroupBox):
+class ArgumentsPanel(QScrollArea):
     def __init__(self, button: DynamicButton, ui_args: Dict[str, Argument]):
-        super().__init__(button.label)
+        super().__init__()
+
+        self.setWidgetResizable(True)
+
+        self.group_box = QGroupBox(button.label)
 
         self._button = button
         self._ui_args = ui_args
@@ -578,7 +584,8 @@ class ArgumentsPanel(QGroupBox):
 
         vbox.addLayout(hbox)
 
-        self.setLayout(vbox)
+        self.group_box.setLayout(vbox)
+        self.setWidget(self.group_box)
 
         # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
 
@@ -634,12 +641,12 @@ class ArgumentsPanel(QGroupBox):
             except (ValueError, TypeError, SyntaxError):
                 return value
 
+
 class FunctionButtonsPanel(QScrollArea):
     def __init__(self):
         super().__init__()
 
         self.setWidgetResizable(True)
-        self.setMinimumSize(600, 300)
 
         widget = QWidget()
 
@@ -735,35 +742,44 @@ class View(QMainWindow):
 
         self.setWindowTitle(app_name or "GUI Executor")
 
-        # self.setGeometry(300, 300, 500, 200)
+        desktop_widget = QApplication.desktop()
+        desktop_screen = desktop_widget.screenNumber(self)
+        desktop_geometry = desktop_widget.availableGeometry(screen=desktop_screen)
+        print(f"{desktop_screen = }, {desktop_geometry = }")
+
+        self.setMaximumSize(desktop_geometry.width(), desktop_geometry.height())
+
+        self.setGeometry(300, 300, 600, 800)
 
         # The main frame in which all the other frames are located, the outer Application frame
 
         self.app_frame = QFrame()
         self.app_frame.setObjectName("AppFrame")
+        self.app_frame.setMinimumSize(600, 0)  # TODO: should be a setting
 
         # We don't want this QFrame to shrink below 500 pixels, therefore set a minimum horizontal size
         # and set the policy such that it can still expand from this minimum size. This will be used
         # when we use adjustSize after replacing the arguments panel.
 
-        self.app_frame.setMinimumSize(600, 0)  # TODO: should be a setting
-        sp = self.app_frame.sizePolicy()
-        sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
-        self.app_frame.setSizePolicy(sp)
+        self.app_frame.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
 
-        self._layout_panels = QVBoxLayout()
-        self._layout_buttons = FunctionButtonsPanel()
+        vbox = QVBoxLayout()
 
-        self._layout_panels.addWidget(self._layout_buttons)
-        self._layout_panels.addWidget(HLine())
-        self._current_args_panel: QWidget = QWidget()
-        self._current_args_panel.hide()
-        self._layout_panels.addWidget(self._current_args_panel)
+        self._splitter = QSplitter(Qt.Vertical)
+
+        self._buttons_panel = FunctionButtonsPanel()
+        self._args_panel: QWidget = None
         self._console_panel = ConsoleOutput()
-        self._layout_panels.addWidget(HLine())
-        self._layout_panels.addWidget(self._console_panel)
 
-        self.app_frame.setLayout(self._layout_panels)
+        self._splitter.addWidget(self._buttons_panel)
+        # we do not yet add the args_panel -> see 'the_button_was_clicked()'
+        self._splitter.addWidget(self._console_panel)
+
+        self._splitter.setSizes([300, 120, 300])
+
+        vbox.addWidget(self._splitter)
+
+        self.app_frame.setLayout(vbox)
 
         self.setCentralWidget(self.app_frame)
 
@@ -816,6 +832,7 @@ class View(QMainWindow):
 
     def _start_new_kernel(self):
         name = self.kernel_panel.selected_kernel
+        print(f"Starting new kernel {name}...")
         self._kernel = MyKernel(name)
         self._console_panel.append(f"New kernel '{name}' started...")
         info = self._kernel.get_kernel_info()
@@ -867,10 +884,9 @@ class View(QMainWindow):
 
         button = DynamicButton(func.__name__, func)
         button.mouseReleaseEvent = partial(self.the_button_was_clicked, button)
-        # button.clicked.connect(partial(self.the_button_was_clicked, button))
 
         self._buttons.append(button)
-        self._layout_buttons.add_button(button)
+        self._buttons_panel.add_button(button)
 
     def the_button_was_clicked(self, button: DynamicButton, *args, **kwargs):
 
@@ -886,16 +902,14 @@ class View(QMainWindow):
                 args_panel.function, args_panel.args, args_panel.kwargs, args_panel.runnable
             )
         )
+        args_panel.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
 
-        if self._current_args_panel:
-            self._layout_panels.replaceWidget(self._current_args_panel, args_panel)
-            self._current_args_panel.setParent(None)
+        if self._args_panel is None:
+            self._splitter.insertWidget(1, args_panel)
         else:
-            self._layout_panels.addWidget(args_panel)
+            self._splitter.replaceWidget(1, args_panel)
 
-        self._current_args_panel = args_panel
-        # self.app_frame.adjustSize()
-        # self.adjustSize()
+        self._args_panel = args_panel
 
     @pyqtSlot(object)
     def function_output(self, data: object):
