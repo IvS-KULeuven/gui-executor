@@ -430,7 +430,9 @@ class DynamicButton(QWidget):
     horizontal_spacing = 2
 
     def __init__(self, label: str, func: Callable,
-                 icon_path: Path | str = None, final_stretch=True, size: QSize = icon_size):
+                 icon_path: Path | str = None,
+                 final_stretch=True,
+                 icon_size: QSize = icon_size):
         super().__init__()
         self.source_code_window = None
         self._function = func
@@ -443,7 +445,7 @@ class DynamicButton(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        self.label_icon = IconLabel(icon_path=self.icon_path, size=size)
+        self.label_icon = IconLabel(icon_path=self.icon_path, size=icon_size)
         label_text = QLabel(self.function_display_name)
 
         layout.addWidget(self.label_icon)
