@@ -797,6 +797,7 @@ class View(QMainWindow):
         vbox = QVBoxLayout()
 
         self._splitter = QSplitter(Qt.Vertical)
+        self._splitter.setChildrenCollapsible(False)
 
         self._buttons_panel = FunctionButtonsPanel()
         self._args_panel: QWidget = None
