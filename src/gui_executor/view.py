@@ -948,6 +948,11 @@ class View(QMainWindow):
         button.select()
         self.previous_selected_button = button
 
+        # This scrolls the buttons panel to make the selected button is still visible
+        # after the Arguments panel appeared.
+
+        self._buttons_panel.ensureWidgetVisible(button)
+
     @pyqtSlot(object)
     def function_output(self, data: object):
         self._console_panel.append(str(data))
