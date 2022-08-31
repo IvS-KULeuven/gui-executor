@@ -347,7 +347,7 @@ class ConsoleOutput(QTextEdit):
         self.setReadOnly(True)
         self.setLineWrapMode(QTextEdit.NoWrap)
         self.insertPlainText("")
-        self.setMinimumSize(600, 300)
+        self.setMinimumSize(600, 100)
         monospaced_font = QFont("Courier New")
         monospaced_font.setStyleHint(QFont.Monospace)
         monospaced_font.setPointSize(14)  # TODO: should be a setting
@@ -703,6 +703,7 @@ class FunctionButtonsPanel(QScrollArea):
         super().__init__()
 
         self.setWidgetResizable(True)
+        self.setMinimumSize(600, 100)
 
         widget = QWidget()
 
