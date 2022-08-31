@@ -693,7 +693,7 @@ class FunctionButtonsPanel(QScrollArea):
             gbox.setLayout(grid)
             gbox.setStyleSheet(textwrap.dedent("""
                 QGroupBox {
-                    font-size: 18px;
+                    font-size: 16px;
                     font-weight: light;
                     color: grey;
                     margin-top: 25px;
@@ -701,7 +701,7 @@ class FunctionButtonsPanel(QScrollArea):
                 QGroupBox::title {
                     subcontrol-origin: margin;
                     left: 10px;
-                    padding-top: 0px;
+                    padding-top: 5px;
                     padding-bottom: 0px
                 }
             """))
