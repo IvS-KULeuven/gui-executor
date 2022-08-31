@@ -776,7 +776,7 @@ class View(QMainWindow):
         desktop_widget = QApplication.desktop()
         desktop_screen = desktop_widget.screenNumber(self)
         desktop_geometry = desktop_widget.availableGeometry(screen=desktop_screen)
-        print(f"{desktop_screen = }, {desktop_geometry = }")
+        # print(f"{desktop_screen = }, {desktop_geometry = }")
 
         self.setMaximumSize(desktop_geometry.width(), desktop_geometry.height())
 
@@ -863,7 +863,7 @@ class View(QMainWindow):
 
     def _start_new_kernel(self):
         name = self.kernel_panel.selected_kernel
-        print(f"Starting new kernel {name}...")
+        # print(f"Starting new kernel {name}...")
         self._kernel = MyKernel(name)
         self._console_panel.append(f"New kernel '{name}' started...")
         info = self._kernel.get_kernel_info()
