@@ -500,7 +500,24 @@ class ArgumentsPanel(QScrollArea):
 
         self.setWidgetResizable(True)
 
-        self.group_box = QGroupBox(button.label)
+        self.group_box = QGroupBox(f"arguments for '{button.function_display_name}'")
+        self.group_box.setStyleSheet(
+            textwrap.dedent(
+                """
+                    QGroupBox {
+                        font-size: 14px;
+                        font-weight: light;
+                        color: grey;
+                        margin-top: 25px;
+                    }
+                    QGroupBox::title {
+                        subcontrol-origin: margin;
+                        left: 10px;
+                        padding-top: 5px;
+                        padding-bottom: 0px
+                    }
+                """)
+        )
 
         self._button = button
         self._ui_args = ui_args
