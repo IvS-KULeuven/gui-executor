@@ -437,16 +437,16 @@ class DynamicButton(QWidget):
         self._label = label
         self._icon = None
 
-        self.icon_path = str(icon_path or HERE / "icons/023-evaluate.svg")
+        self.icon_path = str(icon_path or HERE / "icons/script-function.svg")
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        label_icon = IconLabel(icon_path=self.icon_path, size=size)
+        self.label_icon = IconLabel(icon_path=self.icon_path, size=size)
         label_text = QLabel(self.function_display_name)
 
-        layout.addWidget(label_icon)
+        layout.addWidget(self.label_icon)
         layout.addSpacing(self.horizontal_spacing)
         layout.addWidget(label_text)
 
@@ -466,6 +466,14 @@ class DynamicButton(QWidget):
     def view_source(self):
         self.source_code_window = SourceCodeWindow(self.function)
         self.source_code_window.show()
+
+    def select(self):
+        self.label_icon.set_icon_path(HERE / "icons/script-function-selected.svg")
+        self.label_icon.repaint()
+
+    def deselect(self):
+        self.label_icon.set_icon_path(HERE / "icons/script-function.svg")
+        self.label_icon.repaint()
 
     @property
     def function(self) -> Callable:
@@ -753,6 +761,7 @@ class View(QMainWindow):
         self._kernel: Optional[MyKernel] = None
         self._buttons = []
         self.input_queue: Queue = Queue()
+        self.previous_selected_button: Optional[DynamicButton] = None
 
         # Keep a record of the GUI Apps, because if their reference is garbage collected they will crash
 
@@ -928,6 +937,12 @@ class View(QMainWindow):
             self._splitter.replaceWidget(1, args_panel)
 
         self._args_panel = args_panel
+
+        if self.previous_selected_button is not None:
+            self.previous_selected_button.deselect()
+
+        button.select()
+        self.previous_selected_button = button
 
     @pyqtSlot(object)
     def function_output(self, data: object):

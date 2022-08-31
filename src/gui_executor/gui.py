@@ -11,13 +11,16 @@ from PyQt5.QtWidgets import QLabel
 
 class IconLabel(QLabel):
 
-    IconSize = QSize(16, 16)
+    icon_size = QSize(16, 16)
 
-    def __init__(self, icon_path: Path | str, size: QSize = IconSize):
+    def __init__(self, icon_path: Path | str, size: QSize = icon_size):
         super().__init__()
 
         self.icon_path = str(icon_path)
         self.setFixedSize(size)
+
+    def set_icon_path(self, icon_path: Path):
+        self.icon_path = str(icon_path)
 
     def paintEvent(self, *args, **kwargs):
 
