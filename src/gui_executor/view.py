@@ -431,6 +431,7 @@ class DynamicButton(QWidget):
 
     def __init__(self, label: str, func: Callable,
                  icon_path: Path | str = None,
+                 icon_selected_path: Path | str = None,
                  final_stretch=True,
                  icon_size: QSize = icon_size):
         super().__init__()
@@ -440,6 +441,7 @@ class DynamicButton(QWidget):
         self._icon = None
 
         self.icon_path = str(icon_path or HERE / "icons/script-function.svg")
+        self.icon_selected_path = str(icon_selected_path or HERE / "icons/script-function-selected.svg")
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -470,11 +472,11 @@ class DynamicButton(QWidget):
         self.source_code_window.show()
 
     def select(self):
-        self.label_icon.set_icon_path(HERE / "icons/script-function-selected.svg")
+        self.label_icon.set_icon_path(self.icon_selected_path)
         self.label_icon.repaint()
 
     def deselect(self):
-        self.label_icon.set_icon_path(HERE / "icons/script-function.svg")
+        self.label_icon.set_icon_path(self.icon_path)
         self.label_icon.repaint()
 
     @property

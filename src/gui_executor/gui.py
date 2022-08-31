@@ -19,7 +19,7 @@ class IconLabel(QLabel):
         self.icon_path = str(icon_path)
         self.setFixedSize(size)
 
-    def set_icon_path(self, icon_path: Path):
+    def set_icon_path(self, icon_path: Path | str):
         self.icon_path = str(icon_path)
 
     def paintEvent(self, *args, **kwargs):
