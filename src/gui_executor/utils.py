@@ -13,6 +13,7 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
+from PyQt5.QtWidgets import QFileDialog
 from rich.text import Text
 from rich.tree import Tree
 
@@ -196,3 +197,27 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
             {"response = main()" if call_func else ''}
         """
     )
+
+
+def select_directory(directory: str = None) -> str:
+    dialog = QFileDialog()
+    dialog.setOption(QFileDialog.ShowDirsOnly, True)
+    dialog.setOption(QFileDialog.ReadOnly, True)
+    dialog.setOption(QFileDialog.HideNameFilterDetails, True)
+    dialog.setDirectory(directory)
+    dialog.setFileMode(QFileDialog.Directory)
+    dialog.setViewMode(QFileDialog.Detail)
+    dialog.setAcceptMode(QFileDialog.AcceptOpen)
+
+    filenames = dialog.selectedFiles() if dialog.exec() else None
+
+    return filenames[0] if filenames is not None else ''
+
+
+def select_file() -> str:
+
+    dialog = QFileDialog()
+    dialog.setFileMode(QFileDialog.AnyFile)
+    dialog.setViewMode(QFileDialog.Detail)
+
+    rc = dialog.exec()

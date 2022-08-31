@@ -75,6 +75,7 @@ from .kernel import MyKernel
 from .kernel import start_qtconsole
 from .utils import capture
 from .utils import create_code_snippet
+from .utils import select_directory
 from .utils import stringify_args
 from .utils import stringify_kwargs
 from .utypes import TypeObject
@@ -583,6 +584,12 @@ class ArgumentsPanel(QScrollArea):
             type_hint = QLabel(f"[{arg.annotation.__name__}]" if arg.annotation is not None else None)
             type_hint.setStyleSheet("color: gray")
 
+            if arg.annotation is Path:
+                folder_button = IconLabel(icon_path=HERE / "icons/folder.svg", size=QSize(20, 20))
+                folder_button.mousePressEvent = partial(self.get_folder, input_field)
+            else:
+                folder_button = None
+
             # label.setStyleSheet("border:1px solid #111111; ")
             # input_field.setStyleSheet("border:1px solid #111111; ")
             # type_hint.setStyleSheet("border:1px solid #111111; ")
@@ -592,7 +599,10 @@ class ArgumentsPanel(QScrollArea):
             grid.setColumnStretch(1, 1)
             grid.addWidget(label, idx, 0, alignment=Qt.AlignTop)
             grid.addWidget(input_field, idx, 1, alignment=Qt.AlignTop)
-            grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignTop)
+            if folder_button is not None:
+                grid.addWidget(folder_button, idx, 2)
+            else:
+                grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignTop)
 
         vbox.addLayout(grid)
 
@@ -628,6 +638,12 @@ class ArgumentsPanel(QScrollArea):
         self.setWidget(self.group_box)
 
         # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
+
+    def get_folder(self, input_field: QLineEdit, *args):
+
+        input_dir = input_field.displayText() or input_field.placeholderText()
+        if dir_name := select_directory(directory=input_dir):
+            input_field.setText(dir_name)
 
     def runnable_clicked(self, runnable: int):
         self.function.__ui_runnable__ = runnable
