@@ -12,6 +12,7 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Tuple
+from typing import Union
 
 from . import RUNNABLE_KERNEL, RUNNABLE_APP, RUNNABLE_SCRIPT
 
@@ -45,6 +46,7 @@ def exec_ui(
         use_kernel: bool = False,
         use_gui_app: bool = False,
         use_script_app: bool = False,
+        icons: Tuple[str | Path, ...] = None,
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
@@ -53,10 +55,12 @@ def exec_ui(
     Args:
         kind: identifies the function and what it can be used for [default = BUTTON]
         description: short function description intended to be used as tooltip or similar
+        display_name: the string to use for the button name [default = function name]
         input_request: a tuple contain the string to detect when input is asked for
         use_kernel: use the Jupyter kernel when running this function
         use_gui_app: run the script in a GUI app (enables showing plots and table etc.
         use_script_app: run the script as a plain Python script [this is the default if none is specified]
+        icons: icons to be used for the button of this function
 
     Returns:
         The wrapper function object.
@@ -74,6 +78,7 @@ def exec_ui(
         wrapper.__ui_file__ = func.__code__.co_filename
         wrapper.__ui_module__ = func.__module__
         wrapper.__ui_input_request__ = input_request
+        wrapper.__ui_icons__ = icons
         if use_script_app:
             wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
         elif use_kernel:

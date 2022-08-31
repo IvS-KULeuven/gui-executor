@@ -440,8 +440,18 @@ class DynamicButton(QWidget):
         self._label = label
         self._icon = None
 
-        self.icon_path = str(icon_path or HERE / "icons/script-function.svg")
-        self.icon_selected_path = str(icon_selected_path or HERE / "icons/script-function-selected.svg")
+        # Icons defined by the function itself take precedence, then the
+        # arguments passed as icon_path, and finally a default icon is used.
+
+        try:
+            self.icon_path = self._function.__ui_icons__[0]
+            self.icon_selected_path = self._function.__ui_icons__[1]
+        except (AttributeError, IndexError, TypeError, ValueError):
+            self.icon_path = str(icon_path or HERE / "icons/script-function.svg")
+            self.icon_selected_path = str(icon_selected_path or HERE / "icons/script-function-selected.svg")
+
+        if not Path(self.icon_path).exists() or not Path(self.icon_selected_path).exists():
+            raise ValueError(f"Invalid path given for icons for function '{self._function.__name__}'")
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

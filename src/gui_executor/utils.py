@@ -185,6 +185,7 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
     return textwrap.dedent(
         f"""\
             from {func.__ui_module__} import {func.__name__}
+            from pathlib import Path, PurePath, PosixPath  # might be used by argument types
             
             def main():
                 response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})
