@@ -7,14 +7,39 @@ import warnings
 from enum import IntEnum
 from functools import wraps
 from pathlib import Path
+from pathlib import PosixPath
+from pathlib import PurePath
 from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Tuple
-from typing import Union
+from typing import TypeVar
 
-from . import RUNNABLE_KERNEL, RUNNABLE_APP, RUNNABLE_SCRIPT
+from . import RUNNABLE_APP
+from . import RUNNABLE_KERNEL
+from . import RUNNABLE_SCRIPT
+
+"""
+The following TypeVars can be used to distinguish between a file and a folder when annotating a function
+argument as a Path. The GUI can make the distinction as follows, based on the annotation:
+
+    def func(x: FileName):
+        ...
+
+    sig = inspect.signature(func)
+    pars = sig.parameters
+    par_x = pars['x']
+    par_x.annotation is Filename  <-- True
+
+"""
+
+FileName = TypeVar('FileName', bound=Path)
+"""A FileName type is the name of a file including the extension, but not it's full path."""
+FilePath = TypeVar('FilePath', bound=Path)
+"""A FilePath is the absolute or relative path for a file, including filename and extension."""
+Directory = TypeVar('Directory', bound=Path)
+"A Directory is the location where the file resides."
 
 
 class Kind(IntEnum):

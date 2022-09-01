@@ -214,10 +214,15 @@ def select_directory(directory: str = None) -> str:
     return filenames[0] if filenames is not None else ''
 
 
-def select_file() -> str:
+def select_file(filename: str = None, full_path: bool = True) -> str:
 
     dialog = QFileDialog()
+    dialog.setDirectory(filename)
+    dialog.setOption(QFileDialog.ReadOnly, True)
     dialog.setFileMode(QFileDialog.AnyFile)
     dialog.setViewMode(QFileDialog.Detail)
+    dialog.setAcceptMode(QFileDialog.AcceptOpen)
 
-    rc = dialog.exec()
+    filenames = dialog.selectedFiles() if dialog.exec() else None
+
+    return filenames[0] if filenames is not None else ''

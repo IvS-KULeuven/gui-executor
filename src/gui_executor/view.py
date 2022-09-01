@@ -70,12 +70,14 @@ from . import RUNNABLE_SCRIPT
 from .exec import Argument
 from .exec import ArgumentKind
 from .exec import get_arguments
+from .exec import Directory, FileName, FilePath
 from .gui import IconLabel
 from .kernel import MyKernel
 from .kernel import start_qtconsole
 from .utils import capture
 from .utils import create_code_snippet
 from .utils import select_directory
+from .utils import select_file
 from .utils import stringify_args
 from .utils import stringify_kwargs
 from .utypes import TypeObject
@@ -584,9 +586,15 @@ class ArgumentsPanel(QScrollArea):
             type_hint = QLabel(f"[{arg.annotation.__name__}]" if arg.annotation is not None else None)
             type_hint.setStyleSheet("color: gray")
 
-            if arg.annotation is Path:
+            if arg.annotation is Directory:
                 folder_button = IconLabel(icon_path=HERE / "icons/folder.svg", size=QSize(20, 20))
-                folder_button.mousePressEvent = partial(self.get_folder, input_field)
+                folder_button.mousePressEvent = partial(self.select_folder, input_field)
+            elif arg.annotation is FileName:
+                folder_button = IconLabel(icon_path=HERE / "icons/filename.svg", size=QSize(20, 20))
+                folder_button.mousePressEvent = partial(self.select_file, input_field, full_path=False)
+            elif arg.annotation in (Path, FilePath):
+                folder_button = IconLabel(icon_path=HERE / "icons/filepath.svg", size=QSize(20, 20))
+                folder_button.mousePressEvent = partial(self.select_file, input_field, full_path=True)
             else:
                 folder_button = None
 
@@ -639,11 +647,20 @@ class ArgumentsPanel(QScrollArea):
 
         # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
 
-    def get_folder(self, input_field: QLineEdit, *args):
+    @staticmethod
+    def select_folder(input_field: QLineEdit, *args):
 
         input_dir = input_field.displayText() or input_field.placeholderText()
         if dir_name := select_directory(directory=input_dir):
             input_field.setText(dir_name)
+
+    @staticmethod
+    def select_file(input_field: QLineEdit, *args, full_path: bool = True):
+
+        input_file = input_field.displayText() or input_field.placeholderText()
+        if filename := select_file(filename=input_file):
+            filename = filename if full_path else Path(filename).name
+            input_field.setText(filename)
 
     def runnable_clicked(self, runnable: int):
         self.function.__ui_runnable__ = runnable
@@ -693,6 +710,8 @@ class ArgumentsPanel(QScrollArea):
             try:
                 if arg.annotation is tuple or arg.annotation is list:
                     return ast.literal_eval(value) if value else arg.annotation()
+                elif arg.annotation in (Path, Directory, FileName, FilePath):
+                    return Path(value)
                 return arg.annotation(value)
             except (ValueError, TypeError, SyntaxError):
                 return value
