@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 from pathlib import Path
 
@@ -38,8 +39,12 @@ def main():
     parser.add_argument('--config', help='a YAML file that configures the executor')
     parser.add_argument('--logo', help='path to logo PNG or SVG file')
     parser.add_argument('--app-name', help='the name of the GUI app, will go in the window title')
+    parser.add_argument('--debug', '-d', action="store_true", help="set debugging mode")
 
     args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     # We have only implemented the --module-path option for now
 
