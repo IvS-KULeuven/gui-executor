@@ -67,6 +67,10 @@ class MyKernel:
         )
         return info
 
+    @property
+    def client(self):
+        return self._client
+
     def run_snippet(self, snippet: str) -> str:
 
         # Flush the IOPub channel before executing the command. This is needed because another
