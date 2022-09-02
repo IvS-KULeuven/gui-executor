@@ -8,12 +8,16 @@ import sys
 import textwrap
 from io import StringIO
 from pathlib import Path
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Tuple
 
 from PyQt5.QtWidgets import QFileDialog
+from rich import box
+from rich.panel import Panel
+from rich.syntax import Syntax
 from rich.text import Text
 from rich.tree import Tree
 
@@ -199,6 +203,13 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
     )
 
 
+def create_code_snippet_renderable(func: Callable, args: List, kwargs: Dict):
+
+    snippet = f"response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})"
+
+    return Panel(Syntax(snippet, "python", theme='default', word_wrap=True), box=box.HORIZONTALS)
+
+
 def select_directory(directory: str = None) -> str:
     dialog = QFileDialog()
     dialog.setOption(QFileDialog.ShowDirsOnly, True)
@@ -226,3 +237,11 @@ def select_file(filename: str = None, full_path: bool = True) -> str:
     filenames = dialog.selectedFiles() if dialog.exec() else None
 
     return filenames[0] if filenames is not None else ''
+
+
+def is_renderable(check_object: Any) -> bool:
+    """Check if an object may be rendered by Rich, but ignore plain strings."""
+    return (
+        hasattr(check_object, "__rich__")
+        or hasattr(check_object, "__rich_console__")
+    )

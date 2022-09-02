@@ -67,7 +67,7 @@ def exec_ui(
         kind: Kind = Kind.BUTTON,
         description: str = None,
         display_name: str = None,
-        input_request: Tuple[str, ...] = ("Continue [Y/n]", "Abort [Y/n]"),
+        input_request: Tuple[str, ...] = ("Continue? [Y/n]", "Abort? [Y/n]"),
         use_kernel: bool = False,
         use_gui_app: bool = False,
         use_script_app: bool = False,

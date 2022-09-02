@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import ast
+import contextlib
 import errno
 import fcntl
 import os
+import queue
 import select
 import sys
 import tempfile
@@ -69,13 +71,17 @@ from . import RUNNABLE_KERNEL
 from . import RUNNABLE_SCRIPT
 from .exec import Argument
 from .exec import ArgumentKind
+from .exec import Directory
+from .exec import FileName
+from .exec import FilePath
 from .exec import get_arguments
-from .exec import Directory, FileName, FilePath
 from .gui import IconLabel
 from .kernel import MyKernel
 from .kernel import start_qtconsole
 from .utils import capture
 from .utils import create_code_snippet
+from .utils import create_code_snippet_renderable
+from .utils import is_renderable
 from .utils import select_directory
 from .utils import select_file
 from .utils import stringify_args
@@ -265,20 +271,69 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
 class FunctionRunnableKernel(FunctionRunnable):
     def __init__(self, kernel: MyKernel, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
         super().__init__(func, args, kwargs, input_queue)
-        self._kernel: MyKernel = kernel
+        self.kernel: MyKernel = kernel
         self.startup_timeout = 60  # seconds
         self.client: Optional[KernelClient] = None
+        self.console = Console(record=True, width=120)
 
     def run(self):
-
-        self._kernel = self._kernel or MyKernel()
 
         self.signals.data.emit(f"----- Running script '{self.func_name}' in kernel")
 
         snippet = create_code_snippet(self._func, self._args, self._kwargs)
 
-        if response := self._kernel.run_snippet(snippet):
-            self.signals.data.emit(response)
+        # Flush the IOPub channel before executing the command. This is needed because another
+        # client might be connected that has sent out messages on the pub channel. We want to
+        # catch the output of the given command of course.
+
+        self.kernel.flush()
+
+        self.signals.data.emit("The code snippet:")
+        self.signals.data.emit(create_code_snippet_renderable(self._func, self._args, self._kwargs))
+
+        msg_id = self.kernel.client.execute(snippet, allow_stdin=True)
+
+        while True:
+            try:
+                io_msg = self.kernel.client.get_iopub_msg(timeout=1.0)
+                io_msg_content = io_msg['content']
+
+                if io_msg['msg_type'] == 'stream':
+                    if 'text' in io_msg_content:
+                        text = io_msg_content['text'].rstrip()
+                        self.signals.data.emit(text)
+                elif io_msg['msg_type'] == 'status':
+                    if io_msg_content['execution_state'] == 'idle':
+                        # self.signals.data.emit("Execution State is Idle, terminating...")
+                        break
+                    elif io_msg_content['execution_state'] == 'busy':
+                        # self.signals.data.emit("Execution State is Busy, starting...")
+                        continue
+                # elif io_msg['msg_type'] == 'execute_input':
+                #     self.signals.data.emit("The code snippet:")
+                #     source_code = io_msg_content['code']
+                #     syntax = Syntax(source_code, "python", theme='default')
+                #     self.signals.data.emit(syntax)
+
+            except queue.Empty:
+                with contextlib.suppress(queue.Empty):
+                    in_msg = self.kernel.client.get_stdin_msg(timeout=0.1)
+
+                    if in_msg['msg_type'] == 'input_request':
+                        prompt = in_msg['content']['prompt']
+                        if self._check_for_input and any(pattern in prompt for pattern in self._input_patterns):
+                            self.signals.data.emit(prompt)
+                            response = self.handle_input_request(prompt)
+                            self.kernel.client.input(response)
+
+        msg = self.kernel.client.get_shell_msg(msg_id)
+        if msg['msg_type'] == "execute_reply":
+            status = msg['content']['status']
+            self.signals.data.emit(f"{status = }")
+            if status == 'error' and 'traceback' in msg['content']:
+                traceback = msg['content']['traceback']
+                # self.signals.data.emit(remove_ansi_escape('\n'.join(traceback)))
+                self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
 
         self.signals.finished.emit(self, self.func_name, True)
 
@@ -402,7 +457,7 @@ class SourceCodeWindow(QWidget):
         text_edit = QTextEdit()
 
         console = Console(record=True, width=1200)
-        syntax = Syntax(source_code, "python", theme='default')
+        syntax = Syntax(source_code, "python", theme='default', line_numbers=True)
 
         with console.capture():
             console.print(syntax)
@@ -1002,7 +1057,7 @@ class View(QMainWindow):
 
     @pyqtSlot(object)
     def function_output(self, data: object):
-        self._console_panel.append(str(data))
+        self._console_panel.append(data if is_renderable(data) else str(data))
 
     @pyqtSlot(object, str, bool)
     def function_complete(self, runnable: FunctionRunnable, name: str, success: bool):
@@ -1025,6 +1080,7 @@ class View(QMainWindow):
 
     @pyqtSlot(str)
     def input_request(self, msg: str):
+        # The argument msg contains the last lines of the output on which the input request was recognized.
         button = QMessageBox.question(
             self,
             "Input Request from Script",

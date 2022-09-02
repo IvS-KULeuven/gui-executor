@@ -60,3 +60,25 @@ def test_kernel_info(kernel):
 
     specs = kernel.get_kernel_specs()
     rich.print(specs)
+
+
+def test_run_snippet(kernel):
+
+    print()
+
+    snippet = textwrap.dedent("""
+        import time
+        
+        print("starting...", flush=True, end="")
+        time.sleep(5.0)
+        print("finished!", flush=True)
+        
+    """)
+
+    msg_id = kernel.client.execute(snippet)
+    msg = kernel.client.get_shell_msg(msg_id)
+    print(f"1 {'-'*20} {msg = }")
+
+    io_msg = kernel.client.get_iopub_msg(timeout=1.0)
+    io_msg_content = io_msg['content']
+    print(f"2 {'-'*20} {io_msg_content = }")

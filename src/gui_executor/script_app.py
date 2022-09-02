@@ -22,19 +22,12 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
+from gui_executor.utils import is_renderable
 from gui_executor.view import ConsoleOutput
 
 matplotlib.use("Qt5Agg")
 
 HERE = Path(__file__).parent.resolve()
-
-
-def is_renderable(check_object: Any) -> bool:
-    """Check if an object may be rendered by Rich, but ignore plain strings."""
-    return (
-        hasattr(check_object, "__rich__")
-        or hasattr(check_object, "__rich_console__")
-    )
 
 
 class PlotCanvas(FigureCanvasQTAgg):
