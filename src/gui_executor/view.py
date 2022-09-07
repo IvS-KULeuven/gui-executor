@@ -571,6 +571,9 @@ class DynamicButton(QWidget):
     def label(self) -> str:
         return self._label
 
+    def immediate_run(self):
+        return self.function.__ui_immediate_run__
+
     def __repr__(self):
         return f"DynamicButton(\"{self.label}\", {self.function})"
 
@@ -1022,6 +1025,10 @@ class View(QMainWindow):
         self._buttons_panel.add_button(button)
 
     def the_button_was_clicked(self, button: DynamicButton, *args, **kwargs):
+
+        if button.immediate_run():
+            self.run_function(button.function, [], {}, RUNNABLE_SCRIPT)
+            return
 
         # TODO
         #   * This should be done from the control or model and probably in the background?

@@ -72,6 +72,7 @@ def exec_ui(
         use_gui_app: bool = False,
         use_script_app: bool = False,
         icons: Tuple[str | Path, ...] = None,
+        immediate_run: bool = False,
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
@@ -86,6 +87,8 @@ def exec_ui(
         use_gui_app: run the script in a GUI app (enables showing plots and table etc.
         use_script_app: run the script as a plain Python script [this is the default if none is specified]
         icons: icons to be used for the button of this function
+        immediate_run: when True execute the function immediately when pressed without creating and
+            presenting the arguments panel with the Run button
 
     Returns:
         The wrapper function object.
@@ -103,6 +106,7 @@ def exec_ui(
         wrapper.__ui_file__ = func.__code__.co_filename
         wrapper.__ui_module__ = func.__module__
         wrapper.__ui_input_request__ = input_request
+        wrapper.__ui_immediate_run__ = immediate_run
         wrapper.__ui_icons__ = icons
         if use_script_app:
             wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
