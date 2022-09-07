@@ -1028,6 +1028,19 @@ class View(QMainWindow):
 
         if button.immediate_run():
             self.run_function(button.function, [], {}, RUNNABLE_SCRIPT)
+
+            # Remove any existing arguments panel from a previous button
+
+            if self._args_panel:
+                self._args_panel.hide()
+                self._args_panel = None
+
+            # Deselect the previously selected button
+
+            if self.previous_selected_button is not None:
+                self.previous_selected_button.deselect()
+                self.previous_selected_button = None
+
             return
 
         # TODO
