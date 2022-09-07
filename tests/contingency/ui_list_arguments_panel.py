@@ -26,7 +26,8 @@ def list_of_lists_with_defaults(
 @exec_ui()
 def tuple_list_argument(
         x_tuple: tuple = (1, 2, 3, 4),
-        x_list: list = None  # don't provide a mutable default!
+        # x_list: list = None  # don't provide a mutable default!
+        x_list: list = [1, 2, 3, 4]  # don't provide a mutable default!
 ):
     rich.print("x_tuple = ", x_tuple)
     rich.print("x_list = ", x_list)
