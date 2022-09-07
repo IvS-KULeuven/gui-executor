@@ -34,3 +34,15 @@ def two_icons_given():
 @exec_ui(icons=(ICON_PATH/"arrow-up.svg", ICON_PATH/"arrow-down.svg"))
 def up_down_icons():
     ...
+
+
+@exec_ui(icons=(ICON_PATH/"hexapod-retract.svg", ICON_PATH/"hexapod-retract-selected.svg"),
+         display_name="To Retracted Position")
+def hexapod_to_retracted_position():
+    ...
+
+
+@exec_ui(icons=(ICON_PATH/"hexapod-homing.svg", ICON_PATH/"hexapod-homing-selected.svg"),
+         display_name="Homing")
+def hexapod_homing():
+    ...
