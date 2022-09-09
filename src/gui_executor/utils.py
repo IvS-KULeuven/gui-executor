@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import contextlib
 import inspect
+import logging
 import os
 import re
 import sys
 import textwrap
+import time
 from io import StringIO
 from pathlib import Path
 from typing import Any
@@ -245,3 +247,69 @@ def is_renderable(check_object: Any) -> bool:
         hasattr(check_object, "__rich__")
         or hasattr(check_object, "__rich_console__")
     )
+
+
+class Timer(object):
+    """
+    Context manager to benchmark some lines of code.
+
+    When the context exits, the elapsed time is sent to the default logger (level=INFO).
+
+    Elapsed time can be logged with the `log_elapsed()` method and requested in fractional seconds
+    by calling the class instance. When the contexts goes out of scope, the elapsed time will not
+    increase anymore.
+
+    Log messages are sent to the logger (including egse_logger for egse.system) and the logging
+    level can be passed in as an optional argument. Default logging level is INFO.
+
+    Examples:
+        >>> with Timer("Some calculation") as timer:
+        ...     # do some calculations
+        ...     timer.log_elapsed()
+        ...     # do some more calculations
+        ...     print(f"Elapsed seconds: {timer()}")  # doctest: +ELLIPSIS
+        Elapsed seconds: ...
+
+    Args:
+        name (str): a name for the Timer, will be printed in the logging message
+        precision (int): the precision for the presentation of the elapsed time
+            (number of digits behind the comma ;)
+        log_level (int): the log level to report the timing [default=INFO]
+
+    Returns:
+        a context manager class that records the elapsed time.
+    """
+
+    def __init__(self, name="Timer", precision=3, log_level=logging.INFO):
+        self.name = name
+        self.precision = precision
+        self.log_level = log_level
+
+    def __enter__(self):
+        # start is a value containing the start time in fractional seconds
+        # end is a function which returns the time in fractional seconds
+        self.start = time.perf_counter()
+        self.end = time.perf_counter
+        return self
+
+    def __exit__(self, ty, val, tb):
+        # The context goes out of scope here and we fix the elapsed time
+        self._total_elapsed = time.perf_counter()
+
+        # Overwrite self.end() so that it always returns the fixed end time
+        self.end = self._end
+
+        logging.log(self.log_level,
+                   f"{self.name}: {self.end() - self.start:0.{self.precision}f} seconds")
+        return False
+
+    def __call__(self):
+        return self.end() - self.start
+
+    def log_elapsed(self):
+        """Sends the elapsed time info to the default logger."""
+        logging.log(self.log_level,
+                   f"{self.name}: {self.end() - self.start:0.{self.precision}f} seconds elapsed")
+
+    def _end(self):
+        return self._total_elapsed
