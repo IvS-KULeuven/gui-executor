@@ -521,10 +521,12 @@ class DynamicButton(QWidget):
             # This style will draw a 2 pixel horizontal line under the label
             label_text.setStyleSheet(textwrap.dedent(
                 """\
-                    padding-bottom: 0px; 
-                    border-bottom-width: 2px; 
+                    padding: 0px; 
+                    border-bottom-width: 1px; 
                     border-bottom-style: solid; 
+                    border-bottom-color: blue; 
                     border-radius: 0px;
+                    color: blue;
                 """)
             )
 
