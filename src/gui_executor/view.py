@@ -838,6 +838,7 @@ class FunctionButtonsPanel(QScrollArea):
                     padding-bottom: 0px
                 }
             """))
+            gbox.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
             self.module_layout.addWidget(gbox)
             self.modules[module_name] = grid
             self.buttons[module_name] = 0
