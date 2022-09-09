@@ -522,9 +522,9 @@ class DynamicButton(QWidget):
             label_text.setStyleSheet(textwrap.dedent(
                 """\
                     padding: 0px; 
-                    border-bottom-width: 1px; 
+                    border-bottom-width: 0px;  /* set to 1 or 2 if you need a bottom line */
                     border-bottom-style: solid; 
-                    border-bottom-color: blue; 
+                    border-bottom-color: blue;
                     border-radius: 0px;
                     color: blue;
                 """)
@@ -581,7 +581,7 @@ class DynamicButton(QWidget):
 
         # The following line will put the display_name within triangles: ▶︎ name ◀︎
         # when the immediate_run flag is True
-        # name = f"\u25B6 {name} \u25C0" if self._function.__ui_immediate_run__ else name
+        name = f"\u25B6 {name} \u25C0" if self._function.__ui_immediate_run__ else name
 
         return name
 
