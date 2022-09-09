@@ -517,6 +517,16 @@ class DynamicButton(QWidget):
 
         self.label_icon = IconLabel(icon_path=self.icon_path, size=icon_size)
         label_text = QLabel(self.function_display_name)
+        if self._function.__ui_immediate_run__:
+            # This style will draw a 2 pixel horizontal line under the label
+            label_text.setStyleSheet(textwrap.dedent(
+                """\
+                    padding-bottom: 0px; 
+                    border-bottom-width: 2px; 
+                    border-bottom-style: solid; 
+                    border-radius: 0px;
+                """)
+            )
 
         layout.addWidget(self.label_icon)
         layout.addSpacing(self.horizontal_spacing)
@@ -565,7 +575,13 @@ class DynamicButton(QWidget):
 
     @property
     def function_display_name(self) -> str:
-        return self._function.__ui_display_name__ or self.label or self._function.__name__
+        name = self._function.__ui_display_name__ or self.label or self._function.__name__
+
+        # The following line will put the display_name within triangles: ▶︎ name ◀︎
+        # when the immediate_run flag is True
+        # name = f"\u25B6 {name} \u25C0" if self._function.__ui_immediate_run__ else name
+
+        return name
 
     @property
     def label(self) -> str:
