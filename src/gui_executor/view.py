@@ -19,6 +19,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
+import distro as distro
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QProcess
 from PyQt5.QtCore import QRunnable
@@ -407,7 +408,7 @@ class ConsoleOutput(QTextEdit):
         self.setMinimumSize(600, 100)
         monospaced_font = QFont("Courier New")
         monospaced_font.setStyleHint(QFont.Monospace)
-        monospaced_font.setPointSize(14)  # TODO: should be a setting
+        monospaced_font.setPointSize(12)  # TODO: should be a setting
         self.setFont(monospaced_font)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -581,7 +582,7 @@ class DynamicButton(QWidget):
 
         # The following line will put the display_name within triangles: ▶︎ name ◀︎
         # when the immediate_run flag is True
-        name = f"\u25B6 {name} \u25C0" if self._function.__ui_immediate_run__ else name
+        # name = f"\u25B6 {name} \u25C0" if self._function.__ui_immediate_run__ else name
 
         return name
 
@@ -601,6 +602,9 @@ class ArgumentsPanel(QScrollArea):
         super().__init__()
 
         self.setWidgetResizable(True)
+
+        widget = QWidget()
+        main_layout = QHBoxLayout()
 
         self.group_box = QGroupBox(f"arguments for '{button.function_display_name}'")
         self.group_box.setStyleSheet(
@@ -719,7 +723,9 @@ class ArgumentsPanel(QScrollArea):
         vbox.addLayout(hbox)
 
         self.group_box.setLayout(vbox)
-        self.setWidget(self.group_box)
+        main_layout.addWidget(self.group_box)
+        widget.setLayout(main_layout)
+        self.setWidget(widget)
 
         # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
 
@@ -802,6 +808,24 @@ class FunctionButtonsPanel(QScrollArea):
 
         widget = QWidget()
 
+        widget.setStyleSheet(textwrap.dedent(
+            """
+                QGroupBox {
+                    font-size: 16px;
+                    font-weight: light;
+                    color: grey;
+                    /* margin-top: 25px; */
+                }
+                QGroupBox::title {
+                    subcontrol-origin: margin;
+                    subcontrol-position: top left;
+                    left: 10px;
+                    /* padding-top: 5px; */
+                    /* padding-bottom: 0px */
+                }
+            """)
+        )
+
         self.n_cols = 4  # This must be a setting or configuration option
 
         # The modules are arranged in a vertical layout and each of the functions in that module is arranged in a
@@ -810,7 +834,8 @@ class FunctionButtonsPanel(QScrollArea):
         self.modules: Dict[str, QGridLayout] = {}
         self.buttons: Dict[str, int] = {}
         self.module_layout = QVBoxLayout()
-        self.module_layout.setSpacing(25)
+        self.module_layout.setSpacing(10 if distro.id().lower() == 'ubuntu' else 25)
+        self.module_layout.addStretch(1)
 
         widget.setLayout(self.module_layout)
 
@@ -826,22 +851,9 @@ class FunctionButtonsPanel(QScrollArea):
                 grid.setColumnStretch(idx, 1)
             gbox = QGroupBox(display_name)
             gbox.setLayout(grid)
-            gbox.setStyleSheet(textwrap.dedent("""
-                QGroupBox {
-                    font-size: 16px;
-                    font-weight: light;
-                    color: grey;
-                    margin-top: 25px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    left: 10px;
-                    padding-top: 5px;
-                    padding-bottom: 0px
-                }
-            """))
             gbox.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-            self.module_layout.addWidget(gbox)
+            # self.module_layout.addWidget(gbox)
+            self.module_layout.insertWidget(self.module_layout.count()-1, gbox)
             self.modules[module_name] = grid
             self.buttons[module_name] = 0
 
