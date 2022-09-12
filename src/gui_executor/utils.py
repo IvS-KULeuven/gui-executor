@@ -8,6 +8,7 @@ import re
 import sys
 import textwrap
 import time
+from enum import Enum
 from io import StringIO
 from pathlib import Path
 from typing import Any
@@ -179,20 +180,43 @@ def capture():
         data.stderr = err.getvalue()
 
 
+def custom_repr(arg: Any):
+    """
+    This function checks if the argument is an Enum and then returns a proper repr value for it.
+    """
+    if not isinstance(arg, Enum):
+        return repr(arg)
+
+    m = re.fullmatch(r"<([\w.]+): (\d+)>", repr(arg))
+    return m[1]
+
+
 def stringify_args(args):
-    return ", ".join([repr(arg) for arg in args])
+    return ", ".join([custom_repr(arg) for arg in args])
 
 
 def stringify_kwargs(kwargs):
-    return ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+    return ", ".join([f"{k}={custom_repr(v)}" for k, v in kwargs.items()])
+
+
+def stringify_imports(args, kwargs):
+    return "\n".join(
+        f"from {arg.__module__} import {arg.__class__.__name__}"
+        for arg in (*args, *kwargs.values())
+        if isinstance(arg, Enum)
+    )
 
 
 def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: bool = True):
 
+    # Check if one of the args/kwargs is an Enum
+    #   * import the proper Enum class
+    #   *
     return textwrap.dedent(
         f"""\
             from {func.__ui_module__} import {func.__name__}
             from pathlib import Path, PurePath, PosixPath  # might be used by argument types
+            {stringify_imports(args, kwargs)}
             
             def main():
                 response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})

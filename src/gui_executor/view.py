@@ -10,6 +10,7 @@ import select
 import sys
 import tempfile
 import textwrap
+from enum import Enum
 from functools import partial
 from pathlib import Path
 from queue import Queue
@@ -597,6 +598,12 @@ class DynamicButton(QWidget):
         return f"DynamicButton(\"{self.label}\", {self.function})"
 
 
+def combo_box_from_enum(enumeration: Enum):
+    cb = QComboBox()
+    cb.addItems([x.name for x in enumeration])
+    return cb
+
+
 class ArgumentsPanel(QScrollArea):
     def __init__(self, button: DynamicButton, ui_args: Dict[str, Argument]):
         super().__init__()
@@ -644,6 +651,8 @@ class ArgumentsPanel(QScrollArea):
                 input_field.setCheckState(Qt.Checked if arg.default else Qt.Unchecked)
             elif isinstance(arg.annotation, TypeObject):
                 input_field: QWidget = arg.annotation.get_widget()
+            elif issubclass(arg.annotation, Enum):
+                input_field = combo_box_from_enum(arg.annotation)
             else:
                 input_field = QLineEdit()
                 input_field.setObjectName(name)
@@ -780,13 +789,15 @@ class ArgumentsPanel(QScrollArea):
             self.script_rb.setChecked(True)
             return RUNNABLE_SCRIPT
 
-    def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | UQWidget):
+    def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | QComboBox | UQWidget):
         arg = self._ui_args[name]
 
         if arg.annotation is bool:
             return field.checkState() == Qt.Checked
         elif isinstance(arg.annotation, TypeObject):
             return field.get_value()
+        elif issubclass(arg.annotation, Enum):
+            return arg.annotation[field.currentText()]
         else:
 
             if not (value := field.displayText() or field.placeholderText()):
