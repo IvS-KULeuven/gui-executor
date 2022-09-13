@@ -4,12 +4,14 @@ import ast
 import contextlib
 import errno
 import fcntl
+import inspect
 import os
 import queue
 import select
 import sys
 import tempfile
 import textwrap
+from enum import Enum
 from functools import partial
 from pathlib import Path
 from queue import Queue
@@ -19,6 +21,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
+import distro as distro
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QProcess
 from PyQt5.QtCore import QRunnable
@@ -407,7 +410,7 @@ class ConsoleOutput(QTextEdit):
         self.setMinimumSize(600, 100)
         monospaced_font = QFont("Courier New")
         monospaced_font.setStyleHint(QFont.Monospace)
-        monospaced_font.setPointSize(14)  # TODO: should be a setting
+        monospaced_font.setPointSize(12)  # TODO: should be a setting
         self.setFont(monospaced_font)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -517,6 +520,18 @@ class DynamicButton(QWidget):
 
         self.label_icon = IconLabel(icon_path=self.icon_path, size=icon_size)
         label_text = QLabel(self.function_display_name)
+        if self._function.__ui_immediate_run__:
+            # This style will draw a 2 pixel horizontal line under the label
+            label_text.setStyleSheet(textwrap.dedent(
+                """\
+                    padding: 0px; 
+                    border-bottom-width: 0px;  /* set to 1 or 2 if you need a bottom line */
+                    border-bottom-style: solid; 
+                    border-bottom-color: blue;
+                    border-radius: 0px;
+                    color: blue;
+                """)
+            )
 
         layout.addWidget(self.label_icon)
         layout.addSpacing(self.horizontal_spacing)
@@ -565,7 +580,13 @@ class DynamicButton(QWidget):
 
     @property
     def function_display_name(self) -> str:
-        return self._function.__ui_display_name__ or self.label or self._function.__name__
+        name = self._function.__ui_display_name__ or self.label or self._function.__name__
+
+        # The following line will put the display_name within triangles: ▶︎ name ◀︎
+        # when the immediate_run flag is True
+        # name = f"\u25B6 {name} \u25C0" if self._function.__ui_immediate_run__ else name
+
+        return name
 
     @property
     def label(self) -> str:
@@ -578,30 +599,41 @@ class DynamicButton(QWidget):
         return f"DynamicButton(\"{self.label}\", {self.function})"
 
 
+def combo_box_from_enum(enumeration: Enum):
+    cb = QComboBox()
+    cb.addItems([x.name for x in enumeration])
+    return cb
+
+
 class ArgumentsPanel(QScrollArea):
     def __init__(self, button: DynamicButton, ui_args: Dict[str, Argument]):
         super().__init__()
 
         self.setWidgetResizable(True)
 
-        self.group_box = QGroupBox(f"arguments for '{button.function_display_name}'")
-        self.group_box.setStyleSheet(
-            textwrap.dedent(
-                """
-                    QGroupBox {
-                        font-size: 14px;
-                        font-weight: light;
-                        color: grey;
-                        margin-top: 25px;
-                    }
-                    QGroupBox::title {
-                        subcontrol-origin: margin;
-                        left: 10px;
-                        padding-top: 5px;
-                        padding-bottom: 0px
-                    }
-                """)
+        widget = QWidget()
+
+        widget.setStyleSheet(textwrap.dedent(
+            """
+                QGroupBox {
+                    font-size: 16px;
+                    font-weight: light;
+                    color: grey;
+                    /* margin-top: 25px; */
+                }
+                QGroupBox::title {
+                    subcontrol-origin: margin;
+                    subcontrol-position: top left;
+                    left: 10px;
+                    /* padding-top: 5px; */
+                    /* padding-bottom: 0px */
+                }
+            """)
         )
+
+        main_layout = QHBoxLayout()
+
+        self.group_box = QGroupBox(f"arguments for '{button.function_display_name}'")
 
         self._button = button
         self._ui_args = ui_args
@@ -620,6 +652,8 @@ class ArgumentsPanel(QScrollArea):
                 input_field.setCheckState(Qt.Checked if arg.default else Qt.Unchecked)
             elif isinstance(arg.annotation, TypeObject):
                 input_field: QWidget = arg.annotation.get_widget()
+            elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
+                input_field = combo_box_from_enum(arg.annotation)
             else:
                 input_field = QLineEdit()
                 input_field.setObjectName(name)
@@ -698,10 +732,13 @@ class ArgumentsPanel(QScrollArea):
         hbox.addStretch()
         hbox.addWidget(self.run_button)
 
+        vbox.addStretch()
         vbox.addLayout(hbox)
 
         self.group_box.setLayout(vbox)
-        self.setWidget(self.group_box)
+        main_layout.addWidget(self.group_box)
+        widget.setLayout(main_layout)
+        self.setWidget(widget)
 
         # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
 
@@ -754,13 +791,15 @@ class ArgumentsPanel(QScrollArea):
             self.script_rb.setChecked(True)
             return RUNNABLE_SCRIPT
 
-    def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | UQWidget):
+    def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | QComboBox | UQWidget):
         arg = self._ui_args[name]
 
         if arg.annotation is bool:
             return field.checkState() == Qt.Checked
         elif isinstance(arg.annotation, TypeObject):
             return field.get_value()
+        elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
+            return arg.annotation[field.currentText()]
         else:
 
             if not (value := field.displayText() or field.placeholderText()):
@@ -784,6 +823,24 @@ class FunctionButtonsPanel(QScrollArea):
 
         widget = QWidget()
 
+        widget.setStyleSheet(textwrap.dedent(
+            """
+                QGroupBox {
+                    font-size: 16px;
+                    font-weight: light;
+                    color: grey;
+                    /* margin-top: 25px; */
+                }
+                QGroupBox::title {
+                    subcontrol-origin: margin;
+                    subcontrol-position: top left;
+                    left: 10px;
+                    /* padding-top: 5px; */
+                    /* padding-bottom: 0px */
+                }
+            """)
+        )
+
         self.n_cols = 4  # This must be a setting or configuration option
 
         # The modules are arranged in a vertical layout and each of the functions in that module is arranged in a
@@ -792,7 +849,8 @@ class FunctionButtonsPanel(QScrollArea):
         self.modules: Dict[str, QGridLayout] = {}
         self.buttons: Dict[str, int] = {}
         self.module_layout = QVBoxLayout()
-        self.module_layout.setSpacing(25)
+        self.module_layout.setSpacing(10 if distro.id().lower() == 'ubuntu' else 25)
+        self.module_layout.addStretch(1)
 
         widget.setLayout(self.module_layout)
 
@@ -808,21 +866,9 @@ class FunctionButtonsPanel(QScrollArea):
                 grid.setColumnStretch(idx, 1)
             gbox = QGroupBox(display_name)
             gbox.setLayout(grid)
-            gbox.setStyleSheet(textwrap.dedent("""
-                QGroupBox {
-                    font-size: 16px;
-                    font-weight: light;
-                    color: grey;
-                    margin-top: 25px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    left: 10px;
-                    padding-top: 5px;
-                    padding-bottom: 0px
-                }
-            """))
-            self.module_layout.addWidget(gbox)
+            gbox.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+            # self.module_layout.addWidget(gbox)
+            self.module_layout.insertWidget(self.module_layout.count()-1, gbox)
             self.modules[module_name] = grid
             self.buttons[module_name] = 0
 

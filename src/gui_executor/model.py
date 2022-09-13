@@ -1,3 +1,5 @@
+import contextlib
+import importlib
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -17,4 +19,10 @@ class Model:
         return find_ui_button_functions(mod)
 
     def get_ui_modules(self) -> Dict[str, Any]:
-        return find_modules(self._module_path)
+        response = {}
+        for name, path in find_modules(self._module_path).items():
+            with contextlib.suppress(ModuleNotFoundError):
+                mod = importlib.import_module(path)
+                display_name = getattr(mod, "UI_MODULE_DISPLAY_NAME", name)
+                response[name] = (display_name, path)
+        return response

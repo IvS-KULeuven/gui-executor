@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import contextlib
 import inspect
+import logging
 import os
 import re
 import sys
 import textwrap
+import time
+from enum import Enum
 from io import StringIO
 from pathlib import Path
 from typing import Any
@@ -177,20 +180,43 @@ def capture():
         data.stderr = err.getvalue()
 
 
+def custom_repr(arg: Any):
+    """
+    This function checks if the argument is an Enum and then returns a proper repr value for it.
+    """
+    if not isinstance(arg, Enum):
+        return repr(arg)
+
+    m = re.fullmatch(r"<([\w.]+): (\d+)>", repr(arg))
+    return m[1]
+
+
 def stringify_args(args):
-    return ", ".join([repr(arg) for arg in args])
+    return ", ".join([custom_repr(arg) for arg in args])
 
 
 def stringify_kwargs(kwargs):
-    return ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+    return ", ".join([f"{k}={custom_repr(v)}" for k, v in kwargs.items()])
+
+
+def stringify_imports(args, kwargs):
+    return "\n".join(
+        f"from {arg.__module__} import {arg.__class__.__name__}"
+        for arg in (*args, *kwargs.values())
+        if isinstance(arg, Enum)
+    )
 
 
 def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: bool = True):
 
+    # Check if one of the args/kwargs is an Enum
+    #   * import the proper Enum class
+    #   *
     return textwrap.dedent(
         f"""\
             from {func.__ui_module__} import {func.__name__}
             from pathlib import Path, PurePath, PosixPath  # might be used by argument types
+            {stringify_imports(args, kwargs)}
             
             def main():
                 response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})
@@ -245,3 +271,69 @@ def is_renderable(check_object: Any) -> bool:
         hasattr(check_object, "__rich__")
         or hasattr(check_object, "__rich_console__")
     )
+
+
+class Timer(object):
+    """
+    Context manager to benchmark some lines of code.
+
+    When the context exits, the elapsed time is sent to the default logger (level=INFO).
+
+    Elapsed time can be logged with the `log_elapsed()` method and requested in fractional seconds
+    by calling the class instance. When the contexts goes out of scope, the elapsed time will not
+    increase anymore.
+
+    Log messages are sent to the logger (including egse_logger for egse.system) and the logging
+    level can be passed in as an optional argument. Default logging level is INFO.
+
+    Examples:
+        >>> with Timer("Some calculation") as timer:
+        ...     # do some calculations
+        ...     timer.log_elapsed()
+        ...     # do some more calculations
+        ...     print(f"Elapsed seconds: {timer()}")  # doctest: +ELLIPSIS
+        Elapsed seconds: ...
+
+    Args:
+        name (str): a name for the Timer, will be printed in the logging message
+        precision (int): the precision for the presentation of the elapsed time
+            (number of digits behind the comma ;)
+        log_level (int): the log level to report the timing [default=INFO]
+
+    Returns:
+        a context manager class that records the elapsed time.
+    """
+
+    def __init__(self, name="Timer", precision=3, log_level=logging.INFO):
+        self.name = name
+        self.precision = precision
+        self.log_level = log_level
+
+    def __enter__(self):
+        # start is a value containing the start time in fractional seconds
+        # end is a function which returns the time in fractional seconds
+        self.start = time.perf_counter()
+        self.end = time.perf_counter
+        return self
+
+    def __exit__(self, ty, val, tb):
+        # The context goes out of scope here and we fix the elapsed time
+        self._total_elapsed = time.perf_counter()
+
+        # Overwrite self.end() so that it always returns the fixed end time
+        self.end = self._end
+
+        logging.log(self.log_level,
+                   f"{self.name}: {self.end() - self.start:0.{self.precision}f} seconds")
+        return False
+
+    def __call__(self):
+        return self.end() - self.start
+
+    def log_elapsed(self):
+        """Sends the elapsed time info to the default logger."""
+        logging.log(self.log_level,
+                   f"{self.name}: {self.end() - self.start:0.{self.precision}f} seconds elapsed")
+
+    def _end(self):
+        return self._total_elapsed

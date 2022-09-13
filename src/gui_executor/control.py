@@ -11,7 +11,7 @@ class Control:
 
         modules = self._model.get_ui_modules()
 
-        for _, mod in modules.items():
+        for _, mod in sorted(modules.values()):
             try:
                 funcs = self._model.get_ui_buttons_functions(mod)
 
