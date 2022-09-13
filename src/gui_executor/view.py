@@ -732,6 +732,7 @@ class ArgumentsPanel(QScrollArea):
         hbox.addStretch()
         hbox.addWidget(self.run_button)
 
+        vbox.addStretch()
         vbox.addLayout(hbox)
 
         self.group_box.setLayout(vbox)
