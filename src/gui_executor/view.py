@@ -4,6 +4,7 @@ import ast
 import contextlib
 import errno
 import fcntl
+import inspect
 import os
 import queue
 import select
@@ -651,7 +652,7 @@ class ArgumentsPanel(QScrollArea):
                 input_field.setCheckState(Qt.Checked if arg.default else Qt.Unchecked)
             elif isinstance(arg.annotation, TypeObject):
                 input_field: QWidget = arg.annotation.get_widget()
-            elif issubclass(arg.annotation, Enum):
+            elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
                 input_field = combo_box_from_enum(arg.annotation)
             else:
                 input_field = QLineEdit()
@@ -796,7 +797,7 @@ class ArgumentsPanel(QScrollArea):
             return field.checkState() == Qt.Checked
         elif isinstance(arg.annotation, TypeObject):
             return field.get_value()
-        elif issubclass(arg.annotation, Enum):
+        elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
             return arg.annotation[field.currentText()]
         else:
 
