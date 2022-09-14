@@ -1073,7 +1073,7 @@ class View(QMainWindow):
     def the_button_was_clicked(self, button: DynamicButton, *args, **kwargs):
 
         if button.immediate_run():
-            self.run_function(button.function, [], {}, RUNNABLE_SCRIPT)
+            self.run_function(button.function, [], {}, button.function.__ui_runnable__)
 
             # Remove any existing arguments panel from a previous button
 

@@ -183,7 +183,7 @@ def start_qtconsole(kernel: MyKernel, buffer_size: int = 5000, console_height: i
     cmd_line = (f"jupyter qtconsole --ConsoleWidget.buffer_size={buffer_size} "
                 f"--ConsoleWidget.console_height={console_height} "
                 f"--ConsoleWidget.console_width={console_width} "
-                f"--existing {connection_file}")
+                f"--existing {connection_file} --log-level=INFO")
 
     cmd = ExternalCommand(
         f"{cmd_line}", capture=True, capture_stderr=True, asynchronous=True)
