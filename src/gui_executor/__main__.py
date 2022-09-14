@@ -34,6 +34,7 @@ HERE = Path(__file__).parent.resolve()
 def main():
 
     parser = argparse.ArgumentParser(prog='gui-executor')
+    parser.add_argument('--version', "-V", action="store_true", help='print the gui-executor version number and exit')
     parser.add_argument('--location', help='location of the Python modules and scripts')
     parser.add_argument('--module-path', help='module path of the Python modules and scripts')
     parser.add_argument('--config', help='a YAML file that configures the executor')
@@ -42,6 +43,11 @@ def main():
     parser.add_argument('--debug', '-d', action="store_true", help="set debugging mode")
 
     args = parser.parse_args()
+
+    if args.version:
+        from .__version__ import __version__ as version
+        print(f"gui-executor {version=}")
+        sys.exit(0)
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
