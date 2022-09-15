@@ -30,7 +30,7 @@ snippet = textwrap.dedent(
         time.sleep(1.0)
         print(f"Running step {idx}...", flush=True)
     
-    raise RuntimeError("Function was aborted!")
+    # raise RuntimeError("Function was aborted!")
     
     rc = input("Continue? [Y/n]")
     # rc = input()  # prompt will be empty, still input_request is sent
@@ -78,9 +78,10 @@ while True:
                 if "Continue?" in in_msg_content['prompt']:
                     console.log("[red]We got an input request, sending 'Y'.[/red]")
                     time.sleep(5.0)
-                    kernel.client.input('n')
+                    kernel.client.input('y')
 
 msg = kernel.client.get_shell_msg(msg_id)
+console.log("Returned shell message:")
 console.log(msg)
 
 msg_id = kernel.client.shutdown()
