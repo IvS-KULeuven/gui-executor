@@ -1186,8 +1186,9 @@ class View(QMainWindow):
         if not image.loadFromData(b64decode(data), 'PNG'):
             print("Could not convert image/png to QImage")
 
+        width = 800
         self.png_widget = QWidget()
-        self.png_widget.setMinimumSize(600, int(600/16*9))
+        self.png_widget.setMinimumSize(width, int(width/16*9))
         pixmap = QPixmap()
         if not pixmap.loadFromData(b64decode(data), 'PNG'):
             print("Could not convert image/png data to QPixmap")
