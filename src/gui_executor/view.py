@@ -22,6 +22,7 @@ from typing import Optional
 from typing import Tuple
 
 import distro as distro
+import rich
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QProcess
 from PyQt5.QtCore import QRunnable
@@ -37,7 +38,9 @@ from PyQt5.QtGui import QCursor
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QImage
 from PyQt5.QtGui import QIntValidator
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QApplication
@@ -81,6 +84,7 @@ from .exec import get_arguments
 from .gui import IconLabel
 from .kernel import MyKernel
 from .kernel import start_qtconsole
+from .utils import b64decode
 from .utils import capture
 from .utils import create_code_snippet
 from .utils import create_code_snippet_renderable
@@ -135,6 +139,8 @@ class FunctionThreadSignals(QObject):
     finished = pyqtSignal(object, str, bool)
     error = pyqtSignal(Exception)
     data = pyqtSignal(object)
+    html = pyqtSignal(str)
+    png = pyqtSignal(str)
     input = pyqtSignal(str)
 
 
@@ -220,6 +226,7 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
 
                     if line_out:
                         self.signals.data.emit(line := line_out.decode(cmd.encoding).rstrip())
+                        # print(f"{line = }")
                         # Try to detect when the process is requesting input.
                         # TODO: request input from user through QLineEdit field...
                         if self._check_for_input and any(pattern in line for pattern in self._input_patterns):
@@ -299,19 +306,34 @@ class FunctionRunnableKernel(FunctionRunnable):
         while True:
             try:
                 io_msg = self.kernel.client.get_iopub_msg(timeout=1.0)
+                io_msg_type = io_msg['msg_type']
                 io_msg_content = io_msg['content']
 
-                if io_msg['msg_type'] == 'stream':
+                # rich.print("io_msg = ", end='')
+                # rich.print(io_msg)
+
+                if io_msg_type == 'stream':
                     if 'text' in io_msg_content:
                         text = io_msg_content['text'].rstrip()
                         self.signals.data.emit(text)
-                elif io_msg['msg_type'] == 'status':
+                elif io_msg_type == 'status':
                     if io_msg_content['execution_state'] == 'idle':
                         # self.signals.data.emit("Execution State is Idle, terminating...")
                         break
                     elif io_msg_content['execution_state'] == 'busy':
                         # self.signals.data.emit("Execution State is Busy, starting...")
                         continue
+                elif io_msg_type == 'display_data':
+                    if 'data' in io_msg_content:
+                        if 'text/html' in io_msg_content['data']:
+                            text = io_msg_content['data']['text/html'].rstrip()
+                            self.signals.html.emit(text)
+                        elif 'image/png' in io_msg_content['data']:
+                            data = io_msg_content['data']['image/png']
+                            self.signals.png.emit(data)
+                        elif 'text/plain' in io_msg_content['data']:
+                            text = io_msg_content['data']['text/plain'].rstrip()
+                            self.signals.data.emit(text)
                 # elif io_msg['msg_type'] == 'execute_input':
                 #     self.signals.data.emit("The code snippet:")
                 #     source_code = io_msg_content['code']
@@ -332,8 +354,8 @@ class FunctionRunnableKernel(FunctionRunnable):
         msg = self.kernel.client.get_shell_msg(msg_id)
         if msg['msg_type'] == "execute_reply":
             status = msg['content']['status']
-            self.signals.data.emit(f"{status = }")
             if status == 'error' and 'traceback' in msg['content']:
+                # self.signals.data.emit(f"{status = }")
                 traceback = msg['content']['traceback']
                 # self.signals.data.emit(remove_ansi_escape('\n'.join(traceback)))
                 self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
@@ -406,7 +428,10 @@ class ConsoleOutput(QTextEdit):
         super().__init__(parent)
         self.setReadOnly(True)
         self.setLineWrapMode(QTextEdit.NoWrap)
-        self.insertPlainText("")
+        # self.insertPlainText("")
+        self.insertHtml("<br>")
+        self.setAcceptRichText(False)
+        self.setUndoRedoEnabled(False)
         self.setMinimumSize(600, 100)
         monospaced_font = QFont("Courier New")
         monospaced_font.setStyleHint(QFont.Monospace)
@@ -418,18 +443,42 @@ class ConsoleOutput(QTextEdit):
 
     @pyqtSlot(str)
     def append(self, text):
-        self.moveCursor(QTextCursor.End)
 
-        console = Console(record=True, force_terminal=False, force_jupyter=False)
-        with console.capture():
+        # import builtins
+        # builtins.print(f"{text=}")
+
+        console = Console(record=True)
+
+        with console.capture() as cap:
             console.print(text)
+
+        # builtins.print(f"{cap.get()=}")
 
         exported_html = console.export_html(
             inline_styles=True,
-            code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}\n</pre>"
+            # code_format="<pre style=\"font-family:'Courier New',Menlo,'DejaVu Sans Mono'\">\n{code}\n</pre>",
+            # code_format="<code><pre style=\"font-family:Menlo,\'DejaVu Sans Mono\',consolas,\'Courier New\',monospace\">{code}\n</pre>\n</code>\n",
         )
 
+        # builtins.print(exported_html)
+
+        self.setUpdatesEnabled(False)
+        self.moveCursor(QTextCursor.End)
         self.insertHtml(exported_html)
+        self.insertHtml("<br>")
+        self.setUpdatesEnabled(True)
+
+        sb = self.verticalScrollBar()
+        sb.setValue(sb.maximum())
+
+    @pyqtSlot(str)
+    def append_html(self, text):
+
+        self.setUpdatesEnabled(False)
+        self.moveCursor(QTextCursor.End)
+        self.insertHtml(text)
+        self.insertHtml("<br>")
+        self.setUpdatesEnabled(True)
 
         sb = self.verticalScrollBar()
         sb.setValue(sb.maximum())
@@ -1043,6 +1092,8 @@ class View(QMainWindow):
         worker.start()
 
         worker.signals.data.connect(self.function_output)
+        worker.signals.html.connect(self.function_output_html)
+        worker.signals.png.connect(self.function_output_png)
         worker.signals.finished.connect(self.function_complete)
         worker.signals.error.connect(self.function_error)
         worker.signals.input.connect(self.input_request)
@@ -1124,6 +1175,32 @@ class View(QMainWindow):
     @pyqtSlot(object)
     def function_output(self, data: object):
         self._console_panel.append(data if is_renderable(data) else str(data))
+
+    @pyqtSlot(str)
+    def function_output_html(self, data: str):
+        self._console_panel.append_html(data)
+
+    @pyqtSlot(str)
+    def function_output_png(self, data: str):
+        image = QImage()
+        if not image.loadFromData(b64decode(data), 'PNG'):
+            print("Could not convert image/png to QImage")
+
+        self.png_widget = QWidget()
+        self.png_widget.setMinimumSize(600, int(600/16*9))
+        pixmap = QPixmap()
+        if not pixmap.loadFromData(b64decode(data), 'PNG'):
+            print("Could not convert image/png data to QPixmap")
+            pixmap.fromImage(image)
+        label = QLabel()
+        label.setPixmap(pixmap)
+
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+
+        self.png_widget.setLayout(layout)
+        self.png_widget.show()
+
 
     @pyqtSlot(object, str, bool)
     def function_complete(self, runnable: FunctionRunnable, name: str, success: bool):
