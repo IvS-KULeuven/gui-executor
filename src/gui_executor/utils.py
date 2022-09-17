@@ -215,13 +215,14 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
     #   *
     return textwrap.dedent(
         f"""\
+            # [3405691582]
             from rich import print
             from {func.__ui_module__} import {func.__name__}
             from pathlib import Path, PurePath, PosixPath  # might be used by argument types
             {stringify_imports(args, kwargs)}
             
             def main():
-                response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})
+                response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})  # [3405691582]
                 if response is not None:
                     print(response)
                 return response
