@@ -957,7 +957,7 @@ class KernelPanel(QWidget):
 
 
 class View(QMainWindow):
-    def __init__(self, app_name: str = None):
+    def __init__(self, app_name: str = None, cmd_log: str = None, verbosity: int = 0):
         super().__init__()
 
         self._qt_console: Optional[ExternalCommand] = None
@@ -965,6 +965,10 @@ class View(QMainWindow):
         self._buttons = []
         self.input_queue: Queue = Queue()
         self.previous_selected_button: Optional[DynamicButton] = None
+        self.verbosity = verbosity
+
+        self.cmd_log = cmd_log
+        """The location of the command log files, provided as an argument."""
 
         # Keep a record of the GUI Apps, because if their reference is garbage collected they will crash
 
@@ -1062,6 +1066,8 @@ class View(QMainWindow):
         return self._kernel
 
     def _start_new_kernel(self):
+        if self._kernel is not None:
+            del self._kernel
         name = self.kernel_panel.selected_kernel
         # print(f"Starting new kernel {name}...")
         self._kernel = MyKernel(name)
@@ -1070,11 +1076,27 @@ class View(QMainWindow):
         if 'banner' in info['content']:
             self._console_panel.append(info['content']['banner'])
 
+        # make sure the user doesn't by accident quit the kernel
+        self._kernel.run_snippet("del quit, exit")
+
+        if self.cmd_log:
+            self._console_panel.append(
+                f"Loading [blue]gui_executor.transforms[/] extension...log file in '{self.cmd_log}'")
+            self._kernel.run_snippet(
+                textwrap.dedent(
+                    f"""\
+                    from gui_executor import transforms
+                    transforms.set_log_file_location("{self.cmd_log}")
+                    %load_ext gui_executor.transforms
+                    """
+                )
+            )
+
     def start_qt_console(self):
         if self._qt_console is not None and self._qt_console.is_running:
             dialog = QMessageBox.information(self, "Qt Console", "There is already a Qt Console running.")
         else:
-            self._qt_console = start_qtconsole(self._kernel or self.start_kernel())
+            self._qt_console = start_qtconsole(self._kernel or self.start_kernel(), verbosity=self.verbosity)
 
     def run_function(self, func: Callable, args: List, kwargs: Dict, runnable_type: int):
 

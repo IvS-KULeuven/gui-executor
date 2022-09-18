@@ -6,6 +6,7 @@ from pathlib import Path
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
+from gui_executor.utils import print_system_info
 from .config import load_config
 from .control import Control
 from .model import Model
@@ -35,7 +36,10 @@ def main():
 
     parser = argparse.ArgumentParser(prog='gui-executor')
     parser.add_argument('--version', "-V", action="store_true", help='print the gui-executor version number and exit')
+    parser.add_argument('--verbose', "-v", action="count",
+                        help="print verbose information, increased verbosity level with multiple occurrences")
     parser.add_argument('--location', help='location of the Python modules and scripts')
+    parser.add_argument('--cmd-log', help='location of the command log files')
     parser.add_argument('--module-path', help='module path of the Python modules and scripts')
     parser.add_argument('--config', help='a YAML file that configures the executor')
     parser.add_argument('--logo', help='path to logo PNG or SVG file')
@@ -44,9 +48,13 @@ def main():
 
     args = parser.parse_args()
 
+    verbosity = 0 if args.verbose is None else args.verbose
+
     if args.version:
         from .__version__ import __version__ as version
         print(f"gui-executor {version=}")
+        if verbosity:
+            print_system_info()
         sys.exit(0)
 
     if args.debug:
@@ -65,7 +73,7 @@ def main():
     app = QApplication([])
     app.setWindowIcon(QIcon(args.logo or str(HERE / "icons/tasks.svg")))
 
-    view = View(args.app_name or "GUI Executor")
+    view = View(args.app_name or "GUI Executor", cmd_log=args.cmd_log, verbosity=verbosity)
     model = Model(args.module_path)
     Control(view, model)
 
