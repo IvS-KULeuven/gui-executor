@@ -383,3 +383,13 @@ def b64decode(s, altchars=None, validate=False):
     if validate and not re.fullmatch(b'[A-Za-z0-9+/]*={0,2}', s):
         raise binascii.Error('Non-base64 digit found')
     return binascii.a2b_base64(s)
+
+
+def print_system_info():
+    import sys
+    import rich
+    import distro
+
+    rich.print(f"distro: {distro.name()}, {distro.version(pretty=True)}")
+    rich.print("sys.executable = ", sys.executable)
+    rich.print("sys.path = ", sys.path)
