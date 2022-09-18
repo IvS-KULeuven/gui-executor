@@ -930,7 +930,7 @@ class FunctionButtonsPanel(QScrollArea):
 
 
 class KernelPanel(QWidget):
-    def __init__(self):
+    def __init__(self, name: str = "python3"):
         super().__init__()
 
         hbox = QHBoxLayout()
@@ -938,9 +938,9 @@ class KernelPanel(QWidget):
 
         kernel_specs = list(MyKernel.get_kernel_specs())
         try:
-            idx = kernel_specs.index("python3")
+            idx = kernel_specs.index(name)
         except ValueError:
-            idx = 0
+            idx = kernel_specs.index("python3")
         self.kernel_list = QComboBox()
         self.kernel_list.addItems(list(kernel_specs))
         self.kernel_list.setCurrentIndex(idx)
@@ -957,7 +957,7 @@ class KernelPanel(QWidget):
 
 
 class View(QMainWindow):
-    def __init__(self, app_name: str = None, cmd_log: str = None, verbosity: int = 0):
+    def __init__(self, app_name: str = None, cmd_log: str = None, verbosity: int = 0, kernel_name: str = "python3"):
         super().__init__()
 
         self._qt_console: Optional[ExternalCommand] = None
@@ -966,6 +966,7 @@ class View(QMainWindow):
         self.input_queue: Queue = Queue()
         self.previous_selected_button: Optional[DynamicButton] = None
         self.verbosity = verbosity
+        self.kernel_name = kernel_name
 
         self.cmd_log = cmd_log
         """The location of the command log files, provided as an argument."""
@@ -1041,7 +1042,7 @@ class View(QMainWindow):
         qtconsole_button.triggered.connect(self.start_qt_console)
         qtconsole_button.setCheckable(False)
         self._toolbar.addAction(qtconsole_button)
-        self.kernel_panel = KernelPanel()
+        self.kernel_panel = KernelPanel(self.kernel_name)
         self._toolbar.addWidget(self.kernel_panel)
 
     def closeEvent(self, event: QCloseEvent) -> None:
