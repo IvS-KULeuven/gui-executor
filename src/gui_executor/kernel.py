@@ -181,7 +181,8 @@ def do_test_my_kernel(name: str = "python3"):
 def start_qtconsole(kernel: MyKernel,
                     buffer_size: int = 5000,
                     console_height: int = 42, console_width: int = 128,
-                    console_font: str = "Courier New"):
+                    console_font: str = "Courier New",
+                    verbosity: int = 0):
     connection_file = kernel.get_connection_file()
     cmd_line = (f"jupyter qtconsole --ConsoleWidget.buffer_size={buffer_size} "
                 f"--ConsoleWidget.console_height={console_height} "
@@ -189,7 +190,9 @@ def start_qtconsole(kernel: MyKernel,
                 f"--ConsoleWidget.font_family='{console_font}' "
                 f"--existing {connection_file} --log-level=INFO")
 
-    print(f"{cmd_line=}")
+    if verbosity:
+        print("Starting Jupyter Qt Console...")
+        print(f"{cmd_line = }")
 
     cmd = ExternalCommand(
         f"{cmd_line}", capture=True, capture_stderr=True, asynchronous=True)
