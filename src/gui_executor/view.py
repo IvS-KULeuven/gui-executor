@@ -300,6 +300,7 @@ class FunctionRunnableKernel(FunctionRunnable):
 
         self.signals.data.emit("The code snippet:")
         self.signals.data.emit(create_code_snippet_renderable(self._func, self._args, self._kwargs))
+        self.signals.data.emit("")
 
         msg_id = self.kernel.client.execute(snippet, allow_stdin=True)
 
