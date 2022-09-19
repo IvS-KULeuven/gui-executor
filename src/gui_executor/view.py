@@ -1037,7 +1037,7 @@ class View(QMainWindow):
 
         # Add a button to the toolbar to start the qtconsole
 
-        qtconsole_button = QAction(QIcon(str(HERE / "icons/command.svg")), "Start Qt Console", self)
+        qtconsole_button = QAction(QIcon(str(HERE / "icons/command.svg")), "Start Python Console", self)
         qtconsole_button.setStatusTip("Start the QT Console")
         qtconsole_button.triggered.connect(self.start_qt_console)
         qtconsole_button.setCheckable(False)
