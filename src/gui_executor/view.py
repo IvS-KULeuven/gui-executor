@@ -335,11 +335,18 @@ class FunctionRunnableKernel(FunctionRunnable):
                         elif 'text/plain' in io_msg_content['data']:
                             text = io_msg_content['data']['text/plain'].rstrip()
                             self.signals.data.emit(text)
-                # elif io_msg['msg_type'] == 'execute_input':
-                #     self.signals.data.emit("The code snippet:")
-                #     source_code = io_msg_content['code']
-                #     syntax = Syntax(source_code, "python", theme='default')
-                #     self.signals.data.emit(syntax)
+                elif io_msg_type == 'execute_input':
+                    ...  # ignore this message type
+                    #     self.signals.data.emit("The code snippet:")
+                    #     source_code = io_msg_content['code']
+                    #     syntax = Syntax(source_code, "python", theme='default')
+                    #     self.signals.data.emit(syntax)
+                elif io_msg_type == 'error':
+                    if 'traceback' in io_msg_content:
+                        traceback = io_msg_content['traceback']
+                        self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
+                else:
+                    self.signals.error.emit(RuntimeError(f"Unknown io_msg_type: {io_msg_type}"))
 
             except queue.Empty:
                 with contextlib.suppress(queue.Empty):

@@ -213,6 +213,9 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
     # Check if one of the args/kwargs is an Enum
     #   * import the proper Enum class
     #   *
+
+    # [3405691582] magic number is defined in gui_executor.transforms
+
     return textwrap.dedent(
         f"""\
             # [3405691582]

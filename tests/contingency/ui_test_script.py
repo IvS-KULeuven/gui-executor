@@ -46,15 +46,6 @@ def long_duration_func():
     return "Done"
 
 
-@exec_ui()
-def raise_a_value_error():
-    """This function just raises a ValueError after it first sleeps for 1s."""
-    print("This function will raise a ValueError after 1s...", flush=True)
-    print("This message is sent to stderr.", file=sys.stderr)
-    time.sleep(1.0)
-    raise ValueError("Exception raised as an example..")
-
-
 @exec_ui(use_gui_app=True)
 def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_filename: str = "plot.png"):
     """
