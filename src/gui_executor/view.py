@@ -1225,13 +1225,12 @@ class View(QMainWindow):
         self.png_widget.setLayout(layout)
         self.png_widget.show()
 
-
     @pyqtSlot(object, str, bool)
     def function_complete(self, runnable: FunctionRunnable, name: str, success: bool):
         if success:
-            self._console_panel.append(f"function '{name}' execution finished.")
+            self._console_panel.append(f"----- function '{name}' execution finished.")
         else:
-            self._console_panel.append(f"function '{name}' raised an Exception.")
+            self._console_panel.append(f"----- function '{name}' raised an Exception.")
 
         try:
             self._gui_apps.remove(runnable)
