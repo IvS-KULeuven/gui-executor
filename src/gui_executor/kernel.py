@@ -41,6 +41,7 @@ class MyKernel:
         return self._kernel.is_alive()
 
     def shutdown(self):
+        self._client.stop_channels()
         self._kernel.shutdown_kernel(now=True)
 
     @staticmethod
@@ -145,10 +146,6 @@ class MyKernel:
             return decode_traceback(content['traceback'])
         else:
             return ''
-
-    def __del__(self):
-        self._client.stop_channels()
-        self._kernel.shutdown_kernel()
 
 
 def do_test_my_kernel(name: str = "python3"):

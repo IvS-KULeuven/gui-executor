@@ -1068,8 +1068,10 @@ class View(QMainWindow):
         return self._kernel
 
     def _start_new_kernel(self):
+
         if self._kernel is not None:
-            del self._kernel
+            self._kernel.shutdown()
+
         name = self.kernel_panel.selected_kernel
         # print(f"Starting new kernel {name}...")
         self._kernel = MyKernel(name)
