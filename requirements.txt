@@ -19,3 +19,5 @@ matplotlib~=3.5.3
 setuptools~=63.1.0
 
 Faker~=14.1.0
+
+distro~=1.7.0

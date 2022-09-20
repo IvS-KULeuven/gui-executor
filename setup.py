@@ -101,7 +101,8 @@ setup(
     include_package_data=False,
     install_requires=[
         "rich>=12.5", "PyQt5", "executor", "pyyaml", "matplotlib",
-        "jupyter-client==6.1.12", "jupyter-core==4.11.1", "qtconsole"
+        "jupyter-client==6.1.12", "jupyter-core==4.11.1", "qtconsole",
+        "distro",
     ],
     extras_require={
         "test": ["faker", "lorem-text"],

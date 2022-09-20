@@ -115,7 +115,7 @@ def exec_ui(
         elif use_gui_app:
             wrapper.__ui_runnable__ = RUNNABLE_APP
         else:
-            wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
+            wrapper.__ui_runnable__ = RUNNABLE_KERNEL
 
         return wrapper
 
