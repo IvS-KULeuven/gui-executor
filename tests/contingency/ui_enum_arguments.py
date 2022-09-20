@@ -1,3 +1,4 @@
+from enum import Enum
 from enum import IntEnum
 
 from gui_executor.exec import exec_ui
@@ -23,6 +24,17 @@ class OperatingMode(IntEnum):
     SELFTEST = 1
     ALIGNMENT = 2
     FC_TVAC = 3
+
+
+class CSLSiteId(str, Enum):
+    CSL = "CSL"
+    CSL1 = "CSL1"
+    CSL2 = "CSL2"
+
+
+@exec_ui()
+def str_enum(csl_site: CSLSiteId = CSLSiteId.CSL, setup_id: int = 98):
+    print(f"{csl_site=}, {setup_id=}")
 
 
 @exec_ui()
