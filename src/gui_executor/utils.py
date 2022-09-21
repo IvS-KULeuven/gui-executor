@@ -188,7 +188,8 @@ def custom_repr(arg: Any):
     if not isinstance(arg, Enum):
         return repr(arg)
 
-    m = re.fullmatch(r"<([\w.]+): (\d+)>", repr(arg))
+    m = re.fullmatch(r"<([\w.]+): (.*)>", repr(arg))
+
     return m[1]
 
 
