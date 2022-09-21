@@ -47,6 +47,8 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QButtonGroup
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QComboBox
+from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QGroupBox
@@ -993,6 +995,9 @@ class View(QMainWindow):
         self.cmd_log = cmd_log
         """The location of the command log files, provided as an argument."""
 
+        self.question_dialog: YesNoQuestion | None = None
+        """A half-modal dialog to answer questions from the runnable."""
+
         # Keep a record of the GUI Apps, because if their reference is garbage collected they will crash
 
         self._gui_apps = []
@@ -1270,15 +1275,48 @@ class View(QMainWindow):
 
     @pyqtSlot(str)
     def input_request(self, msg: str):
-        # The argument msg contains the last lines of the output on which the input request was recognized.
-        button = QMessageBox.question(
-            self,
-            "Input Request from Script",
-            "There was an input request from the running script. "
-            "The question is in the output console of the main GUI.\n\n"
-            "Please answer the question with Yes or No."
+        message = textwrap.dedent(
+            """\
+            Input Request from Script\n\n
+            There was an input request from the running script.
+            The question is in the output console of the main GUI.\n\n
+            Please answer the question with Yes or No.
+            """
         )
-        if button == QMessageBox.Yes:
-            self.input_queue.put("Y")
-        elif button == QMessageBox.No:
-            self.input_queue.put("N")
+
+        self.question_dialog = YesNoQuestion(message)
+
+        self._buttons_panel.setDisabled(True)
+        if self._args_panel is not None:
+            self._args_panel.setDisabled(True)
+
+        self.question_dialog.show()
+        self.question_dialog.button_box.accepted.connect(partial(self.answer, "Y"))
+        self.question_dialog.button_box.rejected.connect(partial(self.answer, "N"))
+
+    def answer(self, msg: str, *args, **kwargs):
+        self.input_queue.put(msg)
+        # print(f"answer -> {msg=}, {args=}, {kwargs=}")
+        self.question_dialog.close()
+        self.question_dialog = None
+
+        self._buttons_panel.setDisabled(False)
+        if self._args_panel is not None:
+            self._args_panel.setDisabled(False)
+
+
+class YesNoQuestion(QDialog):
+    def __init__(self, message: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Reply to Question")
+
+        buttons = QDialogButtonBox.Yes | QDialogButtonBox.No
+
+        self.button_box = QDialogButtonBox(buttons)
+
+        self.layout = QVBoxLayout()
+        message = QLabel(message)
+        self.layout.addWidget(message)
+        self.layout.addWidget(self.button_box)
+        self.setLayout(self.layout)
+        self.setWindowFlag(Qt.WindowStaysOnTopHint)
