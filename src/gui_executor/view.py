@@ -307,6 +307,7 @@ class FunctionRunnableKernel(FunctionRunnable):
         while True:
             try:
                 io_msg = self.kernel.client.get_iopub_msg(timeout=1.0)
+
                 io_msg_type = io_msg['msg_type']
                 io_msg_content = io_msg['content']
 
@@ -359,16 +360,29 @@ class FunctionRunnableKernel(FunctionRunnable):
                             response = self.handle_input_request(prompt)
                             self.kernel.client.input(response)
 
-        msg = self.kernel.client.get_shell_msg(msg_id)
-        if msg['msg_type'] == "execute_reply":
-            status = msg['content']['status']
-            if status == 'error' and 'traceback' in msg['content']:
-                # self.signals.data.emit(f"{status = }")
-                traceback = msg['content']['traceback']
-                # self.signals.data.emit(remove_ansi_escape('\n'.join(traceback)))
-                self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
+        self.collect_response_payload(msg_id, timeout=1000)
 
         self.signals.finished.emit(self, self.func_name, True)
+
+    def collect_response_payload(self, msg_id, timeout: int):
+        shell_msg = self.kernel.client.get_shell_msg(msg_id, timeout=timeout)
+
+        msg_type = shell_msg["msg_type"]
+        msg_content = shell_msg["content"]
+
+        # rich.print("shell_msg = ", end='')
+        # rich.print(shell_msg)
+
+        if msg_type == "execute_reply":
+            status = msg_content['status']
+            if status == 'error' and 'traceback' in msg_content:
+                ...
+                # We are not sending this traceback anymore to the Console output
+                # as it was already handled in the context of the io_pub_msg.
+                # self.signals.data.emit(f"{status = }")
+                # traceback = msg_content['traceback']
+                # self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
+
 
 
 class FunctionRunnableQProcess(FunctionRunnable):
