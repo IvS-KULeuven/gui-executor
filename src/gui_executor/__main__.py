@@ -3,8 +3,9 @@ import logging
 import sys
 from pathlib import Path
 
+from PyQt5.QtCore import QLockFile
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from gui_executor.utils import print_system_info
 from .config import load_config
@@ -47,11 +48,15 @@ def main():
     parser.add_argument('--logo', help='path to logo PNG or SVG file')
     parser.add_argument('--app-name', help='the name of the GUI app, will go in the window title')
     parser.add_argument('--debug', '-d', action="store_true", help="set debugging mode")
+    parser.add_argument('--single', action="store_true", help='the UI can be started only once (instead of multiple times)')
 
     args = parser.parse_args()
 
     verbosity = 0 if args.verbose is None else args.verbose
     kernel_name = args.kernel_name or "python3"
+
+    single = 1 if args.single is None else args.single
+    lock_file = QLockFile(str(Path(f"~/{args.app_name or 'GUI executor'}.app.lock").expanduser())) if single else None
 
     if args.version:
         from .__version__ import __version__ as version
@@ -76,13 +81,30 @@ def main():
     app = QApplication([])
     app.setWindowIcon(QIcon(args.logo or str(HERE / "icons/tasks.svg")))
 
-    view = View(args.app_name or "GUI Executor", cmd_log=args.cmd_log, verbosity=verbosity, kernel_name=kernel_name)
-    model = Model(args.module_path)
-    Control(view, model)
+    # Enter here when either:
+    #   - the UI is allowed to be opened multiple times
+    #   - the UI is not allowed to be started multiple times, but it is the first instance
 
-    view.show()
+    if not single or lock_file.tryLock(100):
 
-    return app.exec()
+        view = View(args.app_name or "GUI Executor", cmd_log=args.cmd_log, verbosity=verbosity, kernel_name=kernel_name)
+        model = Model(args.module_path)
+        Control(view, model)
+
+        view.show()
+
+        return app.exec()
+
+    # You try to open the UI multiple times, even though this is not allowed
+
+    else:
+        error_message = QMessageBox()
+        error_message.setIcon(QMessageBox.Warning)
+        error_message.setWindowTitle("Error")
+        error_message.setText(f"The {args.app_name or 'GUI executor'} application is already running!")
+        error_message.setStandardButtons(QMessageBox.Ok)
+
+        return error_message.exec()
 
 
 if __name__ == "__main__":
