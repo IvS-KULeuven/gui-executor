@@ -71,6 +71,7 @@ from executor import ExternalCommand
 from executor import ExternalCommandFailed
 from jupyter_client import KernelClient
 from rich.console import Console
+from rich.markup import escape
 from rich.syntax import Syntax
 from rich.text import Text
 
@@ -158,8 +159,9 @@ class FunctionRunnable(QRunnable):
         self._input_queue: Queue = input_queue
 
     def check_for_input(self, patterns: Tuple):
-        self._check_for_input = True
-        self._input_patterns = [pattern.rstrip() for pattern in patterns]
+        if patterns is not None:
+            self._check_for_input = True
+            self._input_patterns = [pattern.rstrip() for pattern in patterns]
 
     def run_in_current_interpreter(self):
         # This runs the function within the current Python interpreter. This might be a security risk
@@ -352,19 +354,67 @@ class FunctionRunnableKernel(FunctionRunnable):
                     self.signals.error.emit(RuntimeError(f"Unknown io_msg_type: {io_msg_type}"))
 
             except queue.Empty:
+                # We fall through here when no output is received from the kernel. This can mean that the kernel
+                # is waiting for input and therefore this is a good opportunity to check for stdin messages.
                 with contextlib.suppress(queue.Empty):
                     in_msg = self.kernel.client.get_stdin_msg(timeout=0.1)
 
+                    # rich.print("in_msg = ", end='')
+                    # rich.print(in_msg)
+
                     if in_msg['msg_type'] == 'input_request':
                         prompt = in_msg['content']['prompt']
-                        if self._check_for_input and any(pattern in prompt for pattern in self._input_patterns):
-                            self.signals.data.emit(prompt)
-                            response = self.handle_input_request(prompt)
-                            self.kernel.client.input(response)
+                        response = self.handle_input_request(prompt)
+                        self.kernel.client.input(response)
 
         self.collect_response_payload(msg_id, timeout=1000)
 
         self.signals.finished.emit(self, self.func_name, True)
+
+    def handle_input_request(self, prompt: str = None) -> str:
+        """
+        This function is called when a stdin message is received from the kernel.
+
+        Args:
+            prompt: the text that was given as a prompt to the user
+
+        Returns:
+            A string that will be sent to the kernel as a reply.
+        """
+        if prompt:
+            if self._check_for_input and all(pattern not in prompt for pattern in self._input_patterns):
+                self.signals.data.emit(
+                    textwrap.dedent(
+                        f"""\
+                        [red][bold]ERROR: [/]The input request prompt message doesn't match any of the expected prompt messages.[/]
+                        [default]→ input prompt='{escape(prompt)}'[/]
+                        [default]→ expected=({", ".join(f"'{escape(x)}'" for x in self._input_patterns)})[/]
+                        
+                        [blue]Ask the developer of the task to match up the input request patterns and the prompt.[/]
+                        """
+                    )
+                )
+
+            self.signals.data.emit(escape(prompt))
+            self.signals.input.emit(prompt)
+
+            response = self._input_queue.get()
+            self._input_queue.task_done()
+            return response
+        else:
+            # The input() function had no prompt argument
+            self.signals.data.emit(
+                textwrap.dedent(
+                    f"""\
+                    [red][bold]ERROR: [/]No prompt was given to the input request function.[/]
+                    An input request was detected from the Jupyter kernel, but no message was given to describe the 
+                    request. Ask the developer of the task to pass a proper message to the input request.
+                    
+                    [blue]An empty string will be returned to the kernel.[/]
+                    """
+                )
+            )
+            return ''
 
     def collect_response_payload(self, msg_id, timeout: int):
         shell_msg = self.kernel.client.get_shell_msg(msg_id, timeout=timeout)
