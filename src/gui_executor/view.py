@@ -1159,6 +1159,26 @@ class View(QMainWindow):
         # make sure the user doesn't by accident quit the kernel
         self._kernel.run_snippet("del quit, exit")
 
+        # If there is a startup script, run it now
+        try:
+            startup = os.environ["PYTHONSTARTUP"]
+            self._console_panel.append(f"Loading Python startup file from {startup}.")
+            self._kernel.run_snippet(
+                textwrap.dedent("""\
+                    import os
+                    import runpy
+                    
+                    try:
+                        startup = os.environ["PYTHONSTARTUP"]
+                        runpy.run_path(path_name=startup)
+                    except KeyError:
+                        raise Warning("Couldn't load startup script, PYTHONSTARTUP not defined.")
+                    """
+                )
+            )
+        except KeyError:
+            self._console_panel.append("Couldn't load startup script, PYTHONSTARTUP not defined.")
+
         if self.cmd_log:
             self._console_panel.append(
                 f"Loading [blue]gui_executor.transforms[/] extension...log file in '{self.cmd_log}'")
