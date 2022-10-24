@@ -94,6 +94,7 @@ class MainWindow(QMainWindow):
                 canvas_box.addWidget(sc)
                 canvas_box.addWidget(toolbar)
                 hbox.addLayout(canvas_box)
+                fig.set_tight_layout(True)
 
             widget = QWidget()
             width = 960
