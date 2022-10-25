@@ -753,6 +753,7 @@ class ArgumentsPanel(QScrollArea):
                 }
             """)
         )
+        widget.setContentsMargins(0, 5, 0, 0)
 
         main_layout = QHBoxLayout()
 
@@ -849,10 +850,12 @@ class ArgumentsPanel(QScrollArea):
         button_group.addButton(self.script_rb, RUNNABLE_SCRIPT)
 
         self.run_button = QPushButton("run")
+        self.close_button = QPushButton("close")
         hbox.addWidget(self.kernel_rb)
         hbox.addWidget(self.app_rb)
         hbox.addWidget(self.script_rb)
         hbox.addStretch()
+        hbox.addWidget(self.close_button)
         hbox.addWidget(self.run_button)
 
         vbox.addStretch()
@@ -1287,6 +1290,7 @@ class View(QMainWindow):
                 args_panel.function, args_panel.args, args_panel.kwargs, args_panel.runnable
             )
         )
+        args_panel.close_button.clicked.connect(self.close_args_panel)
         args_panel.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
 
         if self._args_panel is None:
@@ -1306,6 +1310,12 @@ class View(QMainWindow):
         # after the Arguments panel appeared.
 
         self._buttons_panel.ensureWidgetVisible(button)
+
+    def close_args_panel(self):
+        self._args_panel.hide()
+        self._args_panel = None
+        if self.previous_selected_button is not None:
+            self.previous_selected_button.deselect()
 
     @pyqtSlot(object)
     def function_output(self, data: object):
