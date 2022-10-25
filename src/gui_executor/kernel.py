@@ -44,6 +44,9 @@ class MyKernel:
         self._client.stop_channels()
         self._kernel.shutdown_kernel(now=True)
 
+    def interrupt_kernel(self):
+        self._kernel.interrupt_kernel()
+
     @staticmethod
     def get_kernel_specs():
         return jupyter_client.kernelspec.find_kernel_specs()

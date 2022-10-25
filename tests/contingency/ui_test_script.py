@@ -40,9 +40,10 @@ def func_with_only_kwargs(*, a: str, b: int = 42, c):
 
 
 @exec_ui()
-def long_duration_func():
-    print("Sleeping for 10s..", flush=True)
-    time.sleep(10)
+def long_duration_func(duration: int = 10):
+    """This function will just sleep for the given duration [s]."""
+    print(f"Sleeping for {duration}s..", flush=True)
+    time.sleep(duration)
     return "Done"
 
 

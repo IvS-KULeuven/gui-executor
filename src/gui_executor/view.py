@@ -1119,6 +1119,16 @@ class View(QMainWindow):
         qtconsole_button.triggered.connect(self.start_qt_console)
         qtconsole_button.setCheckable(False)
         self._toolbar.addAction(qtconsole_button)
+
+        # Add a button to the toolbar to interrupt the kernel
+
+        interrupt_button = QAction(QIcon(str(HERE / "icons/traffic-light-red.svg")), "Interrupt the Jupyter Kernel", self)
+        interrupt_button.setStatusTip("Interrupt the Jupyter Kernel")
+        interrupt_button.triggered.connect(self.interrupt_kernel)
+        interrupt_button.setCheckable(False)
+        self._toolbar.addAction(interrupt_button)
+
+
         self.kernel_panel = KernelPanel(self.kernel_name)
         self._toolbar.addWidget(self.kernel_panel)
 
@@ -1159,6 +1169,26 @@ class View(QMainWindow):
         # make sure the user doesn't by accident quit the kernel
         self._kernel.run_snippet("del quit, exit")
 
+        # If there is a startup script, run it now
+        try:
+            startup = os.environ["PYTHONSTARTUP"]
+            self._console_panel.append(f"Loading Python startup file from {startup}.")
+            self._kernel.run_snippet(
+                textwrap.dedent("""\
+                    import os
+                    import runpy
+                    
+                    try:
+                        startup = os.environ["PYTHONSTARTUP"]
+                        runpy.run_path(path_name=startup)
+                    except KeyError:
+                        raise Warning("Couldn't load startup script, PYTHONSTARTUP not defined.")
+                    """
+                )
+            )
+        except KeyError:
+            self._console_panel.append("Couldn't load startup script, PYTHONSTARTUP not defined.")
+
         if self.cmd_log:
             self._console_panel.append(
                 f"Loading [blue]gui_executor.transforms[/] extension...log file in '{self.cmd_log}'")
@@ -1171,6 +1201,9 @@ class View(QMainWindow):
                     """
                 )
             )
+
+    def interrupt_kernel(self):
+        self._kernel.interrupt_kernel()
 
     def start_qt_console(self):
         if self._qt_console is not None and self._qt_console.is_running:
