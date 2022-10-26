@@ -17,7 +17,7 @@ def list_of_lists(
 
 @exec_ui(display_name="ListList with Defaults")
 def list_of_lists_with_defaults(
-        x_list: ListList([int, float, str], [42, 2.54, "Test data"])
+        x_list: ListList([int, float, str], [42, 2.54, "Test data"], name="list of lists")
 ):
     rich.print("x_list = ", x_list)
     return x_list
