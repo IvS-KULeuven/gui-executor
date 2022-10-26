@@ -49,16 +49,17 @@ class UQWidget(QWidget):
 
 
 class Callback(TypeObject):
-    def __init__(self, func: Callable, name: str = None):
+    def __init__(self, func: Callable, default: Callable = None, name: str = None):
         super().__init__(name=name)
         self.func = func
+        self.default_func = default
 
     def get_widget(self):
-        return CallbackWidget(self.func)
+        return CallbackWidget(self.func, self.default_func)
 
 
 class CallbackWidget(UQWidget):
-    def __init__(self, func: Callable):
+    def __init__(self, func: Callable, default_func: Callable):
         super().__init__()
 
         hbox = QHBoxLayout()
@@ -68,9 +69,13 @@ class CallbackWidget(UQWidget):
         self.func_rc = func()
 
         if isinstance(self.func_rc, (list, tuple)):
-            self.widget = combo_box_from_list(self.func_rc)
+            self.widget:QComboBox = combo_box_from_list(self.func_rc)
+            if default_func is not None:
+                self.widget.setCurrentText(str(default_func()))
         elif inspect.isclass(self.func_rc) and issubclass(self.func_rc, Enum):
-            self.widget = combo_box_from_enum(self.func_rc)
+            self.widget: QComboBox = combo_box_from_enum(self.func_rc)
+            if default_func is not None:
+                self.widget.setCurrentText(default_func().name)
         else:
             self.widget = QLineEdit()
             self.widget.setPlaceholderText(str(self.func_rc))

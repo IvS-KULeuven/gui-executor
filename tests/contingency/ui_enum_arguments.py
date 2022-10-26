@@ -33,7 +33,7 @@ class CSLSiteId(str, Enum):
 
 
 @exec_ui()
-def str_enum(csl_site: CSLSiteId = CSLSiteId.CSL, setup_id: int = 98):
+def str_enum(csl_site: CSLSiteId = CSLSiteId.CSL2, setup_id: int = 98):
     print(f"{csl_site=}, {setup_id=}")
 
 
@@ -43,7 +43,7 @@ def name_of(digit: Digit):
 
 
 @exec_ui()
-def value_of(digit: Digit):
+def value_of(digit: Digit = Digit.FIVE):
     print(f"{digit.name} = {digit.value}")
 
 

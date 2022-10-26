@@ -773,7 +773,9 @@ class ArgumentsPanel(QScrollArea):
             elif isinstance(arg.annotation, (TypeObject, Callback)):
                 input_field: QWidget = arg.annotation.get_widget()
             elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
-                input_field = combo_box_from_enum(arg.annotation)
+                input_field: QComboBox = combo_box_from_enum(arg.annotation)
+                if arg.default is not None:
+                    input_field.setCurrentText(arg.default.name)
             else:
                 input_field = QLineEdit()
                 input_field.setObjectName(name)
