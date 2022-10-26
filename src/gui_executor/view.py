@@ -89,6 +89,7 @@ from .kernel import MyKernel
 from .kernel import start_qtconsole
 from .utils import b64decode
 from .utils import capture
+from .utils import combo_box_from_enum
 from .utils import create_code_snippet
 from .utils import create_code_snippet_renderable
 from .utils import is_renderable
@@ -96,6 +97,7 @@ from .utils import select_directory
 from .utils import select_file
 from .utils import stringify_args
 from .utils import stringify_kwargs
+from .utypes import Callback
 from .utypes import TypeObject
 from .utypes import UQWidget
 
@@ -722,12 +724,6 @@ class DynamicButton(QWidget):
         return f"DynamicButton(\"{self.label}\", {self.function})"
 
 
-def combo_box_from_enum(enumeration: Enum):
-    cb = QComboBox()
-    cb.addItems([x.name for x in enumeration])
-    return cb
-
-
 class ArgumentsPanel(QScrollArea):
     def __init__(self, button: DynamicButton, ui_args: Dict[str, Argument]):
         super().__init__()
@@ -774,7 +770,7 @@ class ArgumentsPanel(QScrollArea):
             if arg.annotation is bool:
                 input_field = QCheckBox("")
                 input_field.setCheckState(Qt.Checked if arg.default else Qt.Unchecked)
-            elif isinstance(arg.annotation, TypeObject):
+            elif isinstance(arg.annotation, (TypeObject, Callback)):
                 input_field: QWidget = arg.annotation.get_widget()
             elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
                 input_field = combo_box_from_enum(arg.annotation)

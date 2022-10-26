@@ -3,7 +3,7 @@ from enum import IntEnum
 
 from gui_executor.exec import exec_ui
 
-UI_MODULE_DISPLAY_NAME = "01 Enum Arguments"
+UI_MODULE_DISPLAY_NAME = "Enum Arguments"
 
 
 class Digit(IntEnum):
