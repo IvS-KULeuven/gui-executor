@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import inspect
 import itertools
+from enum import Enum
 from functools import partial
 from pathlib import Path
 from typing import Callable
@@ -12,6 +14,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QLineEdit
@@ -19,6 +22,8 @@ from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 
 from .gui import IconLabel
+from .utils import combo_box_from_enum
+from .utils import combo_box_from_list
 
 HERE = Path(__file__).parent.resolve()
 
@@ -27,6 +32,55 @@ class TypeObject:
     @property
     def __name__(self):
         return self.__class__.__name__
+
+
+class UQWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+
+    def get_value(self):
+        raise NotImplementedError
+
+
+class Callback(TypeObject):
+    def __init__(self, func: Callable):
+        self.func = func
+
+    def get_widget(self):
+        return CallbackWidget(self.func)
+
+
+class CallbackWidget(UQWidget):
+    def __init__(self, func: Callable):
+        super().__init__()
+
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(0, 0, 0, 0)
+        hbox.setSpacing(0)
+
+        self.func_rc = func()
+
+        if isinstance(self.func_rc, (list, tuple)):
+            self.widget = combo_box_from_list(self.func_rc)
+        elif inspect.isclass(self.func_rc) and issubclass(self.func_rc, Enum):
+            self.widget = combo_box_from_enum(self.func_rc)
+        else:
+            self.widget = QLineEdit()
+            self.widget.setPlaceholderText(str(self.func_rc))
+
+        hbox.addWidget(self.widget)
+
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(hbox)
+
+    def get_value(self):
+        if not isinstance(self.widget, QComboBox):
+            return self.widget.displayText() or self.widget.placeholderText()
+
+        if isinstance(self.func_rc, (list, tuple)):
+            return self.func_rc[self.widget.currentIndex()]
+        else:
+            return self.func_rc[self.widget.currentText()]
 
 
 class ListList(TypeObject):
@@ -46,14 +100,6 @@ class ListList(TypeObject):
 
     def get_widget(self):
         return ListListWidget(self)
-
-
-class UQWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-
-    def get_value(self):
-        raise NotImplementedError
 
 
 class ListListWidget(UQWidget):

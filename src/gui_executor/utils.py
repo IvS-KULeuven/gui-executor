@@ -18,6 +18,7 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
+from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QFileDialog
 from rich import box
 from rich.panel import Panel
@@ -270,6 +271,18 @@ def select_file(filename: str = None, full_path: bool = True) -> str:
     filenames = dialog.selectedFiles() if dialog.exec() else None
 
     return filenames[0] if filenames is not None else ''
+
+
+def combo_box_from_enum(enumeration: Enum):
+    cb = QComboBox()
+    cb.addItems([x.name for x in enumeration])
+    return cb
+
+
+def combo_box_from_list(values: List):
+    cb = QComboBox()
+    cb.addItems(str(x) for x in values)
+    return cb
 
 
 def is_renderable(check_object: Any) -> bool:
