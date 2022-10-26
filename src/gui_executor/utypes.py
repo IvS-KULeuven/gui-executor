@@ -29,9 +29,15 @@ HERE = Path(__file__).parent.resolve()
 
 
 class TypeObject:
+    def __init__(self, name: str = None):
+        self.name = name
+
     @property
     def __name__(self):
-        return self.__class__.__name__
+        return self.name or self.__class__.__name__
+
+    def get_widget(self):
+        raise NotImplementedError
 
 
 class UQWidget(QWidget):
@@ -43,7 +49,8 @@ class UQWidget(QWidget):
 
 
 class Callback(TypeObject):
-    def __init__(self, func: Callable):
+    def __init__(self, func: Callable, name: str = None):
+        super().__init__(name=name)
         self.func = func
 
     def get_widget(self):
@@ -87,8 +94,8 @@ class ListList(TypeObject):
     """
     A TypeObject for a List of Lists.
     """
-    def __init__(self, literals: List[Union[str, Callable]], defaults: List = None):
-        super().__init__()
+    def __init__(self, literals: List[Union[str, Callable]], defaults: List = None, name: str = None):
+        super().__init__(name=name or "list of lists")
         self._literals = literals
         self._defaults = defaults or []
 

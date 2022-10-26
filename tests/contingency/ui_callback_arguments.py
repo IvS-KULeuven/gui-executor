@@ -34,15 +34,15 @@ def list_of_floats():
 
 
 @exec_ui()
-def random_callback(word: Callback(random_word)):
+def random_callback(word: Callback(random_word, name="str")):
     print(f"A random word: {word}")
 
 
 @exec_ui()
-def enum_callback(digit: Callback(int_enum)):
+def enum_callback(digit: Callback(int_enum, name="int")):
     print(f"You selected {digit}")
 
 
 @exec_ui()
-def list_callback(number: Callback(list_of_floats)):
+def list_callback(number: Callback(list_of_floats, name="float")):
     print(f"You selected {number}")
