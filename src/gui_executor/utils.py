@@ -273,13 +273,13 @@ def select_file(filename: str = None, full_path: bool = True) -> str:
     return filenames[0] if filenames is not None else ''
 
 
-def combo_box_from_enum(enumeration: Enum):
+def combo_box_from_enum(enumeration: Enum) -> QComboBox:
     cb = QComboBox()
     cb.addItems([x.name for x in enumeration])
     return cb
 
 
-def combo_box_from_list(values: List):
+def combo_box_from_list(values: List) -> QComboBox:
     cb = QComboBox()
     cb.addItems(str(x) for x in values)
     return cb

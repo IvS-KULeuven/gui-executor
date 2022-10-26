@@ -38,11 +38,19 @@ def random_callback(word: Callback(random_word, name="str")):
     print(f"A random word: {word}")
 
 
+def default_digit() -> Digit:
+    return Digit.EIGHT
+
+
 @exec_ui()
-def enum_callback(digit: Callback(int_enum, name="int")):
+def enum_callback(digit: Callback(int_enum, name="int", default=default_digit)):
     print(f"You selected {digit}")
 
 
+def default_float() -> float:
+    return 0.5
+
+
 @exec_ui()
-def list_callback(number: Callback(list_of_floats, name="float")):
+def list_callback(number: Callback(list_of_floats, name="float", default=default_float)):
     print(f"You selected {number}")
