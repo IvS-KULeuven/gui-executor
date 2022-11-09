@@ -1106,7 +1106,7 @@ class View(QMainWindow):
         self._toolbar.setIconSize(QSize(40, 40))
         self.addToolBar(self._toolbar)
 
-        self._status_bar_fixed_widget = QLabel("Hexapod ID = 1A")
+        self._status_bar_fixed_widget = QLabel("")
         self._status_bar = self.statusBar()
         self._status_bar.addPermanentWidget(self._status_bar_fixed_widget)
 
