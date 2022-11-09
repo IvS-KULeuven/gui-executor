@@ -80,6 +80,7 @@ from . import RUNNABLE_KERNEL
 from . import RUNNABLE_SCRIPT
 from .exec import Argument
 from .exec import ArgumentKind
+from .exec import StatusType
 from .exec import Directory
 from .exec import FileName
 from .exec import FilePath
@@ -1105,6 +1106,10 @@ class View(QMainWindow):
         self._toolbar.setIconSize(QSize(40, 40))
         self.addToolBar(self._toolbar)
 
+        self._status_bar_fixed_widget = QLabel("Hexapod ID = 1A")
+        self._status_bar = self.statusBar()
+        self._status_bar.addPermanentWidget(self._status_bar_fixed_widget)
+
         # Add a button to the toolbar to restart the kernel
 
         kernel_button = QAction(QIcon(str(HERE / "icons/reload-kernel.svg")), "Restart the Jupyter kernel", self)
@@ -1129,14 +1134,28 @@ class View(QMainWindow):
         interrupt_button.setCheckable(False)
         self._toolbar.addAction(interrupt_button)
 
-
         self.kernel_panel = KernelPanel(self.kernel_name)
         self._toolbar.addWidget(self.kernel_panel)
+
+        self._recurring_tasks = []
+
+        self._timer = QTimer()
+        self._timer.setInterval(1000)  # This interval shall be in the settings
+        self._timer.timeout.connect(self.run_recurring_tasks)
+        self._timer.start()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._kernel:
             self._kernel.shutdown()
         event.accept()
+
+    def run_recurring_tasks(self):
+        for func in self._recurring_tasks:
+            response = func()
+            if func.__ui_status_type__ == StatusType.NORMAL:
+                self._status_bar.showMessage(response)
+            else:
+                self._status_bar_fixed_widget.setText(response)
 
     def start_kernel(self, force: bool = False) -> MyKernel:
 
@@ -1256,6 +1275,9 @@ class View(QMainWindow):
 
         self._buttons.append(button)
         self._buttons_panel.add_button(button)
+
+    def add_recurring_function(self, func: Callable):
+        self._recurring_tasks.append(func)
 
     def the_button_was_clicked(self, button: DynamicButton, *args, **kwargs):
 

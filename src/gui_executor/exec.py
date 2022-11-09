@@ -45,6 +45,8 @@ Directory = TypeVar('Directory', bound=Path)
 class Kind(IntEnum):
     BUTTON = 0b00000001
     """Identifies a function to be called after a clicked event on a button in the GUI."""
+    RECURRING = 0b00000010
+    """Identifies a function to be called recurrently with a timer from the GUI."""
 
 
 class ArgumentKind(IntEnum):
@@ -55,12 +57,38 @@ class ArgumentKind(IntEnum):
     VAR_KEYWORD = 4
 
 
+class StatusType(IntEnum):
+    PERMANENT = 1
+    """Use the permanent widget to show the message in the status bar."""
+    NORMAL = 2
+    """Use the """
+
 class Argument:
     def __init__(self, name: str, kind: int, annotation: Any, default: Any):
         self.name = name
         self.kind: ArgumentKind = ArgumentKind(kind)
         self.annotation = annotation
         self.default = default
+
+
+def exec_recurring_task(
+        kind: Kind = Kind.RECURRING,
+        status_type: StatusType = None,
+):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # you can put extra code to be run here, based on the arguments to exec_ui
+            response = func(*args, **kwargs)
+            # or here
+            return response
+
+        wrapper.__ui_kind__ = kind
+        wrapper.__ui_status_type__ = status_type
+
+        return wrapper
+
+    return decorator
 
 
 def exec_ui(
@@ -122,6 +150,9 @@ def exec_ui(
     return decorator
 
 
+exec_task = exec_ui
+
+
 def find_ui_button_functions(module_path: str) -> Dict[str, Callable]:
     """
     Returns a dictionary with function names as keys and the callable function as their value.
@@ -134,6 +165,21 @@ def find_ui_button_functions(module_path: str) -> Dict[str, Callable]:
     return find_ui_functions(
         module_path,
         lambda x: x.__ui_kind__ & Kind.BUTTON
+    )
+
+
+def find_ui_recurring_functions(module_path: str) -> Dict[str, Callable]:
+    """
+    Returns a dictionary with function names as keys and the callable function as their value.
+    The functions are intended to be used as recurring callables, i.e. the GUI will call these
+    functions from a QTimer when the timer times out.
+
+    Args:
+        module_path: string containing a fully qualified module name
+    """
+    return find_ui_functions(
+        module_path,
+        lambda x: x.__ui_kind__ & Kind.RECURRING
     )
 
 

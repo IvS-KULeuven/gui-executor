@@ -6,6 +6,7 @@ from typing import Dict
 
 from .exec import find_modules
 from .exec import find_ui_button_functions
+from .exec import find_ui_recurring_functions
 
 
 class Model:
@@ -17,6 +18,9 @@ class Model:
 
     def get_ui_buttons_functions(self, mod: str) -> Dict[str, Callable]:
         return find_ui_button_functions(mod)
+
+    def get_ui_recurring_functions(self, mod: str) -> Dict[str, Callable]:
+        return find_ui_recurring_functions(mod)
 
     def get_ui_modules(self) -> Dict[str, Any]:
         response = {}

@@ -4,7 +4,7 @@ from enum import IntEnum
 from gui_executor.exec import exec_ui
 from gui_executor.utypes import Callback
 
-UI_MODULE_DISPLAY_NAME = "01 — Callback Arguments"
+UI_MODULE_DISPLAY_NAME = "Callback Arguments"
 
 
 class Digit(IntEnum):

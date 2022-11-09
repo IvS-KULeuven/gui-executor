@@ -24,6 +24,12 @@ class Control:
                 for name, func in sorted(funcs.items(), key=lambda x: x[1].__wrapped__.__code__.co_firstlineno):
                     # print(f"{func.__name__} -> {func.__wrapped__.__code__.co_firstlineno = }")
                     self._view.add_function_button(func)
+
+                recurring_funcs = self._model.get_ui_recurring_functions(mod)
+
+                for name, func in sorted(recurring_funcs.items(), key=lambda x: x[1].__wrapped__.__code__.co_firstlineno):
+                    self._view.add_recurring_function(func)
+
             except ModuleNotFoundError as exc:
                 rich.print(f"[red]{exc.__class__.__name__}: {exc}[/]")
                 rich.print(f"Skipping '{mod}'...")
