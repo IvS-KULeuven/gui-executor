@@ -4,6 +4,7 @@ import ast
 import contextlib
 import errno
 import fcntl
+import importlib
 import inspect
 import os
 import queue
@@ -1281,6 +1282,10 @@ class View(QMainWindow):
         self.function_complete(func.__name__, True)
 
     def create_button_panels(self) -> Dict:
+        module_path = self._model.module_path
+
+        mod = importlib.import_module(module_path)
+        tab_order: List = getattr(mod, "UI_TAB_ORDER", None)
 
         buttons_panels = {}
 
@@ -1288,11 +1293,18 @@ class View(QMainWindow):
         # FunctionButtonsPanel which will be called "Main".
 
         panel = FunctionButtonsPanel()
-        if self.add_buttons_to_panel(panel, module_path=self._model.module_path):
+        if self.add_buttons_to_panel(panel, module_path=module_path):
             buttons_panels["Main"] = panel
 
         if subpackages := self._model.get_ui_subpackages():
-            for name, (display_name, _) in sorted(subpackages.items(), key=lambda x: x[1][0]):
+            if tab_order is None:
+                # Here we sort in display_name
+                sorted_subpackages = sorted(subpackages.items(), key=lambda x: x[1][0])
+            else:
+                # sorted_subpackages = sorted(subpackages.items(), key=lambda x: tab_order.index(x[0]))
+                # This way seems to be faster: see https://stackoverflow.com/a/21773891/4609203
+                sorted_subpackages = [(name, subpackages[name]) for name in tab_order if name in subpackages]
+            for name, (display_name, _) in sorted_subpackages:
                 panel = FunctionButtonsPanel()
                 self.add_buttons_to_panel(panel, module_path=f"{self._model.module_path}.{name}")
                 buttons_panels[display_name] = panel
