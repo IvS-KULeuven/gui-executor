@@ -1292,10 +1292,10 @@ class View(QMainWindow):
             buttons_panels["Main"] = panel
 
         if subpackages := self._model.get_ui_subpackages():
-            for name, subpackage in subpackages.items():
+            for name, (display_name, _) in sorted(subpackages.items(), key=lambda x: x[1][0]):
                 panel = FunctionButtonsPanel()
                 self.add_buttons_to_panel(panel, module_path=f"{self._model.module_path}.{name}")
-                buttons_panels[name] = panel
+                buttons_panels[display_name] = panel
 
         return buttons_panels
 
