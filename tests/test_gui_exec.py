@@ -56,6 +56,18 @@ def test_find_modules():
     assert mod.__name__ == "contingency.ui_test_script"
 
 
+def test_find_sub_modules():
+
+    print()
+
+    assert has_sub_modules("tasks") is True
+
+    with sys_path(HERE):
+        tasks = find_modules("tasks")
+
+    print(tasks)
+
+
 def test_ui_script():
 
     with sys_path(HERE):  # make sure Python knows where to look for the module

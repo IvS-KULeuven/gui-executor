@@ -203,6 +203,22 @@ def find_ui_functions(module_path: str, predicate: Callable = None) -> Dict[str,
     }
 
 
+def find_subpackages(module_path: str) -> Dict[str, Path]:
+    """
+    Finds Python sub-packages in the given module path. A sub-package is a folder below the location of the
+    module_path's location and shall contain an '__init__.py' file.
+
+    Args:
+        module_path: the module path where the Python modules and scripts are located
+
+    Returns:
+        A dictionary with the subpackage names as keys and their paths as values.
+    """
+    location = get_module_location(module_path)
+
+    return {item.name: item for item in location.iterdir() if item.is_dir() and (item / "__init__.py").exists()}
+
+
 def find_modules(module_path: str) -> Dict[str, Any]:
     """
     Finds Python modules and scripts in the given module path (non recursively). The modules will not be
@@ -215,6 +231,17 @@ def find_modules(module_path: str) -> Dict[str, Any]:
     Returns:
         A dictionary with module names as keys and their paths as values.
     """
+    location = get_module_location(module_path)
+
+    return {
+        item.stem: f"{module_path}.{item.stem}"
+        for item in location.glob("*.py")
+        if item.name not in ["__init__.py"]
+    }
+
+
+def get_module_location(module_path: str) -> Path:
+
     mod = importlib.import_module(module_path)
 
     if hasattr(mod, "__path__") and getattr(mod, "__file__", None) is None:
@@ -234,11 +261,7 @@ def find_modules(module_path: str) -> Dict[str, Any]:
     if not location.is_dir():
         raise ValueError(f"Expected a folder, instead got {str(location)}")
 
-    return {
-        item.stem: f"{module_path}.{item.stem}"
-        for item in location.glob("*.py")
-        if item.name not in ["__init__.py"]
-    }
+    return location
 
 
 def get_script_module(script_location: str, exec_module: bool = True) -> Dict[str, Any]:
