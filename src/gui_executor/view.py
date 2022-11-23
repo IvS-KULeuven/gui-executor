@@ -1206,18 +1206,15 @@ class View(QMainWindow):
         self._timer.timeout.connect(self.run_recurring_tasks)
         self._timer.start()
 
-        atexit.register(self.cleanup_at_exit)
-
     def closeEvent(self, event: QCloseEvent) -> None:
-        event.accept()
-
-    def cleanup_at_exit(self):
         if self._kernel:
             print("Shutting down Jupyter kernel.")
             self._kernel.shutdown()
 
+        event.accept()
+
         print("Waiting for recurring tasks to end.", end='', flush=True)
-        while not self.threadpool.waitForDone(1000):
+        while not self.threadpool.waitForDone(100):
             print(".", end='', flush=True)
         print(flush=True)
 
