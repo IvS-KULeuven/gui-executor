@@ -3,6 +3,7 @@ from __future__ import annotations
 import binascii
 import contextlib
 import datetime
+import functools
 import inspect
 import logging
 import os
@@ -19,6 +20,7 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
+import rich
 from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QFileDialog
 from rich import box
@@ -510,3 +512,25 @@ def read_id(file_path: Path) -> str:
     except FileNotFoundError:
         id_ = ''
     return id_ or ''
+
+
+def timer(*, precision: int = 4):
+    """
+    Print the runtime of the decorated function.
+
+    Args:
+        precision: the number of decimals for the time [default=3 (ms)]
+    """
+
+    def actual_decorator(func):
+        @functools.wraps(func)
+        def wrapper_timer(*args, **kwargs):
+            start_time = time.perf_counter()
+            value = func(*args, **kwargs)
+            end_time = time.perf_counter()
+            run_time = end_time - start_time
+            print(f"Finished {func.__name__!r} in {run_time:.{precision}f} secs")
+            return value
+
+        return wrapper_timer
+    return actual_decorator

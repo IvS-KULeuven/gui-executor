@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import atexit
 import contextlib
 import errno
 import fcntl
@@ -12,6 +13,7 @@ import select
 import sys
 import tempfile
 import textwrap
+import traceback
 from enum import Enum
 from functools import partial
 from pathlib import Path
@@ -101,6 +103,7 @@ from .utils import select_directory
 from .utils import select_file
 from .utils import stringify_args
 from .utils import stringify_kwargs
+from .utils import timer
 from .utypes import Callback
 from .utypes import TypeObject
 from .utypes import UQWidget
@@ -125,6 +128,49 @@ class HLine(QFrame):
         self.setLineWidth(0)
         self.setMidLineWidth(1)
         self.setFrameShape(QFrame.HLine | QFrame.Sunken)
+
+
+class RecurringTaskSignals(QObject):
+    """
+    Defines the signals available from a running recurring task thread.
+
+    Supported signals are:
+
+        finished
+            No data
+
+        error
+            tuple (exc_type, value, traceback.format_exc() )
+
+        result
+            object data returned from processing, anything
+
+    """
+    result = pyqtSignal(object)
+    finished = pyqtSignal()
+    error = pyqtSignal(tuple)
+
+
+class RecurringTask(QRunnable):
+    def __init__(self, func: Callable, *args, **kwargs):
+        super().__init__()
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+        self.signals = RecurringTaskSignals()
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            result = self._func(*self._args, **self._kwargs)
+        except (Exception, ):
+            traceback.print_exc()
+            exc_type, value = sys.exc_info()[:2]
+            self.signals.error.emit((exc_type, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()  # Done
 
 
 class FunctionThreadSignals(QObject):
@@ -1152,23 +1198,50 @@ class View(QMainWindow):
         self.kernel_panel = KernelPanel(self.kernel_name)
         self._toolbar.addWidget(self.kernel_panel)
 
+        self.threadpool = QThreadPool()
+        # print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+
         self._timer = QTimer()
         self._timer.setInterval(1000)  # This interval shall be in the settings
         self._timer.timeout.connect(self.run_recurring_tasks)
         self._timer.start()
 
+        atexit.register(self.cleanup_at_exit)
+
     def closeEvent(self, event: QCloseEvent) -> None:
-        if self._kernel:
-            self._kernel.shutdown()
         event.accept()
+
+    def cleanup_at_exit(self):
+        if self._kernel:
+            print("Shutting down Jupyter kernel.")
+            self._kernel.shutdown()
+
+        print("Waiting for recurring tasks to end.", end='', flush=True)
+        while not self.threadpool.waitForDone(1000):
+            print(".", end='', flush=True)
+        print(flush=True)
+
+    def start_recurring_task(self, task: Callable):
+        # Pass the function to execute
+        worker = RecurringTask(task)  # Any other args, kwargs are passed to the run function
+        worker.signals.result.connect(partial(self.update_status, task))
+        worker.signals.finished.connect(self.end_recurring_task)
+
+        # Execute
+        self.threadpool.start(worker)
+
+    def end_recurring_task(self):
+        pass
 
     def run_recurring_tasks(self):
         for func in self._recurring_tasks:
-            response = func()
-            if func.__ui_status_type__ == StatusType.NORMAL:
-                self._status_bar.showMessage(response)
-            else:
-                self._status_bar_fixed_widget.setText(response)
+            self.start_recurring_task(func)
+
+    def update_status(self, func: Callable, msg: str):
+        if func.__ui_status_type__ == StatusType.NORMAL:
+            self._status_bar.showMessage(msg)
+        else:
+            self._status_bar_fixed_widget.setText(msg)
 
     def start_kernel(self, force: bool = False) -> MyKernel:
 
