@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import binascii
 import contextlib
+import datetime
+import functools
 import inspect
 import logging
 import os
@@ -18,6 +20,7 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
+import rich
 from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QFileDialog
 from rich import box
@@ -410,3 +413,124 @@ def print_system_info():
     rich.print(f"distro: {distro.name()}, {distro.version(pretty=True)}")
     rich.print("sys.executable = ", sys.executable)
     rich.print("sys.path = ", sys.path)
+
+
+def format_datetime(dt: str | datetime.datetime = None, fmt: str = None, width: int = 6, precision: int = 3):
+    """Format a datetime as YYYY-mm-ddTHH:MM:SS.μs+0000.
+
+    If the given argument is not timezone aware, the last part, i.e. `+0000` will not be there.
+
+    If no argument is given, the timestamp is generated as
+    `datetime.datetime.now(tz=datetime.timezone.utc)`.
+
+    The `dt` argument can also be a string with the following values: today, yesterday, tomorrow,
+    and 'day before yesterday'. The format will then be '%Y%m%d' unless specified.
+
+    Optionally, a format string can be passed in to customize the formatting of the timestamp.
+    This format string will be used with the `strftime()` method and should obey those conventions.
+
+    Example:
+        >>> format_datetime(datetime.datetime(2020, 6, 13, 14, 45, 45, 696138))
+        '2020-06-13T14:45:45.696'
+        >>> format_datetime(datetime.datetime(2020, 6, 13, 14, 45, 45, 696138), precision=6)
+        '2020-06-13T14:45:45.696138'
+        >>> format_datetime(datetime.datetime(2020, 6, 13, 14, 45, 59, 999501), precision=3)
+        '2020-06-13T14:45:59.999'
+        >>> format_datetime(datetime.datetime(2020, 6, 13, 14, 45, 59, 999501), precision=6)
+        '2020-06-13T14:45:59.999501'
+        >>> _ = format_datetime()
+        ...
+        >>> format_datetime("yesterday")
+        '20220214'
+        >>> format_datetime("yesterday", fmt="%d/%m/%Y")
+        '14/02/2022'
+
+    Args:
+        dt (datetime): a datetime object or an agreed string like yesterday, tomorrow, ...
+        fmt (str): a format string that is accepted by `strftime()`
+        width (int): the width to use for formatting the microseconds
+        precision (int): the precision for the microseconds
+    Returns:
+        a string representation of the current time in UTC, e.g. `2020-04-29T12:30:04.862+0000`.
+
+    Raises:
+        A ValueError will be raised when the given dt argument string is not understood.
+    """
+    dt = dt or datetime.datetime.now(tz=datetime.timezone.utc)
+    if isinstance(dt, str):
+        fmt = fmt or "%Y%m%d"
+        if dt.lower() == "yesterday":
+            dt = datetime.date.today() - datetime.timedelta(days=1)
+        elif dt.lower() == "today":
+            dt = datetime.date.today()
+        elif dt.lower() == "day before yesterday":
+            dt = datetime.date.today() - datetime.timedelta(days=2)
+        elif dt.lower() == "tomorrow":
+            dt = datetime.date.today() + datetime.timedelta(days=1)
+        else:
+            raise ValueError(f"Unknown date passed as an argument: {dt}")
+
+    if fmt:
+        timestamp = dt.strftime(fmt)
+    else:
+        width = min(width, precision)
+        timestamp = (
+            f"{dt.strftime('%Y-%m-%dT%H:%M')}:"
+            f"{dt.second:02d}.{dt.microsecond//10**(6-precision):0{width}d}{dt.strftime('%z')}"
+        )
+
+    return timestamp
+
+
+def write_id(id_: str, file_path: Path):
+    """
+    Overwrites the given identifier in the given file. The file contains nothing else then the identifier.
+    If the file didn't exist before, it will be created.
+
+    Args:
+        id_: the identifier to save
+        file_path: the file to which the identifier shall be saved
+    """
+    with file_path.open('w') as fd:
+        fd.write(f"{id_}")
+
+
+def read_id(file_path: Path) -> str:
+    """
+    Reads an identifier from the given file. The file shall only contain the identifier which must
+    be an str on the first line of the file. If the given file doesn't exist, an empty is returned.
+
+    Args:
+        file_path: the full path of the file containing the identifier
+
+    Returns:
+        The identifier that is read from the file or '' if file doesn't exist.
+    """
+    try:
+        with file_path.open('r') as fd:
+            id_ = fd.read().strip()
+    except FileNotFoundError:
+        id_ = ''
+    return id_ or ''
+
+
+def timer(*, precision: int = 4):
+    """
+    Print the runtime of the decorated function.
+
+    Args:
+        precision: the number of decimals for the time [default=3 (ms)]
+    """
+
+    def actual_decorator(func):
+        @functools.wraps(func)
+        def wrapper_timer(*args, **kwargs):
+            start_time = time.perf_counter()
+            value = func(*args, **kwargs)
+            end_time = time.perf_counter()
+            run_time = end_time - start_time
+            print(f"Finished {func.__name__!r} in {run_time:.{precision}f} secs")
+            return value
+
+        return wrapper_timer
+    return actual_decorator

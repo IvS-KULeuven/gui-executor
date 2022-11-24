@@ -9,7 +9,6 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from gui_executor.utils import print_system_info
 from .config import load_config
-from .control import Control
 from .model import Model
 from .view import View
 
@@ -87,9 +86,10 @@ def main():
 
     if not single or lock_file.tryLock(100):
 
-        view = View(args.app_name or "GUI Executor", cmd_log=args.cmd_log, verbosity=verbosity, kernel_name=kernel_name)
         model = Model(args.module_path)
-        Control(view, model)
+        view = View(model,
+                    app_name=args.app_name or "GUI Executor",
+                    cmd_log=args.cmd_log, verbosity=verbosity, kernel_name=kernel_name)
 
         view.show()
 

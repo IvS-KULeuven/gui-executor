@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import ast
+import atexit
 import contextlib
 import errno
 import fcntl
+import importlib
 import inspect
 import os
 import queue
@@ -11,6 +13,7 @@ import select
 import sys
 import tempfile
 import textwrap
+import traceback
 from enum import Enum
 from functools import partial
 from pathlib import Path
@@ -63,6 +66,7 @@ from PyQt5.QtWidgets import QRadioButton
 from PyQt5.QtWidgets import QScrollArea
 from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QSplitter
+from PyQt5.QtWidgets import QTabWidget
 from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtWidgets import QToolBar
 from PyQt5.QtWidgets import QVBoxLayout
@@ -80,6 +84,7 @@ from . import RUNNABLE_KERNEL
 from . import RUNNABLE_SCRIPT
 from .exec import Argument
 from .exec import ArgumentKind
+from .exec import StatusType
 from .exec import Directory
 from .exec import FileName
 from .exec import FilePath
@@ -87,6 +92,7 @@ from .exec import get_arguments
 from .gui import IconLabel
 from .kernel import MyKernel
 from .kernel import start_qtconsole
+from .model import Model
 from .utils import b64decode
 from .utils import capture
 from .utils import combo_box_from_enum
@@ -97,6 +103,7 @@ from .utils import select_directory
 from .utils import select_file
 from .utils import stringify_args
 from .utils import stringify_kwargs
+from .utils import timer
 from .utypes import Callback
 from .utypes import TypeObject
 from .utypes import UQWidget
@@ -121,6 +128,49 @@ class HLine(QFrame):
         self.setLineWidth(0)
         self.setMidLineWidth(1)
         self.setFrameShape(QFrame.HLine | QFrame.Sunken)
+
+
+class RecurringTaskSignals(QObject):
+    """
+    Defines the signals available from a running recurring task thread.
+
+    Supported signals are:
+
+        finished
+            No data
+
+        error
+            tuple (exc_type, value, traceback.format_exc() )
+
+        result
+            object data returned from processing, anything
+
+    """
+    result = pyqtSignal(object)
+    finished = pyqtSignal()
+    error = pyqtSignal(tuple)
+
+
+class RecurringTask(QRunnable):
+    def __init__(self, func: Callable, *args, **kwargs):
+        super().__init__()
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+        self.signals = RecurringTaskSignals()
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            result = self._func(*self._args, **self._kwargs)
+        except (Exception, ):
+            traceback.print_exc()
+            exc_type, value = sys.exc_info()[:2]
+            self.signals.error.emit((exc_type, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()  # Done
 
 
 class FunctionThreadSignals(QObject):
@@ -1032,12 +1082,13 @@ class KernelPanel(QWidget):
 
 
 class View(QMainWindow):
-    def __init__(self, app_name: str = None, cmd_log: str = None, verbosity: int = 0, kernel_name: str = "python3"):
+    def __init__(self, model: Model, app_name: str = None, cmd_log: str = None, verbosity: int = 0, kernel_name: str = "python3"):
         super().__init__()
+
+        self._model = model
 
         self._qt_console: Optional[ExternalCommand] = None
         self._kernel: Optional[MyKernel] = None
-        self._buttons = []
         self.input_queue: Queue = Queue()
         self.previous_selected_button: Optional[DynamicButton] = None
         self.verbosity = verbosity
@@ -1052,6 +1103,7 @@ class View(QMainWindow):
         # Keep a record of the GUI Apps, because if their reference is garbage collected they will crash
 
         self._gui_apps = []
+        self._recurring_tasks = []
 
         self.setWindowTitle(app_name or "GUI Executor")
 
@@ -1081,11 +1133,21 @@ class View(QMainWindow):
         self._splitter = QSplitter(Qt.Vertical)
         self._splitter.setChildrenCollapsible(False)
 
-        self._buttons_panel = FunctionButtonsPanel()
+        self._buttons_panels = self.create_button_panels()
+
         self._args_panel: QWidget = None
         self._console_panel = ConsoleOutput()
 
-        self._splitter.addWidget(self._buttons_panel)
+        if len(self._buttons_panels) == 1:
+            self._buttons_widget = self._buttons_panels["Main"]
+        else:
+            self._buttons_widget = QTabWidget()
+            for name, widget in self._buttons_panels.items():
+                self._buttons_widget.addTab(widget, name)
+            self._buttons_widget.setCurrentIndex(0)
+            self._buttons_widget.currentChanged.connect(self.close_args_panel)
+
+        self._splitter.addWidget(self._buttons_widget)
         # we do not yet add the args_panel -> see 'the_button_was_clicked()'
         self._splitter.addWidget(self._console_panel)
 
@@ -1104,6 +1166,10 @@ class View(QMainWindow):
         self._toolbar = QToolBar()
         self._toolbar.setIconSize(QSize(40, 40))
         self.addToolBar(self._toolbar)
+
+        self._status_bar_fixed_widget = QLabel("")
+        self._status_bar = self.statusBar()
+        self._status_bar.addPermanentWidget(self._status_bar_fixed_widget)
 
         # Add a button to the toolbar to restart the kernel
 
@@ -1129,14 +1195,50 @@ class View(QMainWindow):
         interrupt_button.setCheckable(False)
         self._toolbar.addAction(interrupt_button)
 
-
         self.kernel_panel = KernelPanel(self.kernel_name)
         self._toolbar.addWidget(self.kernel_panel)
 
+        self.threadpool = QThreadPool()
+        # print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+
+        self._timer = QTimer()
+        self._timer.setInterval(1000)  # This interval shall be in the settings
+        self._timer.timeout.connect(self.run_recurring_tasks)
+        self._timer.start()
+
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._kernel:
+            print("Shutting down Jupyter kernel.")
             self._kernel.shutdown()
+
         event.accept()
+
+        print("Waiting for recurring tasks to end.", end='', flush=True)
+        while not self.threadpool.waitForDone(100):
+            print(".", end='', flush=True)
+        print(flush=True)
+
+    def start_recurring_task(self, task: Callable):
+        # Pass the function to execute
+        worker = RecurringTask(task)  # Any other args, kwargs are passed to the run function
+        worker.signals.result.connect(partial(self.update_status, task))
+        worker.signals.finished.connect(self.end_recurring_task)
+
+        # Execute
+        self.threadpool.start(worker)
+
+    def end_recurring_task(self):
+        pass
+
+    def run_recurring_tasks(self):
+        for func in self._recurring_tasks:
+            self.start_recurring_task(func)
+
+    def update_status(self, func: Callable, msg: str):
+        if func.__ui_status_type__ == StatusType.NORMAL:
+            self._status_bar.showMessage(msg)
+        else:
+            self._status_bar_fixed_widget.setText(msg)
 
     def start_kernel(self, force: bool = False) -> MyKernel:
 
@@ -1249,15 +1351,81 @@ class View(QMainWindow):
 
         self.function_complete(func.__name__, True)
 
-    def add_function_button(self, func: Callable):
+    def create_button_panels(self) -> Dict:
+        module_path = self._model.module_path
 
-        button = DynamicButton(func.__name__, func)
-        button.mouseReleaseEvent = partial(self.the_button_was_clicked, button)
+        mod = importlib.import_module(module_path)
+        tab_order: List = getattr(mod, "UI_TAB_ORDER", None)
 
-        self._buttons.append(button)
-        self._buttons_panel.add_button(button)
+        buttons_panels = {}
 
-    def the_button_was_clicked(self, button: DynamicButton, *args, **kwargs):
+        # If we do not have sub packages, we will not create tabs, and we also only need one
+        # FunctionButtonsPanel which will be called "Main".
+
+        panel = FunctionButtonsPanel()
+        if self.add_buttons_to_panel(panel, module_path=module_path):
+            buttons_panels["Main"] = panel
+
+        if subpackages := self._model.get_ui_subpackages():
+            if tab_order is None:
+                # Here we sort in display_name
+                sorted_subpackages = sorted(subpackages.items(), key=lambda x: x[1][0])
+            else:
+                # sorted_subpackages = sorted(subpackages.items(), key=lambda x: tab_order.index(x[0]))
+                # This way seems to be faster: see https://stackoverflow.com/a/21773891/4609203
+                sorted_subpackages = [(name, subpackages[name]) for name in tab_order if name in subpackages]
+            for name, (display_name, _) in sorted_subpackages:
+                panel = FunctionButtonsPanel()
+                self.add_buttons_to_panel(panel, module_path=f"{self._model.module_path}.{name}")
+                buttons_panels[display_name] = panel
+
+        return buttons_panels
+
+    def add_buttons_to_panel(self, panel: FunctionButtonsPanel, module_path: str = None) -> int:
+        """
+
+        Args:
+            panel:
+            module_path:
+
+        Returns:
+            The number of buttons added.
+        """
+        modules = self._model.get_ui_modules(module_path=module_path)
+        number_of_buttons = 0
+
+        for _, mod in sorted(modules.values()):
+            try:
+                funcs = self._model.get_ui_buttons_functions(mod)
+
+                # Our functions are all decorated functions, decorated with the @exec_ui or @exec_task.
+                # Since we have used functools.wraps(), all our functions have the attribute __wrapped__
+                # which points to the original function. What we need is the first line of the function
+                # in the module file, because we want the functions to be sorted in the order they appear
+                # in the source code file and not alphabetically.
+
+                for name, func in sorted(funcs.items(), key=lambda x: x[1].__wrapped__.__code__.co_firstlineno):
+                    # print(f"{func.__name__} -> {func.__wrapped__.__code__.co_firstlineno = }")
+                    button = DynamicButton(func.__name__, func)
+                    button.mouseReleaseEvent = partial(self.the_button_was_clicked, button, panel)
+                    panel.add_button(button)
+                    number_of_buttons += 1
+
+                recurring_funcs = self._model.get_ui_recurring_functions(mod)
+
+                for name, func in sorted(recurring_funcs.items(), key=lambda x: x[1].__wrapped__.__code__.co_firstlineno):
+                    self.add_recurring_function(func)
+
+            except ModuleNotFoundError as exc:
+                rich.print(f"[red]{exc.__class__.__name__}: {exc}[/]")
+                rich.print(f"Skipping '{mod}'...")
+
+        return number_of_buttons
+
+    def add_recurring_function(self, func: Callable):
+        self._recurring_tasks.append(func)
+
+    def the_button_was_clicked(self, button: DynamicButton, panel, *args, **kwargs):
 
         if button.immediate_run():
             self.run_function(button.function, [], {}, button.function.__ui_runnable__)
@@ -1307,11 +1475,12 @@ class View(QMainWindow):
         # This scrolls the buttons panel to make the selected button is still visible
         # after the Arguments panel appeared.
 
-        self._buttons_panel.ensureWidgetVisible(button)
+        panel.ensureWidgetVisible(button)
 
     def close_args_panel(self):
-        self._args_panel.hide()
-        self._args_panel = None
+        if self._args_panel is not None:
+            self._args_panel.hide()
+            self._args_panel = None
         if self.previous_selected_button is not None:
             self.previous_selected_button.deselect()
 
