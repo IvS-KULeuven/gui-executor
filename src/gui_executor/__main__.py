@@ -53,7 +53,7 @@ def main():
 
     verbosity = 0 if args.verbose is None else args.verbose
     kernel_name = args.kernel_name or "python3"
-    module_path = args.module_path
+    module_path_list = args.module_path
 
     single = 1 if args.single is None else args.single
     lock_file = QLockFile(str(Path(f"~/{args.app_name or 'GUI executor'}.app.lock").expanduser())) if single else None
@@ -71,7 +71,7 @@ def main():
     # We have only implemented the --module-path option for now
 
     if args.module_path is None:
-        print("You need to provide the --module-path option.")
+        print("You need to provide at least one --module-path option.")
         parser.print_help()
         return
 
@@ -87,7 +87,7 @@ def main():
 
     if not single or lock_file.tryLock(100):
 
-        model = Model(module_path)
+        model = Model(module_path_list)
         view = View(model,
                     app_name=args.app_name or "GUI Executor",
                     cmd_log=args.cmd_log, verbosity=verbosity, kernel_name=kernel_name)
