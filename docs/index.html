@@ -446,7 +446,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>The Tasks GUI is a generic GUI that allows the user to execute standard tasks by clicking the task button and provide the necessary arguments. An example of such a Task GUI is given in the screenshot below. This screenshot is taken as an example and showcase from a project I&#8217;m working on. In further sections we will create such a task GUI step by step.</p>
 </div>
-<div class="imageblock text-center">
+<div id="csl-task-gui" class="imageblock text-center">
 <div class="content">
 <img src="images/csl_ui.png" alt="csl ui" width="60%">
 </div>
@@ -665,27 +665,30 @@ Hello, World! <b class="conum">(3)</b>
 <div class="paragraph">
 <p>TBW</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p>immediate_run</p>
-</li>
-<li>
-<p>description</p>
-</li>
-<li>
-<p>display_name</p>
-</li>
-<li>
-<p>use_kernel, use_gui_app, use_script_app</p>
-</li>
-<li>
-<p>input_request</p>
-</li>
-<li>
-<p>icons</p>
-</li>
-</ul>
+<div class="paragraph">
+<p>A Task is a function that is decorated with the <code>@exec_task</code> decorator. Such a function or task becomes a button in the Task GUI with a default icon. How the task is presented in the Task GUI and how the task is executed depends on the arguments that are passed into the decorator. In this section we will describe these arguments and what their effect is visually and behind the scenes.</p>
+</div>
+<div class="paragraph">
+<p>The default behaviour is as follows: The function is decorated with <code>@exec_task()</code> without any arguments. The task name will be the function name, the task icon will be <span class="image"><img src="images/script-function.svg" alt="script function" width="20px"></span>. When the task is selected, an arguments panel will be shown with a 'Run' button and the Task icon will look like <span class="image"><img src="images/script-function-selected.svg" alt="script function selected" width="20px"></span>. Click on the 'Run' button will execute the task in the selected Jupyter kernel (by default the 'python3' kernel). This is the behaviour that we have seen in the previous sections.</p>
+</div>
+<div class="paragraph">
+<p>If you check back on <a href="#csl-task-gui">Figure 1</a>, you can see that each of the tasks is visualised with a nice icon and a proper task name,most task names are black but there are some blue task names. All these features are the result from optional arguments on the decorator.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>immediate_run</code></dt>
+<dd>
+<p>When this argument is set to True, the task name will be blue and when you click the task, it will run immediately without first showing the arguments panel with a 'Run' button. Don&#8217;t use this option for tasks that take arguments. This option is usually used for tasks that only print information or emergency action that must run as soon as possible.</p>
+</dd>
+<dt class="hdlist1"><code>description</code></dt>
+<dt class="hdlist1"><code>display_name</code></dt>
+<dt class="hdlist1"><code>use_kernel, use_gui_app, use_script_app</code></dt>
+<dt class="hdlist1"><code>input_request</code></dt>
+<dt class="hdlist1"><code>icons</code></dt>
+<dd>
+<p>This is a tuple&#8230;&#8203;</p>
+</dd>
+</dl>
 </div>
 </div>
 <div class="sect2">
@@ -791,7 +794,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-12-08 19:25:05 +0100
+Last updated 2022-12-08 22:56:02 +0100
 </div>
 </div>
 </body>

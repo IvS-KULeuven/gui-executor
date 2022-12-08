@@ -4,6 +4,7 @@
 The Tasks GUI is a generic GUI that allows the user to execute standard tasks by clicking the task button and provide the necessary arguments. An example of such a Task GUI is given in the screenshot below. This screenshot is taken as an example and showcase from a project I'm working on. In further sections we will create such a task GUI step by step.
 
 .A example Task GUI used in a real project. This type of GUI is generated from seven short Python modules containing simple functions to perform one specific task.
+[[csl-task-gui,Figure 1]]
 image::images/csl_ui.png[width=60%,align=center]
 
 The Task GUI is organised in three panels that are arranged vertically in the window. The top panel is the toolbar to control the Jupyter kernel, the panel at the center contains all the task buttons organised by category, the bottom panel is the console where the output and error messages of the tasks will appear.
@@ -160,12 +161,19 @@ In the screenshot above, you can see the effect of the small changes we made in 
 
 TBW
 
-* immediate_run
-* description
-* display_name
-* use_kernel, use_gui_app, use_script_app
-* input_request
-* icons
+A Task is a function that is decorated with the `@exec_task` decorator. Such a function or task becomes a button in the Task GUI with a default icon. How the task is presented in the Task GUI and how the task is executed depends on the arguments that are passed into the decorator. In this section we will describe these arguments and what their effect is visually and behind the scenes.
+
+The default behaviour is as follows: The function is decorated with `@exec_task()` without any arguments. The task name will be the function name, the task icon will be image:images/script-function.svg[width=20px]. When the task is selected, an arguments panel will be shown with a 'Run' button and the Task icon will look like image:images/script-function-selected.svg[width=20px]. Click on the 'Run' button will execute the task in the selected Jupyter kernel (by default the 'python3' kernel). This is the behaviour that we have seen in the previous sections.
+
+If you check back on <<csl-task-gui>>, you can see that each of the tasks is visualised with a nice icon and a proper task name,most task names are black but there are some blue task names. All these features are the result from optional arguments on the decorator.
+
+`immediate_run`:: When this argument is set to True, the task name will be blue and when you click the task, it will run immediately without first showing the arguments panel with a 'Run' button. Don't use this option for tasks that take arguments. This option is usually used for tasks that only print information or emergency action that must run as soon as possible.
+
+`description`::
+`display_name`::
+`use_kernel, use_gui_app, use_script_app`::
+`input_request`::
+`icons`:: This is a tuple...
 
 === Type Hints and Defaults
 
