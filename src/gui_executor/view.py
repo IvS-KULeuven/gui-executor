@@ -1547,7 +1547,7 @@ class View(QMainWindow):
 
         self.question_dialog = YesNoQuestion(message)
 
-        self._buttons_panel.setDisabled(True)
+        self._buttons_widget.setDisabled(True)
         if self._args_panel is not None:
             self._args_panel.setDisabled(True)
 
@@ -1561,7 +1561,7 @@ class View(QMainWindow):
         self.question_dialog.close()
         self.question_dialog = None
 
-        self._buttons_panel.setDisabled(False)
+        self._buttons_widget.setDisabled(False)
         if self._args_panel is not None:
             self._args_panel.setDisabled(False)
 
