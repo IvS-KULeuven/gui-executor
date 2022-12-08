@@ -514,9 +514,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="python"><span style="color:#080;font-weight:bold">from</span> <span style="color:#B44;font-weight:bold">gui_executor.exec</span> <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">exec_ui</span>
+<pre class="CodeRay highlight"><code data-lang="python"><span style="color:#080;font-weight:bold">from</span> <span style="color:#B44;font-weight:bold">gui_executor.exec</span> <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">exec_task</span>
 
-<span style="color:#B0B">@exec_ui</span>(immediate_run=<span style="color:#069">True</span>) <b class="conum">(1)</b>
+<span style="color:#B0B">@exec_task</span>(immediate_run=<span style="color:#069">True</span>) <b class="conum">(1)</b>
 <span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">hello_world</span>():
     print(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello, World!</span><span style="color:#710">&quot;</span></span>)</code></pre>
 </div>
@@ -524,12 +524,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="colist arabic">
 <ol>
 <li>
-<p>Each task button in the Task GUI is actually a function that is decorated with the <code>@exec_ui</code> decorator.</p>
+<p>Each task button in the Task GUI is actually a function that is decorated with the <code>@exec_task</code> decorator.</p>
 </li>
 </ol>
 </div>
 <div class="paragraph">
-<p>Make sure you are at the same directory level as the <code>yakka</code> folder and the execute the following command from your terminal. That will start the Task GUI as shown in the screenshot below.</p>
+<p>Make sure you are at the same directory level as the <code>yakka</code> folder and then execute the following command from your terminal. That command will start the Task GUI as shown in the screenshot below.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -746,7 +746,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-12-08 18:17:07 +0100
+Last updated 2022-12-08 18:39:23 +0100
 </div>
 </div>
 </body>

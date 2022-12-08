@@ -54,15 +54,15 @@ The `hello.py` file shall contain the following code:
 
 [source, python]
 ----
-from gui_executor.exec import exec_ui
+from gui_executor.exec import exec_task
 
-@exec_ui(immediate_run=True) <1>
+@exec_task(immediate_run=True) <1>
 def hello_world():
     print("Hello, World!")
 ----
-<1> Each task button in the Task GUI is actually a function that is decorated with the `@exec_ui` decorator.
+<1> Each task button in the Task GUI is actually a function that is decorated with the `@exec_task` decorator.
 
-Make sure you are at the same directory level as the `yakka` folder and the execute the following command from your terminal. That will start the Task GUI as shown in the screenshot below.
+Make sure you are at the same directory level as the `yakka` folder and then execute the following command from your terminal. That command will start the Task GUI as shown in the screenshot below.
 
 ----
 PYTHONPATH=. gui-executor --module-path yakka
