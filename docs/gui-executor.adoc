@@ -17,10 +17,41 @@ This 'Analyse' task accepts 5 arguments: a list of observation identifiers, the 
 
 In the rest of this document we will explain how such a GUI as above is created and how you can develop your own version for your specific tasks.
 
+=== Installation
+
+The `gui-executor` package can be installed via https://pypi.org[PyPI]. You should preferably install the package inside a vertual environment unless you want it to be available from your global Python installation.
+
+----
+$ pip install [--upgrade] gui-executor
+----
+
+Use the `--help` option to see the commandline options for the `gui-executor`:
+
+----
+$ gui-executor --help
+usage: gui-executor [-h] [--version] [--verbose] [--location LOCATION] [--cmd-log CMD_LOG] [--module-path MODULE_PATH]
+                    [--kernel-name KERNEL_NAME] [--config CONFIG] [--logo LOGO] [--app-name APP_NAME] [--debug] [--single]
+
+options:
+  -h, --help            show this help message and exit
+  --version, -V         print the gui-executor version number and exit
+  --verbose, -v         print verbose information, increased verbosity level with multiple occurrences
+  --location LOCATION   location of the Python modules and scripts
+  --cmd-log CMD_LOG     location of the command log files
+  --module-path MODULE_PATH
+                        module path of the Python modules and scripts
+  --kernel-name KERNEL_NAME
+                        the kernel that will be started by default, python3 if not given
+  --config CONFIG       a YAML file that configures the executor
+  --logo LOGO           path to logo PNG or SVG file
+  --app-name APP_NAME   the name of the GUI app, will go in the window title
+  --debug, -d           set debugging mode
+  --single              the UI can be started only once (instead of multiple times)
+----
 
 === The package Layout
 
-To build up the Task GUI, we distinguish the task button as a function, several of these functions can be grouped in a Python module (a `.py` file) and all the modules plus additional information needed for the Task GUI is kept in a Python package. The _CSL Operator GUI_ shown above, is located e.g. in the package `camtest.csl` and has the following layout:
+To build up the Task GUI, we distinguish each task button as a function, several of these functions can be grouped in a Python module (a `.py` file) and all the modules plus additional information needed for the Task GUI is kept in a Python package. The _CSL Operator GUI_ shown in the screenshot above, is located in the package `camtest.csl` and has the following layout:
 
 ----
 camtest.csl
@@ -36,7 +67,13 @@ camtest.csl
    └──────── single.py
 ----
 
-Each of these `.py` files form a group of buttons in the above Task GUI. The `\\__init__.py` file is special, it defines `camtest.csl` as a package, and it also defines the command to start the Task GUI [see XXXXX]. The `icons` folder contains the graphics for the task buttons and the application icon.
+Each of these `.py` files form a group of buttons in the above Task GUI. The `\\__init__.py` file is special, it defines `camtest.csl` as a package, and it also defines the command to start the Task GUI [see section <<init>>]. The `icons` folder contains the graphics for the task buttons and the application icon.
+
+Simply starting the CSL Task GUI from the commandline would be done as follows:
+
+----
+$ gui-executor --module-path camtest.csl
+----
 
 === Defining a Task
 
@@ -94,15 +131,15 @@ Let's add another task that takes an argument 'name' as a string with the defaul
 
 [source, python, subs="+quotes"]
 ----
-from gui_executor.exec import exec_ui
+from gui_executor.exec import exec_task
 
 **UI_MODULE_DISPLAY_NAME = "Hello Tasks"**  <1>
 
-@exec_ui(immediate_run=True)
+@exec_task(immediate_run=True)
 def hello_world():
     print("Hello, World!")
 
-**@exec_ui(display_name="Hello...")  <2>
+**@exec_task(display_name="Hello...")  <2>
 def hello_you(name: str = "John"):  <3>
     print(f"Hello, {name}!")
 **
@@ -115,11 +152,11 @@ def hello_you(name: str = "John"):  <3>
 image:images/yakka-02.png[width=40%,align=left]
 image:images/yakka-03.png[width=40%,align=right]
 
-In the screenshot above, you can see the effect of the small changes we made in the `hello.py`. The tasks button group is now called 'Hello Tasks' and the new task we added got the 'Hello...' name instead of the function name. The new task icon has a different color because it's is selected. You can also see in the arguments panel that the type hint is picked up and shown in grey and the default name is also filled in grey in the text field. When I put my name there and press the 'Run' button, you can see that the function is called with the proper argument.
+In the screenshot above, you can see the effect of the small changes we made in the `hello.py`. The tasks button group is now called 'Hello Tasks' and the new task we added got the 'Hello...' name instead of the function name. The new task icon has a different color because it is selected. You can also see in the arguments panel that the type hint is picked up and shown in grey and the default name is also filled in grey in the text field. When I put my name there and press the 'Run' button, you can see that the function is called with the proper argument.
 
 // XXXXX: where to describe docstrings and where they show up?
 
-=== The @exec_ui decorator
+=== The @exec_task decorator
 
 TBW
 
@@ -162,7 +199,8 @@ TBW
 * Running as a script
 * Running as a GUI App
 
-=== The \\__init__.py
+[#init]
+=== The \\__init__.py file
 
 TBW
 

@@ -471,9 +471,46 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>In the rest of this document we will explain how such a GUI as above is created and how you can develop your own version for your specific tasks.</p>
 </div>
 <div class="sect2">
+<h3 id="_installation">Installation</h3>
+<div class="paragraph">
+<p>The <code>gui-executor</code> package can be installed via <a href="https://pypi.org">PyPI</a>. You should preferably install the package inside a vertual environment unless you want it to be available from your global Python installation.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ pip install [--upgrade] gui-executor</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Use the <code>--help</code> option to see the commandline options for the <code>gui-executor</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ gui-executor --help
+usage: gui-executor [-h] [--version] [--verbose] [--location LOCATION] [--cmd-log CMD_LOG] [--module-path MODULE_PATH]
+                    [--kernel-name KERNEL_NAME] [--config CONFIG] [--logo LOGO] [--app-name APP_NAME] [--debug] [--single]
+
+options:
+  -h, --help            show this help message and exit
+  --version, -V         print the gui-executor version number and exit
+  --verbose, -v         print verbose information, increased verbosity level with multiple occurrences
+  --location LOCATION   location of the Python modules and scripts
+  --cmd-log CMD_LOG     location of the command log files
+  --module-path MODULE_PATH
+                        module path of the Python modules and scripts
+  --kernel-name KERNEL_NAME
+                        the kernel that will be started by default, python3 if not given
+  --config CONFIG       a YAML file that configures the executor
+  --logo LOGO           path to logo PNG or SVG file
+  --app-name APP_NAME   the name of the GUI app, will go in the window title
+  --debug, -d           set debugging mode
+  --single              the UI can be started only once (instead of multiple times)</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_the_package_layout">The package Layout</h3>
 <div class="paragraph">
-<p>To build up the Task GUI, we distinguish the task button as a function, several of these functions can be grouped in a Python module (a <code>.py</code> file) and all the modules plus additional information needed for the Task GUI is kept in a Python package. The <em>CSL Operator GUI</em> shown above, is located e.g. in the package <code>camtest.csl</code> and has the following layout:</p>
+<p>To build up the Task GUI, we distinguish each task button as a function, several of these functions can be grouped in a Python module (a <code>.py</code> file) and all the modules plus additional information needed for the Task GUI is kept in a Python package. The <em>CSL Operator GUI</em> shown in the screenshot above, is located in the package <code>camtest.csl</code> and has the following layout:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -491,7 +528,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="paragraph">
-<p>Each of these <code>.py</code> files form a group of buttons in the above Task GUI. The <code>__init__.py</code> file is special, it defines <code>camtest.csl</code> as a package, and it also defines the command to start the Task GUI [see XXXXX]. The <code>icons</code> folder contains the graphics for the task buttons and the application icon.</p>
+<p>Each of these <code>.py</code> files form a group of buttons in the above Task GUI. The <code>__init__.py</code> file is special, it defines <code>camtest.csl</code> as a package, and it also defines the command to start the Task GUI [see section <a href="#init">The __init__.py file</a>]. The <code>icons</code> folder contains the graphics for the task buttons and the application icon.</p>
+</div>
+<div class="paragraph">
+<p>Simply starting the CSL Task GUI from the commandline would be done as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ gui-executor --module-path camtest.csl</pre>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -580,15 +625,15 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="python"><span style="color:#080;font-weight:bold">from</span> <span style="color:#B44;font-weight:bold">gui_executor.exec</span> <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">exec_ui</span>
+<pre class="CodeRay highlight"><code data-lang="python"><span style="color:#080;font-weight:bold">from</span> <span style="color:#B44;font-weight:bold">gui_executor.exec</span> <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">exec_task</span>
 
 <strong>UI_MODULE_DISPLAY_NAME = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello Tasks</span><span style="color:#710">&quot;</span></span></strong>  <b class="conum">(1)</b>
 
-<span style="color:#B0B">@exec_ui</span>(immediate_run=<span style="color:#069">True</span>)
+<span style="color:#B0B">@exec_task</span>(immediate_run=<span style="color:#069">True</span>)
 <span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">hello_world</span>():
     print(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello, World!</span><span style="color:#710">&quot;</span></span>)
 
-<strong><span style="color:#B0B">@exec_ui</span>(display_name=<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello...</span><span style="color:#710">&quot;</span></span>)  <b class="conum">(2)</b>
+<strong><span style="color:#B0B">@exec_task</span>(display_name=<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello...</span><span style="color:#710">&quot;</span></span>)  <b class="conum">(2)</b>
 <span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">hello_you</span>(name: str = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">John</span><span style="color:#710">&quot;</span></span>):  <b class="conum">(3)</b>
     print(f<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello, {name}!</span><span style="color:#710">&quot;</span></span>)
 </strong></code></pre>
@@ -612,11 +657,11 @@ Hello, World! <b class="conum">(3)</b>
 <span class="image"><img src="images/yakka-03.png" alt="yakka 03" width="40%"></span></p>
 </div>
 <div class="paragraph">
-<p>In the screenshot above, you can see the effect of the small changes we made in the <code>hello.py</code>. The tasks button group is now called 'Hello Tasks' and the new task we added got the 'Hello&#8230;&#8203;' name instead of the function name. The new task icon has a different color because it&#8217;s is selected. You can also see in the arguments panel that the type hint is picked up and shown in grey and the default name is also filled in grey in the text field. When I put my name there and press the 'Run' button, you can see that the function is called with the proper argument.</p>
+<p>In the screenshot above, you can see the effect of the small changes we made in the <code>hello.py</code>. The tasks button group is now called 'Hello Tasks' and the new task we added got the 'Hello&#8230;&#8203;' name instead of the function name. The new task icon has a different color because it is selected. You can also see in the arguments panel that the type hint is picked up and shown in grey and the default name is also filled in grey in the text field. When I put my name there and press the 'Run' button, you can see that the function is called with the proper argument.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_the_exec_ui_decorator">The @exec_ui decorator</h3>
+<h3 id="_the_exec_task_decorator">The @exec_task decorator</h3>
 <div class="paragraph">
 <p>TBW</p>
 </div>
@@ -720,7 +765,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_the_init_py">The __init__.py</h3>
+<h3 id="init">The __init__.py file</h3>
 <div class="paragraph">
 <p>TBW</p>
 </div>
@@ -746,7 +791,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-12-08 18:39:23 +0100
+Last updated 2022-12-08 19:25:05 +0100
 </div>
 </div>
 </body>
