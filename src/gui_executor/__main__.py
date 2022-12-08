@@ -40,7 +40,7 @@ def main():
                         help="print verbose information, increased verbosity level with multiple occurrences")
     parser.add_argument('--location', help='location of the Python modules and scripts')
     parser.add_argument('--cmd-log', help='location of the command log files')
-    parser.add_argument('--module-path', help='module path of the Python modules and scripts')
+    parser.add_argument('--module-path', action="append", help='module path of the Python modules and scripts')
     parser.add_argument('--kernel-name',
                         help="the kernel that will be started by default, python3 if not given")
     parser.add_argument('--config', help='a YAML file that configures the executor')
@@ -53,6 +53,7 @@ def main():
 
     verbosity = 0 if args.verbose is None else args.verbose
     kernel_name = args.kernel_name or "python3"
+    module_path_list = args.module_path
 
     single = 1 if args.single is None else args.single
     lock_file = QLockFile(str(Path(f"~/{args.app_name or 'GUI executor'}.app.lock").expanduser())) if single else None
@@ -70,7 +71,7 @@ def main():
     # We have only implemented the --module-path option for now
 
     if args.module_path is None:
-        print("You need to provide the --module-path option.")
+        print("You need to provide at least one --module-path option.")
         parser.print_help()
         return
 
@@ -86,7 +87,7 @@ def main():
 
     if not single or lock_file.tryLock(100):
 
-        model = Model(args.module_path)
+        model = Model(module_path_list)
         view = View(model,
                     app_name=args.app_name or "GUI Executor",
                     cmd_log=args.cmd_log, verbosity=verbosity, kernel_name=kernel_name)

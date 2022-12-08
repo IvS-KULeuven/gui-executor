@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ast
-import atexit
 import contextlib
 import errno
 import fcntl
@@ -84,10 +83,10 @@ from . import RUNNABLE_KERNEL
 from . import RUNNABLE_SCRIPT
 from .exec import Argument
 from .exec import ArgumentKind
-from .exec import StatusType
 from .exec import Directory
 from .exec import FileName
 from .exec import FilePath
+from .exec import StatusType
 from .exec import get_arguments
 from .gui import IconLabel
 from .kernel import MyKernel
@@ -103,7 +102,6 @@ from .utils import select_directory
 from .utils import select_file
 from .utils import stringify_args
 from .utils import stringify_kwargs
-from .utils import timer
 from .utypes import Callback
 from .utypes import TypeObject
 from .utypes import UQWidget
@@ -163,7 +161,7 @@ class RecurringTask(QRunnable):
     def run(self):
         try:
             result = self._func(*self._args, **self._kwargs)
-        except (Exception, ):
+        except Exception:
             traceback.print_exc()
             exc_type, value = sys.exc_info()[:2]
             self.signals.error.emit((exc_type, value, traceback.format_exc()))
@@ -488,7 +486,6 @@ class FunctionRunnableKernel(FunctionRunnable):
                 # self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
 
 
-
 class FunctionRunnableQProcess(FunctionRunnable):
     def __init__(self, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
         super().__init__(func, args, kwargs, input_queue)
@@ -515,7 +512,7 @@ class FunctionRunnableQProcess(FunctionRunnable):
             # will be a: QProcess: Destroyed while process ("...venv/bin/python") is still running. .. after 30 seconds.
             self._process.waitForFinished(-1)
 
-        except (Exception,) as exc:
+        except Exception as exc:
             self.signals.error.emit(exc)
         finally:
             self.signals.finished.emit(self, self._func.__name__, True)
@@ -1139,7 +1136,9 @@ class View(QMainWindow):
         self._console_panel = ConsoleOutput()
 
         if len(self._buttons_panels) == 1:
-            self._buttons_widget = self._buttons_panels["Main"]
+            # If there is only one buttons panel, we do not create a TabWidget, but use that panel directly.
+            # We do not know the name (key) that was given in the returned dict, so we take the first item.
+            self._buttons_widget = list(self._buttons_panels.values())[0]
         else:
             self._buttons_widget = QTabWidget()
             for name, widget in self._buttons_panels.items():
@@ -1352,32 +1351,34 @@ class View(QMainWindow):
         self.function_complete(func.__name__, True)
 
     def create_button_panels(self) -> Dict:
-        module_path = self._model.module_path
-
-        mod = importlib.import_module(module_path)
-        tab_order: List = getattr(mod, "UI_TAB_ORDER", None)
+        module_path_list: List = self._model.module_path_list
 
         buttons_panels = {}
 
-        # If we do not have sub packages, we will not create tabs, and we also only need one
-        # FunctionButtonsPanel which will be called "Main".
+        for module_path in module_path_list:
+            mod = importlib.import_module(module_path)
+            tab_order: List = getattr(mod, "UI_TAB_ORDER", None)
 
-        panel = FunctionButtonsPanel()
-        if self.add_buttons_to_panel(panel, module_path=module_path):
-            buttons_panels["Main"] = panel
+            # If we do not have sub packages, we will not create tabs, and we also only need one
+            # FunctionButtonsPanel which will be called "Main".
 
-        if subpackages := self._model.get_ui_subpackages():
-            if tab_order is None:
-                # Here we sort in display_name
-                sorted_subpackages = sorted(subpackages.items(), key=lambda x: x[1][0])
-            else:
-                # sorted_subpackages = sorted(subpackages.items(), key=lambda x: tab_order.index(x[0]))
-                # This way seems to be faster: see https://stackoverflow.com/a/21773891/4609203
-                sorted_subpackages = [(name, subpackages[name]) for name in tab_order if name in subpackages]
-            for name, (display_name, _) in sorted_subpackages:
-                panel = FunctionButtonsPanel()
-                self.add_buttons_to_panel(panel, module_path=f"{self._model.module_path}.{name}")
-                buttons_panels[display_name] = panel
+            panel = FunctionButtonsPanel()
+            if self.add_buttons_to_panel(panel, module_path=module_path):
+                tab_name = getattr(mod, "UI_TAB_DISPLAY_NAME", "Main")
+                buttons_panels[tab_name] = panel
+
+            if subpackages := self._model.get_ui_subpackages(module_path_list=[module_path]):
+                if tab_order is None:
+                    # Here we sort in display_name
+                    sorted_subpackages = sorted(subpackages.items(), key=lambda x: x[1][0])
+                else:
+                    # sorted_subpackages = sorted(subpackages.items(), key=lambda x: tab_order.index(x[0]))
+                    # This way seems to be faster: see https://stackoverflow.com/a/21773891/4609203
+                    sorted_subpackages = [(name, subpackages[name]) for name in tab_order if name in subpackages]
+                for name, (display_name, _) in sorted_subpackages:
+                    panel = FunctionButtonsPanel()
+                    self.add_buttons_to_panel(panel, module_path=f"{module_path}.{name}")
+                    buttons_panels[display_name] = panel
 
         return buttons_panels
 
@@ -1391,7 +1392,7 @@ class View(QMainWindow):
         Returns:
             The number of buttons added.
         """
-        modules = self._model.get_ui_modules(module_path=module_path)
+        modules = self._model.get_ui_modules(module_path_list=[module_path])
         number_of_buttons = 0
 
         for _, mod in sorted(modules.values()):
@@ -1546,7 +1547,7 @@ class View(QMainWindow):
 
         self.question_dialog = YesNoQuestion(message)
 
-        self._buttons_panel.setDisabled(True)
+        self._buttons_widget.setDisabled(True)
         if self._args_panel is not None:
             self._args_panel.setDisabled(True)
 
@@ -1560,7 +1561,7 @@ class View(QMainWindow):
         self.question_dialog.close()
         self.question_dialog = None
 
-        self._buttons_panel.setDisabled(False)
+        self._buttons_widget.setDisabled(False)
         if self._args_panel is not None:
             self._args_panel.setDisabled(False)
 
