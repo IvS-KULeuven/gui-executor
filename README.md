@@ -11,3 +11,7 @@ Install this package in your virtual environment:
 ```
 python3 -m pip install gui-executor 
 ```
+
+## Documentation
+
+You can find the documentation at https://rhuygen.github.io/gui-executor/.
