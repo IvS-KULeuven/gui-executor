@@ -1206,6 +1206,23 @@ class View(QMainWindow):
         self._timer.start()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+
+        question = QMessageBox()
+        question.setIcon(QMessageBox.Warning)
+        question.setWindowTitle("Closing GUI and Kernel?")
+        close_button = question.addButton("Close GUI and Kernel", QMessageBox.YesRole)
+        cancel_button = question.addButton("Cancel", QMessageBox.NoRole)
+        cancel_button.setDefault(True)
+        cancel_button.setAutoDefault(True)
+        question.setText("You are about to close the Task GUI and kill the running kernel.")
+        question.setInformativeText("This will permanently delete all data in the Jupyter kernel.")
+
+        question.exec()
+        button_pressed = question.clickedButton()
+        if button_pressed == cancel_button:
+            event.ignore()
+            return
+
         if self._kernel:
             print("Shutting down Jupyter kernel.")
             self._kernel.shutdown()
@@ -1567,11 +1584,12 @@ class View(QMainWindow):
 
 
 class YesNoQuestion(QDialog):
-    def __init__(self, message: str, parent=None):
+    def __init__(self, message: str, title: str = None, buttons=None, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Reply to Question")
+        self.setWindowTitle(title or "Reply to Question from Console")
 
-        buttons = QDialogButtonBox.Yes | QDialogButtonBox.No
+        if buttons is None:
+            buttons = QDialogButtonBox.Yes | QDialogButtonBox.No
 
         self.button_box = QDialogButtonBox(buttons)
 
