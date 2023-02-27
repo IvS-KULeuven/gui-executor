@@ -4,6 +4,7 @@ import binascii
 import contextlib
 import datetime
 import functools
+import importlib
 import inspect
 import logging
 import os
@@ -11,6 +12,7 @@ import re
 import sys
 import textwrap
 import time
+import types
 from enum import Enum
 from io import StringIO
 from pathlib import Path
@@ -93,6 +95,57 @@ def get_file_path(path: str | Path, name: str) -> Path:
         raise ValueError(f"The generated filepath '{filepath}' doesn't exit for command script {name}")
 
     return filepath
+
+
+def get_module_name(module):
+    """Helper function to get a module's name"""
+    return module.__spec__.name if hasattr(module, '__spec__') else module.__name__
+
+
+def copy_module(module, copy_attributes=True, copy_spec=True) -> types.ModuleType:
+    """
+    Helper function for copying a python module
+    .. code:: python
+        import importhook
+        @importhook.on_import('socket')
+        def on_socket_import(socket):
+            new_socket = importhook.copy_module(socket)
+            setattr(new_socket, 'get_hostname', lambda: 'hostname')
+            return new_socket
+    """
+    # name = get_module_name(module)
+    name = module.__name__ if isinstance(module, types.ModuleType) else module
+    module = importlib.import_module(name)
+
+    new_mod = types.ModuleType(name)
+    setattr(new_mod, '__original_module__', module)
+
+    # Copy all module attributes
+    if copy_attributes:
+        for attr, value in module.__dict__.items():
+            setattr(new_mod, attr, value)
+
+    # Make a copy of the modules spec if one is present
+    if copy_spec and getattr(new_mod, '__spec__', None):
+        spec = type(new_mod.__spec__)(name=name, loader=new_mod.__spec__.loader)
+        for attr, value in new_mod.__spec__.__dict__.items():
+            if attr not in ('name', 'loader'):
+                setattr(spec, attr, value)
+        new_mod.__spec__ = spec
+    return new_mod
+
+
+def copy_func(func, display_name=None):
+    new_func = types.FunctionType(func.__code__, func.__globals__, func.__name__, func.__defaults__, func.__closure__)
+
+    for ui_attr in func.__dict__:
+        if ui_attr.startswith("__ui"):
+            setattr(new_func, ui_attr, getattr(func, ui_attr))
+
+    new_func.__wrapped__ = func.__wrapped__
+    new_func.__ui_module_display_name__ = display_name
+
+    return new_func
 
 
 def remove_ansi_escape(line):
