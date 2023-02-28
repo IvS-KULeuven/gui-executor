@@ -14,7 +14,7 @@ name = "Print Functions"
 
 print_sys_version = copy_func(print_sys_version, name)
 print_sys_path = copy_func(print_sys_path, name)
-print_this = copy_func(print_this, name)
+print_this = copy_func(print_this, name, "Import this")
 print_args = copy_func(print_args, name)
 
 name = "Immediate Functions"

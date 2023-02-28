@@ -97,15 +97,20 @@ def get_file_path(path: str | Path, name: str) -> Path:
     return filepath
 
 
-def copy_func(func, display_name=None):
+def copy_func(func, module_display_name=None, function_display_name=None):
     """
     Returns a deep copy of a function object. All function attributes that start with '__ui' are also copied.
     These attributes are used internally by the 'gui-executor'. Provide display_name if you want to connect
     the returned function to a module with that display name. The latter is used to organised functions in a TAB.
 
+    Note: use the function with caution. Especially, specifying a function_display_name will lose the connection
+          with the original function for the user and might be very confusing. Only specify the function_display_name
+          when you know what you are doing and what the impact is for the user.
+
     Args:
         func: a function object
-        display_name: the name of a module/group to be used
+        module_display_name: the name of a module/group to be used to display
+        function_display_name: name of function to be used to display
 
     Returns:
         A deep copy of the given function object.
@@ -120,8 +125,11 @@ def copy_func(func, display_name=None):
         if ui_attr.startswith("__ui"):
             setattr(new_func, ui_attr, getattr(func, ui_attr))
 
-    if display_name:
-        new_func.__ui_module_display_name__ = display_name
+    if module_display_name:
+        new_func.__ui_module_display_name__ = module_display_name
+
+    if function_display_name:
+        new_func.__ui_display_name__ = function_display_name
 
     return new_func
 
