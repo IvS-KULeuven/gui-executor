@@ -1,1 +1,1 @@
-UI_TAB_ORDER = ['second_tab', 'first_tab', 'third_tab']
+UI_TAB_ORDER = ['virtual', 'second_tab', 'first_tab', 'third_tab']

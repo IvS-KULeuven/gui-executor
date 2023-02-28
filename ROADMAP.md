@@ -4,6 +4,7 @@ This page will keep track of the features that we plan to implement in the futur
 
 GUI
   - [x] Allow sub-packages with their own task groups and organise them in TABs task view
+  - [x] Provide functionality to re-use tasks in other TABs and organised under different groups
   - [ ] Implement dark mode
   - [ ] There shall be a Preferences dailog to tune the behaviour of the GUI, e.g. toggle dark mode, set default timeout interval for recurring tasks, ....
   

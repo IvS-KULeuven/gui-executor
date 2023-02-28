@@ -746,7 +746,12 @@ class DynamicButton(QWidget):
     @property
     def module_display_name(self) -> str:
         try:
-            return sys.modules[self._function.__ui_module__].UI_MODULE_DISPLAY_NAME
+            try:
+                # This attribute is given to the function when copying the function object
+                # to be used in a different TAB with another display name
+                return self._function.__ui_module_display_name__
+            except AttributeError:
+                return sys.modules[self._function.__ui_module__].UI_MODULE_DISPLAY_NAME
         except (AttributeError, KeyError):
             return self.module_name.rsplit(".", 1)[-1]
 
@@ -1028,14 +1033,13 @@ class FunctionButtonsPanel(QScrollArea):
         self.setWidget(widget)
 
     def add_button(self, button: DynamicButton):
-        module_name = button.module_name
+        module_name = button.module_display_name
         if module_name not in self.modules:
-            display_name = button.module_display_name
             grid = QGridLayout()
             # Make sure all columns have equal width
             for idx in range(self.n_cols):
                 grid.setColumnStretch(idx, 1)
-            gbox = QGroupBox(display_name)
+            gbox = QGroupBox(module_name)
             gbox.setLayout(grid)
             gbox.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
             # self.module_layout.addWidget(gbox)
