@@ -7,7 +7,7 @@ from functools import partial
 from pathlib import Path
 from typing import Callable
 from typing import List
-from typing import Optional
+from typing import Tuple
 from typing import Union
 
 from PyQt5.QtCore import Qt
@@ -46,6 +46,19 @@ class UQWidget(QWidget):
 
     def get_value(self):
         raise NotImplementedError
+
+    def _cast_arg(self, field: QLineEdit | QCheckBox, literal: str | Callable):
+        if literal is bool:
+            return field.checkState() == Qt.Checked
+
+        if not (value := field.displayText() or field.placeholderText()):
+            return None
+
+        try:
+            return literal(value)
+        except (ValueError, TypeError) as exc:
+            print(f"Exception caught: {exc}")
+            return value
 
 
 class Callback(TypeObject):
@@ -93,6 +106,80 @@ class CallbackWidget(UQWidget):
             return self.func_rc[self.widget.currentIndex()]
         else:
             return self.func_rc[self.widget.currentText()]
+
+
+class FixedList(TypeObject):
+    """
+    A TypeObject for a simple List of fixed size.
+    """
+    def __init__(self, literals: List[Union[str, Callable]], defaults: List = None, name: str = None):
+        super().__init__(name=name or "List")
+        self._literals = literals
+        self._defaults = defaults or []
+
+    def __repr__(self):
+        return f"List({self._literals} = {self._defaults})"
+
+    def __iter__(self):
+        return iter(itertools.zip_longest(self._literals, self._defaults))
+
+    def get_widget(self):
+        return FixedListWidget(self)
+
+
+class FixedListWidget(UQWidget):
+    def __init__(self, type_object: FixedList):
+        super().__init__()
+
+        self._type_object = type_object
+
+        row_widget, self.fields = self._row(expand_default=True)
+
+        row_layout = QHBoxLayout()
+        row_layout.addWidget(row_widget)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+
+        # self.setStyleSheet("background-color: #00afff; margin:0px; border:1px solid #0000d7; ")  # for debugging
+
+        self.setLayout(row_layout)
+
+    def get_value(self) -> List:
+        return [
+            self._cast_arg(f, t)
+            for f, (t, d) in zip(self.fields, self._type_object)
+        ]
+
+    def _row(self, expand_default: bool = False) -> Tuple[QWidget, List]:
+        widget = QWidget()
+
+        hbox = QHBoxLayout()
+
+        fields = []
+        for x, y in self._type_object:
+            if not expand_default:
+                y = None
+            if x is bool:
+                field = QCheckBox()
+                field.setCheckState(Qt.Checked if y is not None else Qt.Unchecked)
+            else:
+                field = QLineEdit()
+                field.setPlaceholderText(str(y) if y is not None else "")
+
+            if x is int:
+                field.setValidator(QIntValidator())
+            elif x is float:
+                field.setValidator(QDoubleValidator())
+
+            fields.append(field)
+            type_hint = QLabel(x if isinstance(x, str) else x.__name__)
+            type_hint.setStyleSheet("color: gray")
+            hbox.addWidget(field)
+            hbox.addWidget(type_hint)
+
+        hbox.setContentsMargins(0, 0, 0, 0)
+        widget.setLayout(hbox)
+
+        return widget, fields
 
 
 class ListList(TypeObject):
@@ -189,16 +276,3 @@ class ListListWidget(UQWidget):
     def _delete_row(self, widget: QWidget, fields: List, *args):
         self._rows_layout.removeWidget(widget)
         self._rows.remove(fields)
-
-    def _cast_arg(self, field: QLineEdit | QCheckBox, literal: str | Callable):
-        if literal is bool:
-            return field.checkState() == Qt.Checked
-
-        if not (value := field.displayText() or field.placeholderText()):
-            return None
-
-        try:
-            return literal(value)
-        except (ValueError, TypeError) as exc:
-            print(f"Exception caught: {exc}")
-            return value
