@@ -56,6 +56,14 @@ def fixed_list(
 def fixed_list_with_defaults(
         x_list: FixedList([int, int, str, float], [3, 42])
 ):
+    """
+    Use a FixedList type hint for arguments. The type of each of the fields is given as the first argument,
+    the second argument is a list with defaults, and a third argument is the name to be displayed in the
+    arguments panel.
+
+    Synopsis:
+         arg: FixedList(literals: List, defaults: List, name: str)
+    """
     rich.print("x_list = ", x_list)
     return x_list
 
