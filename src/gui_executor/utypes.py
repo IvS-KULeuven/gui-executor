@@ -1,3 +1,17 @@
+"""
+The user types are class objects that are used as type hints for arguments in a functions that is decorated with the
+`exec_ui`/`exec_task` decorator. Use these types if you need more control over input values for arguments to your
+functions.
+
+User types can of course be provided as part of your own package.
+
+The user types provided by this module are:
+
+  * CallBack: used when allowed values and defaults needs to be determined at run time
+  * FixedList: a simple fixed list of values
+  * ListList: a list of lists with the outer list expandable
+
+"""
 from __future__ import annotations
 
 import inspect
@@ -62,6 +76,16 @@ class UQWidget(QWidget):
 
 
 class Callback(TypeObject):
+    """
+    A user type that can be used as a type hint in the arguments list of an `exec_ui` function. Use a call back when
+    allowed values and defaults need to be determined when the button is clicked to generate the arguments panel
+    instead of at import time.
+
+    Args:
+         func: the function/object to call that determines the type and values of this argument
+         default: the function/object to call that determines the default value(s)
+         name: the string to be displayed in the arguments panel. This is usually the type of the argument.
+    """
     def __init__(self, func: Callable, default: Callable = None, name: str = None):
         super().__init__(name=name)
         self.func = func
@@ -110,7 +134,12 @@ class CallbackWidget(UQWidget):
 
 class FixedList(TypeObject):
     """
-    A TypeObject for a simple List of fixed size.
+    A user type for a simple List of fixed size.
+
+    Args:
+        literals: the types for each of the values in the list
+        defaults: defaults for each of the values in the list
+        name: the string to be used in the arguments panel to display the type or a description
     """
     def __init__(self, literals: List[Union[str, Callable]], defaults: List = None, name: str = None):
         super().__init__(name=name or "List")
@@ -184,8 +213,15 @@ class FixedListWidget(UQWidget):
 
 class ListList(TypeObject):
     """
-    A TypeObject for a List of Lists.
+    A user type for a list of lists. The outer list is extendable, rows can be added with a '+' button and
+    removed with a 'x' button. The inner list is fixed and will be constructed from the literals and defaults.
+
+    Args:
+        literals: the types for each of the values in the inner lists
+        defaults: defaults for each of the values in the first inner list
+        name: the string to be used in the arguments panel to display the type or a description
     """
+
     def __init__(self, literals: List[Union[str, Callable]], defaults: List = None, name: str = None):
         super().__init__(name=name or "list of lists")
         self._literals = literals

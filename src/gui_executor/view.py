@@ -6,6 +6,7 @@ import errno
 import fcntl
 import importlib
 import inspect
+import logging
 import os
 import queue
 import select
@@ -72,7 +73,6 @@ from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 from executor import ExternalCommand
 from executor import ExternalCommandFailed
-from jupyter_client import KernelClient
 from rich.console import Console
 from rich.markup import escape
 from rich.syntax import Syntax
@@ -81,6 +81,7 @@ from rich.text import Text
 from . import RUNNABLE_APP
 from . import RUNNABLE_KERNEL
 from . import RUNNABLE_SCRIPT
+from .client import MyClient
 from .exec import Argument
 from .exec import ArgumentKind
 from .exec import Directory
@@ -108,6 +109,7 @@ from .utypes import UQWidget
 
 HERE = Path(__file__).parent.resolve()
 DEBUG = False
+LOGGER = logging.getLogger('gui-executor.view')
 
 
 class VLine(QFrame):
@@ -337,36 +339,47 @@ class FunctionRunnableKernel(FunctionRunnable):
         super().__init__(func, args, kwargs, input_queue)
         self.kernel: MyKernel = kernel
         self.startup_timeout = 60  # seconds
-        self.client: Optional[KernelClient] = None
         self.console = Console(record=True, width=120)
+        self.running = False
+
+    def is_running(self):
+        return self.running
 
     def run(self):
+
+        self.running = True
 
         self.signals.data.emit(f"----- Running script '{self.func_name}' in kernel")
 
         snippet = create_code_snippet(self._func, self._args, self._kwargs)
 
-        # Flush the IOPub channel before executing the command. This is needed because another
-        # client might be connected that has sent out messages on the pub channel. We want to
-        # catch the output of the given command of course.
-
-        self.kernel.flush()
-
         self.signals.data.emit("The code snippet:")
         self.signals.data.emit(create_code_snippet_renderable(self._func, self._args, self._kwargs))
         self.signals.data.emit("")
 
-        msg_id = self.kernel.client.execute(snippet, allow_stdin=True)
+        client = MyClient(self.kernel, startup_timeout=self.startup_timeout)
+        try:
+            client.connect()
+        except RuntimeError as exc:
+            self.signals.error.emit(exc)
+            return
+
+        msg_id = client.execute(snippet, allow_stdin=True)
+
+        DEBUG and LOGGER.debug(f"{id(client)}: {msg_id = }")
 
         while True:
             try:
-                io_msg = self.kernel.client.get_iopub_msg(timeout=1.0)
+                io_msg = client.get_iopub_msg(msg_id, timeout=1.0)
+
+                if io_msg['parent_header']['msg_id'] != msg_id:
+                    DEBUG and LOGGER.debug(f"{id(client)}: Skipping {io_msg = }")
+                    continue
 
                 io_msg_type = io_msg['msg_type']
                 io_msg_content = io_msg['content']
 
-                # rich.print("io_msg = ", end='')
-                # rich.print(io_msg)
+                DEBUG and LOGGER.debug(f"{id(client)}: {io_msg = }")
 
                 if io_msg_type == 'stream':
                     if 'text' in io_msg_content:
@@ -375,9 +388,16 @@ class FunctionRunnableKernel(FunctionRunnable):
                 elif io_msg_type == 'status':
                     if io_msg_content['execution_state'] == 'idle':
                         # self.signals.data.emit("Execution State is Idle, terminating...")
+                        DEBUG and LOGGER.debug(f"{id(client)}: Execution State is Idle, terminating...")
+                        self.collect_response_payload(client, msg_id, timeout=1.0)
                         break
                     elif io_msg_content['execution_state'] == 'busy':
-                        # self.signals.data.emit("Execution State is Busy, starting...")
+                        # self.signals.data.emit("Execution State is busy...")
+                        DEBUG and LOGGER.debug(f"{id(client)}: Execution State is busy...")
+                        continue
+                    elif io_msg_content['execution_state'] == 'starting':
+                        # self.signals.data.emit("Execution State is starting...")
+                        DEBUG and LOGGER.debug(f"{id(client)}: Execution State is starting...")
                         continue
                 elif io_msg_type == 'display_data':
                     if 'data' in io_msg_content:
@@ -404,21 +424,25 @@ class FunctionRunnableKernel(FunctionRunnable):
                     self.signals.error.emit(RuntimeError(f"Unknown io_msg_type: {io_msg_type}"))
 
             except queue.Empty:
+                DEBUG and LOGGER.debug(f"{id(client)}: Catching on empty queue -----------")
                 # We fall through here when no output is received from the kernel. This can mean that the kernel
                 # is waiting for input and therefore this is a good opportunity to check for stdin messages.
                 with contextlib.suppress(queue.Empty):
-                    in_msg = self.kernel.client.get_stdin_msg(timeout=0.1)
+                    in_msg = client.get_stdin_msg(timeout=0.1)
 
-                    # rich.print("in_msg = ", end='')
-                    # rich.print(in_msg)
+                    DEBUG and LOGGER.debug(f"{id(client)}: {in_msg = }")
 
                     if in_msg['msg_type'] == 'input_request':
                         prompt = in_msg['content']['prompt']
                         response = self.handle_input_request(prompt)
-                        self.kernel.client.input(response)
+                        client.input(response)
+            except Exception as exc:
+                # We come here after a kernel interrupt that leads to incomplete
+                LOGGER.error(f"{id(client)}: Caught Exception: {exc}", exc_info=True)
+                self.signals.data.emit(exc)
 
-        self.collect_response_payload(msg_id, timeout=1000)
-
+        client.disconnect()
+        self.running = False
         self.signals.finished.emit(self, self.func_name, True)
 
     def handle_input_request(self, prompt: str = None) -> str:
@@ -466,24 +490,28 @@ class FunctionRunnableKernel(FunctionRunnable):
             )
             return ''
 
-    def collect_response_payload(self, msg_id, timeout: int):
-        shell_msg = self.kernel.client.get_shell_msg(msg_id, timeout=timeout)
+    def collect_response_payload(self, client, msg_id, timeout: float):
+        try:
+            shell_msg = client.get_shell_msg(msg_id, timeout=timeout)
+        except queue.Empty:
+            DEBUG and LOGGER.debug(f"{id(client)}: No shell message available for {timeout}s....")
+            self.signals.data.emit(
+                "[red]No result received from kernel, this might happen when kernel is interrupted.[/]")
+            return
 
         msg_type = shell_msg["msg_type"]
         msg_content = shell_msg["content"]
 
-        # rich.print("shell_msg = ", end='')
-        # rich.print(shell_msg)
+        DEBUG and LOGGER.debug(f"{id(client)}: {shell_msg = }")
 
         if msg_type == "execute_reply":
             status = msg_content['status']
             if status == 'error' and 'traceback' in msg_content:
-                ...
                 # We are not sending this traceback anymore to the Console output
                 # as it was already handled in the context of the io_pub_msg.
-                # self.signals.data.emit(f"{status = }")
-                # traceback = msg_content['traceback']
-                # self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
+                self.signals.data.emit(f"{status = }")
+                traceback = msg_content['traceback']
+                self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
 
 
 class FunctionRunnableQProcess(FunctionRunnable):
@@ -552,9 +580,10 @@ class ConsoleOutput(QTextEdit):
         self.setReadOnly(True)
         self.setLineWrapMode(QTextEdit.NoWrap)
         # self.insertPlainText("")
-        self.insertHtml("<br>")
-        self.setAcceptRichText(False)
+        # self.insertHtml("<br>")
+        self.setAcceptRichText(True)
         self.setUndoRedoEnabled(False)
+        self.document().setDocumentMargin(4.0)  # this is also the default
         self.setMinimumSize(600, 100)
         monospaced_font = QFont("Courier New")
         monospaced_font.setStyleHint(QFont.Monospace)
@@ -568,39 +597,36 @@ class ConsoleOutput(QTextEdit):
     def append(self, text):
 
         # import builtins
-        # builtins.print(f"{text=}")
+        # builtins.print(f"{text = }")
 
         console = Console(record=True)
 
         with console.capture() as cap:
             console.print(text)
 
-        # builtins.print(f"{cap.get()=}")
+        # builtins.print(f"{cap.get() = }")
 
         exported_html = console.export_html(
             inline_styles=True,
             # code_format="<pre style=\"font-family:'Courier New',Menlo,'DejaVu Sans Mono'\">\n{code}\n</pre>",
+            # code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}</pre>",
             # code_format="<code><pre style=\"font-family:Menlo,\'DejaVu Sans Mono\',consolas,\'Courier New\',monospace\">{code}\n</pre>\n</code>\n",
+            code_format="<pre>{code}</pre>",
         )
 
-        # builtins.print(exported_html)
-
-        self.setUpdatesEnabled(False)
-        self.moveCursor(QTextCursor.End)
-        self.insertHtml(exported_html)
-        self.insertHtml("<br>")
-        self.setUpdatesEnabled(True)
-
-        sb = self.verticalScrollBar()
-        sb.setValue(sb.maximum())
+        self.append_html(exported_html)
 
     @pyqtSlot(str)
     def append_html(self, text):
+
+        # import builtins
+        # builtins.print(f"{text = }")
 
         self.setUpdatesEnabled(False)
         self.moveCursor(QTextCursor.End)
         self.insertHtml(text)
         self.insertHtml("<br>")
+        self.moveCursor(QTextCursor.End)
         self.setUpdatesEnabled(True)
 
         sb = self.verticalScrollBar()
@@ -871,12 +897,12 @@ class ArgumentsPanel(QScrollArea):
             # Stretch the middle column of the grid. That is needed when there is only one argument and it's a bool
             # i.e. a CheckBox. If we do not stretch, the checkbox will be centered.
             grid.setColumnStretch(1, 1)
-            grid.addWidget(label, idx, 0, alignment=Qt.AlignTop)
-            grid.addWidget(input_field, idx, 1, alignment=Qt.AlignTop)
+            grid.addWidget(label, idx, 0, alignment=Qt.AlignVCenter)
+            grid.addWidget(input_field, idx, 1, alignment=Qt.AlignVCenter)
             if folder_button is not None:
                 grid.addWidget(folder_button, idx, 2)
             else:
-                grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignTop)
+                grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignVCenter)
 
         vbox.addLayout(grid)
 
@@ -912,6 +938,8 @@ class ArgumentsPanel(QScrollArea):
         vbox.addLayout(hbox)
 
         self.group_box.setLayout(vbox)
+        # self.group_box.setStyleSheet("background-color: #5fd7ff; margin:0px; border:1px solid #0000d7; ")  # for debugging
+
         main_layout.addWidget(self.group_box)
         widget.setLayout(main_layout)
         self.setWidget(widget)
@@ -1089,11 +1117,16 @@ class View(QMainWindow):
         self._model = model
 
         self._qt_console: Optional[ExternalCommand] = None
+
         self._kernel: Optional[MyKernel] = None
+        """The Jupyter kernel we are running, can be None, created using start_kernel(). """
+
         self.input_queue: Queue = Queue()
         self.previous_selected_button: Optional[DynamicButton] = None
         self.verbosity = verbosity
+
         self.kernel_name = kernel_name
+        """The name of the kernel that shall be started, defaults to 'python3'."""
 
         self.cmd_log = cmd_log
         """The location of the command log files, provided as an argument."""
@@ -1111,9 +1144,11 @@ class View(QMainWindow):
         desktop_widget = QApplication.desktop()
         desktop_screen = desktop_widget.screenNumber(self)
         desktop_geometry = desktop_widget.availableGeometry(screen=desktop_screen)
-        # print(f"{desktop_screen = }, {desktop_geometry = }")
+        LOGGER.debug(f"{desktop_screen = }, {desktop_geometry = }")
 
-        self.setMaximumSize(desktop_geometry.width(), desktop_geometry.height())
+        # Not sure anymore why I put this line in, but it restricts the size of the main window to the size of the
+        # main desktop screen, which might be smaller than e.g. an external screens that is attached.
+        # self.setMaximumSize(desktop_geometry.width(), desktop_geometry.height())
 
         self.setGeometry(300, 300, 600, 800)
 
@@ -1282,51 +1317,61 @@ class View(QMainWindow):
             self._kernel.shutdown()
 
         name = self.kernel_panel.selected_kernel
-        # print(f"Starting new kernel {name}...")
+        LOGGER.info(f"Starting new kernel {name}...")
         self._kernel = MyKernel(name)
         self._console_panel.append(f"New kernel '{name}' started...")
-        info = self._kernel.get_kernel_info()
-        if 'banner' in info['content']:
-            self._console_panel.append(info['content']['banner'])
 
-        # make sure the user doesn't by accident quit the kernel
-        self._kernel.run_snippet("del quit, exit")
+        with MyClient(self._kernel) as client:
 
-        # If there is a startup script, run it now
-        try:
-            startup = os.environ["PYTHONSTARTUP"]
-            self._console_panel.append(f"Loading Python startup file from {startup}.")
-            self._kernel.run_snippet(
-                textwrap.dedent("""\
-                    import os
-                    import runpy
-                    
-                    try:
-                        startup = os.environ["PYTHONSTARTUP"]
-                        runpy.run_path(path_name=startup)
-                    except KeyError:
-                        raise Warning("Couldn't load startup script, PYTHONSTARTUP not defined.")
-                    """
+            info = client.get_kernel_info()
+            if 'banner' in info:
+                self._console_panel.append(info['banner'])
+
+            # make sure the user doesn't by accident quit the kernel
+            client.run_snippet("del quit, exit")
+
+            # If there is a startup script, run it now
+            try:
+                startup = os.environ["PYTHONSTARTUP"]
+                self._console_panel.append(f"Loading Python startup file from {startup}.")
+                client.run_snippet(
+                    textwrap.dedent("""\
+                        import os
+                        import runpy
+                        
+                        try:
+                            startup = os.environ["PYTHONSTARTUP"]
+                            runpy.run_path(path_name=startup)
+                        except KeyError:
+                            raise Warning("Couldn't load startup script, PYTHONSTARTUP not defined.")
+                        """
+                    )
                 )
-            )
-        except KeyError:
-            self._console_panel.append("Couldn't load startup script, PYTHONSTARTUP not defined.")
+            except KeyError:
+                self._console_panel.append("Couldn't load startup script, PYTHONSTARTUP not defined.")
 
-        if self.cmd_log:
-            self._console_panel.append(
-                f"Loading [blue]gui_executor.transforms[/] extension...log file in '{self.cmd_log}'")
-            self._kernel.run_snippet(
-                textwrap.dedent(
-                    f"""\
-                    from gui_executor import transforms
-                    transforms.set_log_file_location("{self.cmd_log}")
-                    %load_ext gui_executor.transforms
-                    """
+            if self.cmd_log:
+                self._console_panel.append(
+                    f"Loading [blue]gui_executor.transforms[/] extension...log file in '{self.cmd_log}'")
+                client.run_snippet(
+                    textwrap.dedent(
+                        f"""\
+                        from gui_executor import transforms
+                        transforms.set_log_file_location("{self.cmd_log}")
+                        %load_ext gui_executor.transforms
+                        """
+                    )
                 )
-            )
 
     def interrupt_kernel(self):
         self._kernel.interrupt_kernel()
+        for runnable in self._gui_apps:
+            LOGGER.warning(
+                f"Function {runnable.func_name} from the list of threads is "
+                f"{'STILL' if runnable.is_running() else 'NOT'} running."
+            )
+        # self._gui_apps.clear()
+
 
     def start_qt_console(self):
         if self._qt_console is not None and self._qt_console.is_running:
@@ -1429,7 +1474,9 @@ class View(QMainWindow):
                 for name, func in sorted(funcs.items(), key=lambda x: x[1].__wrapped__.__code__.co_firstlineno):
                     # print(f"{func.__name__} -> {func.__wrapped__.__code__.co_firstlineno = }")
                     button = DynamicButton(func.__name__, func)
-                    button.mouseReleaseEvent = partial(self.the_button_was_clicked, button, panel)
+                    button.mousePressEvent = partial(self.the_button_was_pressed, button, panel)
+                    # button.mouseDoubleClickEvent = self.the_button_was_double_clicked
+
                     panel.add_button(button)
                     number_of_buttons += 1
 
@@ -1447,9 +1494,16 @@ class View(QMainWindow):
     def add_recurring_function(self, func: Callable):
         self._recurring_tasks.append(func)
 
-    def the_button_was_clicked(self, button: DynamicButton, panel, *args, **kwargs):
+    def the_button_was_double_clicked(self, *args, **kwargs):
+        DEBUG and LOGGER.debug(f"The button was double clicked {args=}, {kwargs=}.")
+
+    def the_button_was_pressed(self, button: DynamicButton, panel, *args, **kwargs):
+        DEBUG and LOGGER.debug(f"The button was pressed {button=}, {panel=}, {args=}, {kwargs=}.")
 
         if button.immediate_run():
+            if button.function.__ui_allow_kernel_interrupt__:
+                self.interrupt_kernel()
+
             self.run_function(button.function, [], {}, button.function.__ui_runnable__)
 
             # Remove any existing arguments panel from a previous button

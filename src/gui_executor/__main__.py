@@ -1,6 +1,8 @@
 import argparse
 import logging
+import os
 import sys
+from logging.handlers import SocketHandler
 from pathlib import Path
 
 from PyQt5.QtCore import QLockFile
@@ -66,7 +68,16 @@ def main():
         sys.exit(0)
 
     if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
+        from gui_executor import view, client, kernel
+        view.DEBUG = True
+        client.DEBUG = True
+        kernel.DEBUG = True
+
+    log = logging.getLogger('gui-executor')
+    log.setLevel(1 if args.debug else logging.WARNING)  # to send all records to cutelog
+    host = os.environ.get("CUTELOG_HOST", '127.0.0.1')
+    socket_handler = SocketHandler(host, 19996)  # default listening address
+    log.addHandler(socket_handler)
 
     # We have only implemented the --module-path option for now
 

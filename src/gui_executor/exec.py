@@ -7,8 +7,6 @@ import warnings
 from enum import IntEnum
 from functools import wraps
 from pathlib import Path
-from pathlib import PosixPath
-from pathlib import PurePath
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -101,6 +99,7 @@ def exec_ui(
         use_script_app: bool = False,
         icons: Tuple[str | Path, ...] = None,
         immediate_run: bool = False,
+        allow_kernel_interrupt: bool = False,
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
@@ -136,6 +135,7 @@ def exec_ui(
         wrapper.__ui_input_request__ = input_request
         wrapper.__ui_immediate_run__ = immediate_run
         wrapper.__ui_icons__ = icons
+        wrapper.__ui_allow_kernel_interrupt__ = allow_kernel_interrupt
         if use_script_app:
             wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
         elif use_kernel:
