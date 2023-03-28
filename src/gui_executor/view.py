@@ -18,6 +18,7 @@ from enum import Enum
 from functools import partial
 from pathlib import Path
 from queue import Queue
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -26,6 +27,7 @@ from typing import Tuple
 
 import distro as distro
 import rich
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QProcess
 from PyQt5.QtCore import QRunnable
@@ -802,6 +804,41 @@ class DynamicButton(QWidget):
         return f"DynamicButton(\"{self.label}\", {self.function})"
 
 
+class TextInputField(QLineEdit):
+    def __init__(self, name: str, default: Any, placeholder_text: str = None):
+        super().__init__()
+        self._name = name
+        DEBUG and LOGGER.debug(f"{default = }, {type(default)=}")
+        self._default = str(default)
+        self._placeholder_text = placeholder_text
+        self.setObjectName(name)
+        self.setPlaceholderText(self._placeholder_text or self._default)
+
+        # Create a context menu entry to set the default value
+
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.__contextMenu)
+
+        # Use the copy icon to set the default value in the text field
+
+        icon = QApplication.instance().style().standardIcon(QtWidgets.QStyle.SP_TitleBarNormalButton)
+        action = self.addAction(icon, self.TrailingPosition)
+        action.triggered.connect(self.set_default)
+        action.setToolTip("Set the default value.")
+
+    def __contextMenu(self):
+        self._normalMenu = self.createStandardContextMenu()
+        self._addCustomMenuItems(self._normalMenu)
+        self._normalMenu.exec_(QCursor.pos())
+
+    def _addCustomMenuItems(self, menu):
+        menu.addSeparator()
+        menu.addAction(u'Set default', self.set_default)
+
+    def set_default(self):
+        self.setText(self._default)
+
+
 class ArgumentsPanel(QScrollArea):
     def __init__(self, button: DynamicButton, ui_args: Dict[str, Argument]):
         super().__init__()
@@ -855,9 +892,7 @@ class ArgumentsPanel(QScrollArea):
                 if arg.default is not None:
                     input_field.setCurrentText(arg.default.name)
             else:
-                input_field = QLineEdit()
-                input_field.setObjectName(name)
-                input_field.setPlaceholderText(str(arg.default) if arg.default else "")
+                input_field: TextInputField = TextInputField(name=name, default=arg.default)
                 if arg.annotation is not None:
                     input_field.setToolTip(f"The expected type is {arg.annotation.__name__}.")
                 else:
