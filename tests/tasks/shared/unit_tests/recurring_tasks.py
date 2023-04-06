@@ -4,7 +4,6 @@ from pathlib import Path
 from gui_executor.exec import exec_task
 from gui_executor.exec import exec_recurring_task
 from gui_executor.exec import StatusType
-from gui_executor.utils import format_datetime
 from gui_executor.utils import read_id
 from gui_executor.utils import write_id
 
@@ -22,7 +21,6 @@ class HexapodID(str, Enum):
 
 @exec_recurring_task(status_type=StatusType.PERMANENT)
 def show_hexapod_id():
-
     return f"Hexapod ID = {read_id(ID_FILE)}"
 
 
@@ -38,4 +36,5 @@ def get_id():
 
 # @exec_recurring_task(status_type=StatusType.NORMAL)
 # def show_time():
+#     from gui_executor.utils import format_datetime
 #     return format_datetime()
