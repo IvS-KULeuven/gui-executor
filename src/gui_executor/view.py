@@ -809,10 +809,13 @@ class TextInputField(QLineEdit):
         super().__init__()
         self._name = name
         DEBUG and LOGGER.debug(f"{default = }, {type(default)=}")
-        self._default = str(default)
+        self._default = None if default is None else str(default)
         self._placeholder_text = placeholder_text
         self.setObjectName(name)
         self.setPlaceholderText(self._placeholder_text or self._default)
+
+        if default is None:
+            return
 
         # Create a context menu entry to set the default value
 
