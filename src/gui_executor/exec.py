@@ -100,6 +100,7 @@ def exec_ui(
         icons: Tuple[str | Path, ...] = None,
         immediate_run: bool = False,
         allow_kernel_interrupt: bool = False,
+        capture_response: str | tuple[str, ...] = "response",
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
@@ -116,6 +117,8 @@ def exec_ui(
         icons: icons to be used for the button of this function
         immediate_run: when True execute the function immediately when pressed without creating and
             presenting the arguments panel with the Run button
+        allow_kernel_interrupt: allow this GUI to interrupt the kernel before running this task
+        capture_response: replace the response to capture return values in different variables
 
     Returns:
         The wrapper function object.
@@ -136,6 +139,7 @@ def exec_ui(
         wrapper.__ui_immediate_run__ = immediate_run
         wrapper.__ui_icons__ = icons
         wrapper.__ui_allow_kernel_interrupt__ = allow_kernel_interrupt
+        wrapper.__ui_capture_response__ = capture_response if isinstance(capture_response, str) else ", ".join(capture_response)
         if use_script_app:
             wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
         elif use_kernel:

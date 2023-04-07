@@ -274,14 +274,14 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
                     print(response)
                 return response
                     
-            {"response = main()" if call_func else ''}
+            {f"{func.__ui_capture_response__} = main()" if call_func else ''}
         """
     )
 
 
 def create_code_snippet_renderable(func: Callable, args: List, kwargs: Dict):
 
-    snippet = f"response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})"
+    snippet = f"{func.__ui_capture_response__} = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})"
 
     return Panel(Syntax(snippet, "python", theme='default', word_wrap=True), box=box.HORIZONTALS)
 
