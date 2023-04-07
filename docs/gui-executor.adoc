@@ -184,6 +184,26 @@ TBW
 * ListList
 * Callback
 
+=== Capture the result
+
+Since the task that is executed by the GUI is in fact a simple function, it can also return results. These results are normally captured in a variable `response` which is overwritten by new values each time a task is executed from the GUI, even if the task doesn't return anything explicitly in which case response will be None.
+
+The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter `capture_response` which can be a string or a tuple of strings. See an example below. The task `generate_model` returns three values of which we only need the 'model' and the 'hexhw'. In the `capture_response` you see that the second unused return value is captured in the `\_` and therefore ignored. If you need to ignore more return values, the `*_` is a valid choice.
+
+----
+@exec_task(capture_response=("model", "_", "hexhw"))
+def generate_model():
+    model = "This is a model"
+    s = "an unused return value..."
+    hexhw = "this is a reference to a hardware device"
+    return model, s, hexhw
+----
+
+Notice that the `capture_response` represents what you would actually write in your Python script when calling the function directly.
+----
+>>> model, _, hexhw = generate_model()
+----
+
 === Choosing your icons
 
 TBW

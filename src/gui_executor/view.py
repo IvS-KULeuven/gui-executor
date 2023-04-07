@@ -943,6 +943,7 @@ class ArgumentsPanel(QScrollArea):
                 grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignVCenter)
 
         vbox.addLayout(grid)
+        vbox.addWidget(QLabel(f"Return value(s) will be captured in and overwrite '{self.function.__ui_capture_response__}'."))
 
         hbox = QHBoxLayout()
         button_group = QButtonGroup()
