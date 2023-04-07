@@ -9,16 +9,16 @@ You ever wanted to execute your Python code from a simple GUI without the need t
 Install this package in your virtual environment:
 
 ```
-python3 -m pip install gui-executor 
+$ python3 -m pip install [--upgrade] gui-executor 
 ```
 
 ## Documentation
 
-You can find the documentation at https://rhuygen.github.io/gui-executor/.
+You can find the documentation at https://ivs-kuleuven.github.io/gui-executor/.
 
 
 ## Running the Tests
 
 ```
-PYTHONPATH=~/Documents/PyCharmProjects/gui-executor/tests gui-executor --module-path tasks.shared --module-path tasks.specific --debug
+$ PYTHONPATH=~/Documents/PyCharmProjects/gui-executor/tests gui-executor --module-path tasks.shared --module-path tasks.specific --debug
 ```
