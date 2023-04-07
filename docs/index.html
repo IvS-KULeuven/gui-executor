@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="generator" content="Asciidoctor 2.0.17">
 <title>The Tasks GUI</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -84,10 +84,10 @@ code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;
 ul,ol,dl{line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
 ul,ol{margin-left:1.5em}
 ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
 ul.circle{list-style-type:circle}
 ul.disc{list-style-type:disc}
-ul.square{list-style-type:square}
-ul.circle ul:not([class]),ul.disc ul:not([class]),ul.square ul:not([class]){list-style:inherit}
 ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
 dl dt{margin-bottom:.3125em;font-weight:bold}
 dl dd{margin-bottom:1.25em}
@@ -559,11 +559,11 @@ options:
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="python"><span style="color:#080;font-weight:bold">from</span> <span style="color:#B44;font-weight:bold">gui_executor.exec</span> <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">exec_task</span>
+<pre class="highlight"><code class="language-python" data-lang="python">from gui_executor.exec import exec_task
 
-<span style="color:#B0B">@exec_task</span>(immediate_run=<span style="color:#069">True</span>) <b class="conum">(1)</b>
-<span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">hello_world</span>():
-    print(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello, World!</span><span style="color:#710">&quot;</span></span>)</code></pre>
+@exec_task(immediate_run=True) <b class="conum">(1)</b>
+def hello_world():
+    print("Hello, World!")</code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -625,17 +625,17 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="python"><span style="color:#080;font-weight:bold">from</span> <span style="color:#B44;font-weight:bold">gui_executor.exec</span> <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">exec_task</span>
+<pre class="highlight"><code class="language-python" data-lang="python">from gui_executor.exec import exec_task
 
-<strong>UI_MODULE_DISPLAY_NAME = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello Tasks</span><span style="color:#710">&quot;</span></span></strong>  <b class="conum">(1)</b>
+<strong>UI_MODULE_DISPLAY_NAME = "Hello Tasks"</strong>  <b class="conum">(1)</b>
 
-<span style="color:#B0B">@exec_task</span>(immediate_run=<span style="color:#069">True</span>)
-<span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">hello_world</span>():
-    print(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello, World!</span><span style="color:#710">&quot;</span></span>)
+@exec_task(immediate_run=True)
+def hello_world():
+    print("Hello, World!")
 
-<strong><span style="color:#B0B">@exec_task</span>(display_name=<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello...</span><span style="color:#710">&quot;</span></span>)  <b class="conum">(2)</b>
-<span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">hello_you</span>(name: str = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">John</span><span style="color:#710">&quot;</span></span>):  <b class="conum">(3)</b>
-    print(f<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello, {name}!</span><span style="color:#710">&quot;</span></span>)
+<strong>@exec_task(display_name="Hello...")  <b class="conum">(2)</b>
+def hello_you(name: str = "John"):  <b class="conum">(3)</b>
+    print(f"Hello, {name}!")
 </strong></code></pre>
 </div>
 </div>
@@ -711,6 +711,33 @@ Hello, World! <b class="conum">(3)</b>
 <p>Callback</p>
 </li>
 </ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_capture_the_result">Capture the result</h3>
+<div class="paragraph">
+<p>Since the task that is executed by the GUI is in fact a simple function, it can also return results. These results are normally captured in a variable <code>response</code> which is overwritten by new values each time a task is executed from the GUI, even if the task doesn&#8217;t return anything explicitly in which case response will be None.</p>
+</div>
+<div class="paragraph">
+<p>The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter <code>capture_response</code> which can be a string or a tuple of strings. See an example below. The task <code>generate_model</code> returns three values of which we only need the 'model' and the 'hexhw'. In the <code>capture_response</code> you see that the second unused return value is captured in the <code>_</code> and therefore ignored. If you need to ignore more return values, the <code>*_</code> is a valid choice.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>@exec_task(capture_response=("model", "_", "hexhw"))
+def generate_model():
+    model = "This is a model"
+    s = "an unused return value..."
+    hexhw = "this is a reference to a hardware device"
+    return model, s, hexhw</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that the <code>capture_response</code> represents what you would actually write in your Python script when calling the function directly.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&gt;&gt;&gt; model, _, hexhw = generate_model()</pre>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -794,7 +821,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-12-08 22:56:02 +0100
+Last updated 2023-04-07 13:11:54 +0200
 </div>
 </div>
 </body>
