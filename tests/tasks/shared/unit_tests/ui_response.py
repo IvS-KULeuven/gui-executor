@@ -27,3 +27,11 @@ def return_int_and_float(idx: int = 0, value: float = 0.0) -> Tuple[int, float]:
         The tuple (idx, val) with the given values from the arguments.
     """
     return idx, value
+
+
+@exec_task(capture_response=("model", "_", "hexhw"))
+def generate_model():
+    model = "This is a model"
+    s = "an unused return value..."
+    hexhw = "this is a reference to a hardware device"
+    return model, s, hexhw
