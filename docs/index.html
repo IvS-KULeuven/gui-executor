@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.17">
-<title>The Tasks GUI</title>
+<title>A Task Executor GUI</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -435,11 +435,315 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 #footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
 @media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
 </style>
+<style>
+pre.rouge table td { padding: 5px; }
+pre.rouge table pre { margin: 0; }
+pre.rouge .cm {
+  color: #999988;
+  font-style: italic;
+}
+pre.rouge .cp {
+  color: #999999;
+  font-weight: bold;
+}
+pre.rouge .c1 {
+  color: #999988;
+  font-style: italic;
+}
+pre.rouge .cs {
+  color: #999999;
+  font-weight: bold;
+  font-style: italic;
+}
+pre.rouge .c, pre.rouge .ch, pre.rouge .cd, pre.rouge .cpf {
+  color: #999988;
+  font-style: italic;
+}
+pre.rouge .err {
+  color: #a61717;
+  background-color: #e3d2d2;
+}
+pre.rouge .gd {
+  color: #000000;
+  background-color: #ffdddd;
+}
+pre.rouge .ge {
+  color: #000000;
+  font-style: italic;
+}
+pre.rouge .gr {
+  color: #aa0000;
+}
+pre.rouge .gh {
+  color: #999999;
+}
+pre.rouge .gi {
+  color: #000000;
+  background-color: #ddffdd;
+}
+pre.rouge .go {
+  color: #888888;
+}
+pre.rouge .gp {
+  color: #555555;
+}
+pre.rouge .gs {
+  font-weight: bold;
+}
+pre.rouge .gu {
+  color: #aaaaaa;
+}
+pre.rouge .gt {
+  color: #aa0000;
+}
+pre.rouge .kc {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .kd {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .kn {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .kp {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .kr {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .kt {
+  color: #445588;
+  font-weight: bold;
+}
+pre.rouge .k, pre.rouge .kv {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .mf {
+  color: #009999;
+}
+pre.rouge .mh {
+  color: #009999;
+}
+pre.rouge .il {
+  color: #009999;
+}
+pre.rouge .mi {
+  color: #009999;
+}
+pre.rouge .mo {
+  color: #009999;
+}
+pre.rouge .m, pre.rouge .mb, pre.rouge .mx {
+  color: #009999;
+}
+pre.rouge .sa {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .sb {
+  color: #d14;
+}
+pre.rouge .sc {
+  color: #d14;
+}
+pre.rouge .sd {
+  color: #d14;
+}
+pre.rouge .s2 {
+  color: #d14;
+}
+pre.rouge .se {
+  color: #d14;
+}
+pre.rouge .sh {
+  color: #d14;
+}
+pre.rouge .si {
+  color: #d14;
+}
+pre.rouge .sx {
+  color: #d14;
+}
+pre.rouge .sr {
+  color: #009926;
+}
+pre.rouge .s1 {
+  color: #d14;
+}
+pre.rouge .ss {
+  color: #990073;
+}
+pre.rouge .s, pre.rouge .dl {
+  color: #d14;
+}
+pre.rouge .na {
+  color: #008080;
+}
+pre.rouge .bp {
+  color: #999999;
+}
+pre.rouge .nb {
+  color: #0086B3;
+}
+pre.rouge .nc {
+  color: #445588;
+  font-weight: bold;
+}
+pre.rouge .no {
+  color: #008080;
+}
+pre.rouge .nd {
+  color: #3c5d5d;
+  font-weight: bold;
+}
+pre.rouge .ni {
+  color: #800080;
+}
+pre.rouge .ne {
+  color: #990000;
+  font-weight: bold;
+}
+pre.rouge .nf, pre.rouge .fm {
+  color: #990000;
+  font-weight: bold;
+}
+pre.rouge .nl {
+  color: #990000;
+  font-weight: bold;
+}
+pre.rouge .nn {
+  color: #555555;
+}
+pre.rouge .nt {
+  color: #000080;
+}
+pre.rouge .vc {
+  color: #008080;
+}
+pre.rouge .vg {
+  color: #008080;
+}
+pre.rouge .vi {
+  color: #008080;
+}
+pre.rouge .nv, pre.rouge .vm {
+  color: #008080;
+}
+pre.rouge .ow {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .o {
+  color: #000000;
+  font-weight: bold;
+}
+pre.rouge .w {
+  color: #bbbbbb;
+}
+pre.rouge {
+  background-color: #f8f8f8;
+}
+</style>
+<style>
+/*! Asciidoctor Tabs | Copyright (c) 2018-present Dan Allen | MIT License */
+.tabs > ul {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0 -0.25em 0 0;
+  padding: 0;
+}
+
+.tabs > ul li {
+  align-items: center;
+  border: 1px solid black;
+  border-bottom: 0;
+  cursor: pointer;
+  display: flex;
+  font-weight: bold;
+  height: 2em;
+  line-height: 1;
+  margin-right: 0.25em;
+  padding: 0 1em;
+  position: relative;
+}
+
+.tabs > ul li, .tabs > ul p {
+  margin-bottom: 0;
+}
+
+.tabs > ul li + li[id] {
+  margin-top: 0;
+}
+
+.tabset {
+  margin-bottom: 1.25em;
+}
+
+.tabset.is-loading .tabs li:not(:first-child),
+.tabset:not(.is-loading) .tabs li:not(.is-active) {
+  background-color: black;
+  color: white;
+}
+
+.tabset.is-loading .tabs li:first-child::after,
+.tabs li.is-active::after {
+  background-color: white;
+  content: "";
+  display: block;
+  height: 3px; /* Chrome doesn't always paint the line accurately, so add a little extra */
+  position: absolute;
+  bottom: -1.5px;
+  left: 0;
+  right: 0;
+}
+
+.tabset > .content {
+  border: 1px solid gray;
+  padding: 1.25em;
+}
+
+.tabset.is-loading .tab-pane:not(:first-child),
+.tabset:not(.is-loading) .tab-pane:not(.is-active) {
+  display: none;
+}
+
+.tab-pane > :first-child {
+  margin-top: 0;
+}
+
+.tab-pane > :last-child > :last-child {
+  margin-bottom: 0;
+}
+</style>
 </head>
 <body class="article">
 <div id="header">
+<h1>A Task Executor GUI</h1>
 </div>
 <div id="content">
+<div class="sect1">
+<h2 id="_what_is_the_hype">What is the hype?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Execute your Python functions <em>not within</em>, but <em>as a GUI</em> without writing any GUI code.</p>
+</div>
+<div class="paragraph">
+<p>By decorating your function, it is recognised as a task and a button will be created in the Task GUI.
+The parameters of your function will be presented in a panel of input fields of different kinds.
+The output of your function will be printed in rich text.</p>
+</div>
+<div class="paragraph">
+<p>The Task GUI was originally developed to support test operators to quickly execute isolated tasks for an experiment in a lab. We had developed a complex machinery with microservices and scripts that would run from a Python REPL, however, after initial implementation and when going into routine testing in the lab, it turned out that running the scripts from the Python REPL was cumbersome, most of the time a test function was copied from a procedure and executed without changing any parameters. It would be much more convenient for a test operator to execute such script or functions through a dedicated GUI where each button would represent an isolated action to run a specific test. Since we work in a research environment, this sounded as a useful tool in other labs and environments. That&#8217;s how the <code>gui-executor</code> was born.</p>
+</div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="tasks-gui">The Tasks GUI</h2>
 <div class="sectionbody">
@@ -462,7 +766,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="content">
 <img src="images/csl_ui_args.png" alt="csl ui args" width="60%">
 </div>
-<div class="title">Figure 2. The example Task GUI with arguments panel. The arguemnts panel is automatically generated by the gui-executor from the arguments and type hints of the Python function.</div>
+<div class="title">Figure 2. The example Task GUI with arguments panel. The arguments panel is automatically generated by the gui-executor from the arguments and type hints of the Python function.</div>
 </div>
 <div class="paragraph">
 <p>This 'Analyse' task accepts 5 arguments: a list of observation identifiers, the location of the reduced data, an option to save the generated plots in a given output folder, and a flag to make the tasks output more verbose. Since this task will produce plots, we want to execute it as a GUI App. Finally, the 'Close' button hides the arguments panel again and deselects the task button. The 'Run' button executes the task.</p>
@@ -473,7 +777,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect2">
 <h3 id="_installation">Installation</h3>
 <div class="paragraph">
-<p>The <code>gui-executor</code> package can be installed via <a href="https://pypi.org">PyPI</a>. You should preferably install the package inside a vertual environment unless you want it to be available from your global Python installation.</p>
+<p>The <code>gui-executor</code> package can be installed via <a href="https://pypi.org">PyPI</a>. You should preferably install the package inside a virtual environment unless you want it to be available from your global Python installation.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -485,15 +789,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ gui-executor --help
-usage: gui-executor [-h] [--version] [--verbose] [--location LOCATION] [--cmd-log CMD_LOG] [--module-path MODULE_PATH]
-                    [--kernel-name KERNEL_NAME] [--config CONFIG] [--logo LOGO] [--app-name APP_NAME] [--debug] [--single]
+<pre class="nowrap">$ gui-executor --help
+usage: gui-executor [-h] [--version] [--verbose] [--cmd-log CMD_LOG] [--module-path MODULE_PATH]
+                    [--kernel-name KERNEL_NAME] [--config CONFIG] [--logo LOGO] [--app-name APP_NAME]
+                    [--debug] [--single]
 
 options:
   -h, --help            show this help message and exit
   --version, -V         print the gui-executor version number and exit
   --verbose, -v         print verbose information, increased verbosity level with multiple occurrences
-  --location LOCATION   location of the Python modules and scripts
   --cmd-log CMD_LOG     location of the command log files
   --module-path MODULE_PATH
                         module path of the Python modules and scripts
@@ -559,11 +863,11 @@ options:
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-python" data-lang="python">from gui_executor.exec import exec_task
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-@exec_task(immediate_run=True) <b class="conum">(1)</b>
-def hello_world():
-    print("Hello, World!")</code></pre>
+<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <b class="conum">(1)</b>
+<span class="k">def</span> <span class="nf">hello_world</span><span class="p">():</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"Hello, World!"</span><span class="p">)</span></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -625,18 +929,18 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-python" data-lang="python">from gui_executor.exec import exec_task
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<strong>UI_MODULE_DISPLAY_NAME = "Hello Tasks"</strong>  <b class="conum">(1)</b>
+<span class="o"><strong></span><span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="s">"Hello Tasks"</span><span class="o"></strong></span>  <b class="conum">(1)</b>
 
-@exec_task(immediate_run=True)
-def hello_world():
-    print("Hello, World!")
+<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">hello_world</span><span class="p">():</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"Hello, World!"</span><span class="p">)</span>
 
-<strong>@exec_task(display_name="Hello...")  <b class="conum">(2)</b>
-def hello_you(name: str = "John"):  <b class="conum">(3)</b>
-    print(f"Hello, {name}!")
-</strong></code></pre>
+<span class="o"><strong>@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="s">"Hello..."</span><span class="p">)</span>  <b class="conum">(2)</b>
+<span class="k">def</span> <span class="nf">hello_you</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"John"</span><span class="p">):</span>  <b class="conum">(3)</b>
+    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Hello, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">!"</span><span class="p">)</span>
+<span class="o"></strong></span></code></pre>
 </div>
 </div>
 <div class="olist arabic">
@@ -663,38 +967,267 @@ def hello_you(name: str = "John"):  <b class="conum">(3)</b>
 <div class="sect2">
 <h3 id="_the_exec_task_decorator">The @exec_task decorator</h3>
 <div class="paragraph">
-<p>TBW</p>
-</div>
-<div class="paragraph">
 <p>A Task is a function that is decorated with the <code>@exec_task</code> decorator. Such a function or task becomes a button in the Task GUI with a default icon. How the task is presented in the Task GUI and how the task is executed depends on the arguments that are passed into the decorator. In this section we will describe these arguments and what their effect is visually and behind the scenes.</p>
 </div>
 <div class="paragraph">
 <p>The default behaviour is as follows: The function is decorated with <code>@exec_task()</code> without any arguments. The task name will be the function name, the task icon will be <span class="image"><img src="images/script-function.svg" alt="script function" width="20px"></span>. When the task is selected, an arguments panel will be shown with a 'Run' button and the Task icon will look like <span class="image"><img src="images/script-function-selected.svg" alt="script function selected" width="20px"></span>. Click on the 'Run' button will execute the task in the selected Jupyter kernel (by default the 'python3' kernel). This is the behaviour that we have seen in the previous sections.</p>
 </div>
 <div class="paragraph">
-<p>If you check back on <a href="#csl-task-gui">Figure 1</a>, you can see that each of the tasks is visualised with a nice icon and a proper task name,most task names are black but there are some blue task names. All these features are the result from optional arguments on the decorator.</p>
+<p>If you check back on <a href="#csl-task-gui">Figure 1</a>, you can see that each of the tasks is visualised with a nice icon and a proper task name, most task names are black but there are some blue task names. All these features are the result from optional parameters on the decorator. Let&#8217;s describe these parameters now in the following paragraphs. Remember all decorator parameters are optional.</p>
 </div>
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><code>immediate_run</code></dt>
 <dd>
-<p>When this argument is set to True, the task name will be blue and when you click the task, it will run immediately without first showing the arguments panel with a 'Run' button. Don&#8217;t use this option for tasks that take arguments. This option is usually used for tasks that only print information or emergency action that must run as soon as possible.</p>
+<p>When this parameter is set to True, the task name will be blue and when you click the task, it will run immediately without first showing the arguments panel with a 'Run' button. Don&#8217;t use this option for tasks that take arguments. This option is usually used for tasks that only print information or emergency action that must run as soon as possible.</p>
 </dd>
 <dt class="hdlist1"><code>description</code></dt>
+<dd>
+<p>a string with a short description of the function, intended to be used as a tooltip if no docstring is present for the function.</p>
+</dd>
 <dt class="hdlist1"><code>display_name</code></dt>
+<dd>
+<p>a string that will be used as the name of the task (at the right of the button). When this parameter is not given, the function name will be used.</p>
+</dd>
 <dt class="hdlist1"><code>use_kernel, use_gui_app, use_script_app</code></dt>
+<dd>
+<p>These flags can be used to specify how the task shall be executed. The default is to execute a task in the Jupyter kernel. Other options are (1) a GUI app which will run the function in a separate process that is a Qt application and (2) a script which will run the function as a script in a separate Python interpreter. Use these parameters exclusively, i.e. only one must be present.</p>
+</dd>
 <dt class="hdlist1"><code>input_request</code></dt>
+<dd>
+<p>a tuple of strings to recognise input requests from the task. The GUI will scan the task&#8217;s stdin channel for a match with any of these strings and if a match is found, the GUI will fire a dialog requesting a 'yes / no' answer. See <a href="#input_requests">Requesting input</a> for more detailed information.</p>
+</dd>
 <dt class="hdlist1"><code>icons</code></dt>
 <dd>
-<p>This is a tuple&#8230;&#8203;</p>
+<p>This is a tuple of two filepaths that locate the icons that shall be used for the button of this task. The first filepath is the icon for the task button and the second filepath is the icon for the task button when the button is selected. The defaults are <span class="image"><img src="images/script-function.svg" alt="script function" width="20px"></span> and <span class="image"><img src="images/script-function-selected.svg" alt="script function selected" width="20px"></span> respectively.</p>
+</dd>
+<dt class="hdlist1"><code>allow_kernel_interrupt</code></dt>
+<dd>
+<p>a flag that, when True, allows the GUI to interrupt the kernel and stop any running task before executing this task. Use this parameter carefully, it is intended for tasks that have an emergency action and need to run immediately regardless if a previous task is still running or not.</p>
+</dd>
+<dt class="hdlist1"><code>capture_response</code></dt>
+<dd>
+<p>a string or a tuple of strings that represent the variable(s) in which the result of the function shall be captured. See <a href="#capture_response">Capture the result</a> for more detailed information.</p>
 </dd>
 </dl>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_your_functions_parameters">Your functions parameters</h3>
+<div class="paragraph">
+<p>So what about passing arguments to the task. Since a task is just a function, you write your function parameters like any other Python function. The Task GUI will interpret your function parameters and create a panel with input fields that match the type of your parameter (in case you used type hints).</p>
+</div>
+<div class="paragraph">
+<p>Suppose we have a task to capture an image from a camera and save this image into a file in a folder. Such a function could look like the code below. How that looks in the GUI is shown in the TAB next to the code snippet.</p>
+</div>
+<div id="_tabset_1" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_1_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_1_gui">
+<p>GUI</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_1_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+
+<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">capture_image</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+    <span class="p">...</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="s">"Captured image not shown for privacy reasons..."</span>
+
+    <span class="k">return</span> <span class="n">image</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_1_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/func_param_01.png" alt="func param 01" width="60%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>There are five parameters for the <code>capture_image</code> function and one return value. The GUI shows these parameters in the arguments panel below the task button where you can fill in their values before pressing 'Run'. I have already filled the camera name, the exposure time and aperture, but all arguments are of type <code>str</code> since no type hint was used in the functions parameter list. There is also a message saying the return values will be captured in the variable <code>response</code>. This variable will be overwritten when the function is executed and is accessible from the Jupyter kernel.</p>
+</div>
+<div class="paragraph">
+<p>For any given simple function, this is the default behaviour. You do not have to provide more information to run such a function from the Task GUI. All arguments will be passed into the function as strings. When you didn&#8217;t provide a value, <code>None</code> will be passed as an argument. In the screenshot above I have already pressed the 'Run' button, and you can see in the output panel what the arguments look like and what their type is.</p>
+</div>
+<div class="paragraph">
+<p>Now lets add type hints to the parameters of our function. We will use the string type for the camera name and the filename and location, and we will use a float for the exposure time and an integer for the aperture. For the location, we want to provide a default value.</p>
+</div>
+<div id="_tabset_2" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_2_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_2_gui">
+<p>GUI</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_2_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+
+<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">capture_image</span><span class="p">(</span>
+    <span class="n">camera</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"~/data/images"</span>
+<span class="p">):</span>
+    <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
+</span>    <span class="n">image</span> <span class="o">=</span> <span class="sa">f</span><span class="s">"Captured image from camera '</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">' with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">."</span>
+    <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
+</span>
+    <span class="k">return</span> <span class="n">image</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_2_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/func_param_02.png" alt="func param 02" width="60%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>If you now have a look at the arguments panel, you will see a lot of small things have changed. Behind the input fields for each parameter there is now the expected type in grey text. The location had a default value which is put as a placeholder in the input text field and there is a small copy icon aligned at the right in that text field. Pressing this icon will copy the default text into the input field and make this text editable. I again already pressed the 'Run' button and you can see in the output console that the type of the exposure_time argument is 'float', and the type of the aperture argument is 'int'. The return string is also printed with the arguments filled in.</p>
+</div>
+<div class="paragraph">
+<p>But we can do better. For the filename and location, it would be nice if we could open a file selector box and navigate in our directory structure to select these values. We have done that in the following code snippet where the <code>filename</code> has type hint '<em>FileName</em>' and <code>location</code> has type hint '<em>Directory</em>'. These are what we call a <em>TypeVar</em> and both are bound to the <em>Path</em> type. The default for <code>location</code> now has changed to a Path value instead of a string.</p>
+</div>
+<div class="paragraph">
+<p>Another change we added was the <code>capture_response</code> parameter of the decorator. The return value of the function is no longer captured in the variable <code>response</code>, but in the variable <code>new_image</code>.</p>
+</div>
+<div id="_tabset_3" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_3_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_3_gui">
+<p>GUI</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_3_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span><span class="p">,</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">Directory</span>
+
+<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="s">'new_image'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">capture_image_file_type_hints</span><span class="p">(</span>
+        <span class="n">camera</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s">"~/data/images"</span><span class="p">)</span>
+<span class="p">):</span>
+    <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
+</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s">"Captured image from camera '</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">' with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">, "</span>
+        <span class="sa">f</span><span class="s">"saving it as </span><span class="si">{</span><span class="n">filename</span><span class="o">=</span><span class="si">}</span><span class="s"> at </span><span class="si">{</span><span class="n">location</span><span class="o">=</span><span class="si">}</span><span class="s">."</span>
+    <span class="p">)</span>
+
+    <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
+</span>
+    <span class="k">return</span> <span class="n">image</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_3_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/func_param_03.png" alt="func param 03" width="80%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>If you now select the GUI tab above, the changes in the code result in two new icons (<span class="image"><img src="images/filename.svg" alt="filename" width="20px"></span> and <span class="image"><img src="images/folder.svg" alt="folder" width="20px"></span>) that replace the type behind the filename and location input fields. If you click these icons, a file selector box will open and allow you to select either a filename or a folder from your local disk. If you look at the code snippet printed in the output console, the filename and location arguments to the function are now of type <em>PosixPath</em>.</p>
+</div>
+<div class="paragraph">
+<p>The change with the added decorator parameter <code>capture_response</code> is apparent in the arguments panel where it now says the return values will be captured in 'new_image', but also in the output console you can see that the variable name in which the return value is captured is <code>new_image</code>. So, this function will now, when it is executed, make the return value available in the kernel as the variable named <code>new_image</code>.</p>
+</div>
+<div class="paragraph">
+<p>Lets go one step further and change the type of the camera name. We have only a limited number of camera&#8217;s around the house and we don&#8217;t like to type their name all the time, so, we are going to create a dropdown list (or ComboBox) where we can select the camera we want to capture. Luckely, we do not have to worry about coding this dropdown menu, the Task GUI understands the type hint <code>Enum</code> and will automatically create a dropdown box for this parameter. In the following code snippet, we have created a <code>CameraName</code> enumeration class and use it as a type hint for the camera parameter.</p>
+</div>
+<div id="_tabset_4" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_4_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_4_gui">
+<p>GUI</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_4_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">IntEnum</span>
+<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span><span class="p">,</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">Directory</span>
+
+<span class="k">class</span> <span class="nc">CameraName</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
+    <span class="n">FRONT_DOOR</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">BACK_DOOR</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">GARDEN</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">GARDEN_HOUSE</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">BIRD_HOUSE_1</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">BIRD_HOUSE_2</span> <span class="o">=</span> <span class="mi">6</span>
+
+<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="s">'new_image'</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">capture_image_camera_name</span><span class="p">(</span>
+        <span class="n">camera</span><span class="p">:</span> <span class="n">CameraName</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s">"~/data/images"</span><span class="p">)</span>
+<span class="p">):</span>
+    <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
+</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s">"Captured image from camera '</span><span class="si">{</span><span class="n">camera</span><span class="p">.</span><span class="n">name</span><span class="si">}</span><span class="s">' with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">, "</span>
+        <span class="sa">f</span><span class="s">"saving it as </span><span class="si">{</span><span class="n">filename</span><span class="o">=</span><span class="si">}</span><span class="s"> at </span><span class="si">{</span><span class="n">location</span><span class="o">=</span><span class="si">}</span><span class="s">."</span>
+    <span class="p">)</span>
+
+    <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
+</span>
+    <span class="k">return</span> <span class="n">image</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_4_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/func_param_04.png" alt="func param 04" width="80%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>In the GUI, you can see that the input field for the <code>camera</code> parameter is now a dropdown list. I selected the GARDEN camera already. In the output console, the argument for the function is <code>CameraName.GARDEN</code>, and in the f-string that creates the return value, we have to use <code>camera.name</code> because that <code>camera</code> variable is now an Enum object.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_type_hints_and_defaults">Type Hints and Defaults</h3>
 <div class="paragraph">
-<p>TBW</p>
+<p>The following type hints are supported and</p>
 </div>
 <div class="ulist">
 <ul>
@@ -714,9 +1247,9 @@ def hello_you(name: str = "John"):  <b class="conum">(3)</b>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_capture_the_result">Capture the result</h3>
+<h3 id="capture_response">Capture the result</h3>
 <div class="paragraph">
-<p>Since the task that is executed by the GUI is in fact a simple function, it can also return results. These results are normally captured in a variable <code>response</code> which is overwritten by new values each time a task is executed from the GUI, even if the task doesn&#8217;t return anything explicitly in which case response will be None.</p>
+<p>Since the task that is executed by the GUI is in fact a simple function, it can also return results. These results are normally captured in a variable <code>response</code> which is overwritten by new values each time a task is executed from the GUI, even if the task doesn&#8217;t return anything explicitly in which case <code>response</code> will be None.</p>
 </div>
 <div class="paragraph">
 <p>The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter <code>capture_response</code> which can be a string or a tuple of strings. See an example below. The task <code>generate_model</code> returns three values of which we only need the 'model' and the 'hexhw'. In the <code>capture_response</code> you see that the second unused return value is captured in the <code>_</code> and therefore ignored. If you need to ignore more return values, the <code>*_</code> is a valid choice.</p>
@@ -738,6 +1271,18 @@ def generate_model():
 <div class="content">
 <pre>&gt;&gt;&gt; model, _, hexhw = generate_model()</pre>
 </div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+Be careful when you use this parameter because it will overwrite the variables that you specify when they already exist in the kernel. The intend of this parameter is to be able to work with the response of a task in a more natural way and have tasks use return variables that are agreed in the project. The danger is that if not used carefully, data can be lost.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">
@@ -795,6 +1340,12 @@ def generate_model():
 </div>
 </div>
 <div class="sect2">
+<h3 id="input_requests">Requesting input</h3>
+<div class="paragraph">
+<p>TBW</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="init">The __init__.py file</h3>
 <div class="paragraph">
 <p>TBW</p>
@@ -812,6 +1363,12 @@ def generate_model():
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_best_practices">Best Practices</h2>
+<div class="sectionbody">
+
+</div>
+</div>
 </div>
 <div id="footnotes">
 <hr>
@@ -821,8 +1378,56 @@ def generate_model():
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-07 13:11:54 +0200
+Last updated 2023-04-09 19:56:26 +0200
 </div>
 </div>
+<script>
+/*! Asciidoctor Tabs | Copyright (c) 2018-present Dan Allen | MIT License */
+;(function () {
+  'use strict'
+
+  var hash = window.location.hash
+  find('.tabset').forEach(function (tabset) {
+    var active
+    var tabs = tabset.querySelector('.tabs')
+    if (tabs) {
+      var first
+      find('li', tabs).forEach(function (tab, idx) {
+        var id = (tab.querySelector('a[id]') || tab).id
+        if (!id) return
+        var pane = tabset.querySelector('.tab-pane[aria-labelledby~="' + id + '"]')
+        if (!pane) return
+        if (!idx) first = { tab: tab, pane: pane }
+        if (!active && hash === '#' + id && (active = true)) {
+          tab.classList.add('is-active')
+          if (pane) pane.classList.add('is-active')
+        } else if (!idx) {
+          tab.classList.remove('is-active')
+          if (pane) pane.classList.remove('is-active')
+        }
+        tab.addEventListener('click', activateTab.bind({ tabset: tabset, tab: tab, pane: pane }))
+      })
+      if (!active && first) {
+        first.tab.classList.add('is-active')
+        if (first.pane) first.pane.classList.add('is-active')
+      }
+    }
+    tabset.classList.remove('is-loading')
+  })
+
+  function activateTab (e) {
+    var tab = this.tab
+    var pane = this.pane
+    find('.tabs li, .tab-pane', this.tabset).forEach(function (it) {
+      it === tab || it === pane ? it.classList.add('is-active') : it.classList.remove('is-active')
+    })
+    e.preventDefault()
+  }
+
+  function find (selector, from) {
+    return Array.prototype.slice.call((from || document).querySelectorAll(selector))
+  }
+})()
+</script>
 </body>
 </html>
