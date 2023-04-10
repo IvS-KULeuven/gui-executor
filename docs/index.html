@@ -736,15 +736,19 @@ pre.rouge {
 <li><a href="#_organising_your_tasks">Organising your tasks</a></li>
 <li><a href="#_defining_a_task">Defining a Task</a></li>
 <li><a href="#_the_exec_task_decorator">The @exec_task decorator</a></li>
-<li><a href="#_your_functions_parameters">Your functions parameters</a></li>
+<li><a href="#_your_functions_parameters">Your function&#8217;s parameters</a></li>
+<li><a href="#_your_functions_result">Your function&#8217;s result</a></li>
+<li><a href="#_your_functions_output">Your function&#8217;s output</a></li>
 <li><a href="#_advanced_type_hints_and_defaults">Advanced Type Hints and Defaults</a></li>
 <li><a href="#_expert_type_hints_and_defaults">Expert Type Hints and defaults</a></li>
 <li><a href="#capture_response">Capture the result</a></li>
 <li><a href="#_choosing_your_icons">Choosing your icons</a></li>
 <li><a href="#_the_jupyter_kernels">The Jupyter Kernels</a></li>
-<li><a href="#_running_your_tasks">Running your tasks</a></li>
+<li><a href="#running_tasks">Running your tasks</a></li>
 <li><a href="#input_requests">Requesting input</a></li>
-<li><a href="#init">The __init__.py file</a></li>
+<li><a href="#init">The __init__.py files</a></li>
+<li><a href="#_the_command_log">The command log</a></li>
+<li><a href="#_recurring_functions">Recurring Functions</a></li>
 </ul>
 </li>
 <li><a href="#_best_practices">Best Practices</a></li>
@@ -755,7 +759,7 @@ pre.rouge {
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph text-right">
-<p>This documentation is for <code>gui-executor</code> ≥ v0.18.0.</p>
+<p>This documentation is for <code>gui-executor</code> ≥ v0.18.0. <span class="image"><a class="image" href="https://github.com/IvS-KULeuven/gui-executor"><img src="images/github.png" alt="github" width="40px"></a></span></p>
 </div>
 </div>
 </div>
@@ -824,7 +828,7 @@ options:
 <div class="content">
 <img src="images/csl_ui.png" alt="csl ui" width="60%">
 </div>
-<div class="title">Figure 1. A example Task GUI used in a real project. This type of GUI is generated from seven short Python modules containing simple functions to perform one specific task.</div>
+<div class="title">Figure 1. An example Task GUI used in a real project. This type of GUI is generated from seven short Python modules containing simple functions to perform one specific task.</div>
 </div>
 <div class="paragraph">
 <p>The Task GUI is organised in three panels that are arranged vertically in the window. The top panel is the toolbar to control the Jupyter kernel, the panel at the center contains all the task buttons organised by category, the bottom panel is the console where the output and error messages of the tasks will appear.</p>
@@ -842,7 +846,7 @@ options:
 <p>This 'Analyse' task accepts 5 arguments: a list of observation identifiers, the location of the reduced data, an option to save the generated plots in a given output folder, and a flag to make the tasks output more verbose. Since this task will produce plots, we want to execute it as a GUI App. Finally, the 'Close' button hides the arguments panel again and deselects the task button. The 'Run' button executes the task.</p>
 </div>
 <div class="paragraph">
-<p>When you exit the Task GUI a dialog will pop up asking if you really want to quit. I know, this is annoying, but the reason is that our tasks run code in the background in a Jupyter kernel and this kernel has state, i.e. the response or return values of tasks that you have run. You might not want to loose that information by quiting the application and killing the kernel. So, this dialog gives you the opportunity to abort and save your data.</p>
+<p>When you exit the Task GUI a dialog will pop up asking if you really want to quit. I know, this is annoying, but the reason is that our tasks run code in the background in a Jupyter kernel and this kernel has state, i.e. the response or return values of tasks that you have run. You might not want to lose that information by quiting the application and killing the kernel. So, this dialog gives you the opportunity to abort and save your data.</p>
 </div>
 <div class="imageblock text-center">
 <div class="content">
@@ -873,7 +877,7 @@ options:
 </div>
 </div>
 <div class="paragraph">
-<p>Each of these <code>.py</code> files form a group of buttons in the above Task GUI. The <code>__init__.py</code> file is special, it defines <code>camtest.csl</code> as a package, and it also defines the command to start the Task GUI [see section <a href="#init">The __init__.py file</a>]. The <code>icons</code> folder contains the graphics for the task buttons and the application icon.</p>
+<p>Each of these <code>.py</code> files form a group of buttons in the above Task GUI. The <code>__init__.py</code> file is special, it defines <code>camtest.csl</code> as a package, and it also defines the command to start the Task GUI [see section <a href="#init">The __init__.py files</a>]. The <code>icons</code> folder contains the graphics for the task buttons and the application icon.</p>
 </div>
 <div class="paragraph">
 <p>Simply starting the CSL Task GUI from the commandline would be done as follows:</p>
@@ -906,7 +910,7 @@ options:
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <b class="conum">(1)</b>
+<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <b class="conum">(1)</b>
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">():</span>
     <span class="k">print</span><span class="p">(</span><span class="s">"Hello, World!"</span><span class="p">)</span></code></pre>
 </div>
@@ -1054,7 +1058,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_your_functions_parameters">Your functions parameters</h3>
+<h3 id="_your_functions_parameters">Your function&#8217;s parameters</h3>
 <div class="paragraph">
 <p>So what about passing arguments to the task. Since a task is just a function, you write your function parameters like any other Python function. The Task GUI will interpret your function parameters and create a panel with input fields that match the type of your parameter (in case you used type hints).</p>
 </div>
@@ -1103,7 +1107,7 @@ Hello, World! <b class="conum">(3)</b>
 <p>For any given simple function, this is the default behaviour. You do not have to provide more information to run such a function from the Task GUI. All arguments will be passed into the function as strings. When you didn&#8217;t provide a value, <code>None</code> will be passed as an argument. In the screenshot above I have already pressed the 'Run' button, and you can see in the output panel what the arguments look like and what their type is.</p>
 </div>
 <div class="paragraph">
-<p>Now lets add type hints to the parameters of our function. We will use the string type for the camera name and the filename and location, and we will use a float for the exposure time and an integer for the aperture. For the location, we want to provide a default value.</p>
+<p>Now let&#8217;s add type hints to the parameters of our function. We will use the string type for the camera name and the filename and location, and we will use a float for the exposure time and an integer for the aperture. For the location, we want to provide a default value.</p>
 </div>
 <div id="_tabset_2" class="tabset is-loading">
 <div class="ulist tabs">
@@ -1145,7 +1149,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 </div>
 <div class="paragraph">
-<p>If you now have a look at the arguments panel, you will see a lot of small things have changed. Behind the input fields for each parameter there is now the expected type in grey text. The location had a default value which is put as a placeholder in the input text field and there is a small copy icon aligned at the right in that text field. Pressing this icon will copy the default text into the input field and make this text editable. I again already pressed the 'Run' button and you can see in the output console that the type of the exposure_time argument is 'float', and the type of the aperture argument is 'int'. The return string is also printed with the arguments filled in.</p>
+<p>If you now have a look at the arguments panel, you will see a lot of small things have changed. Behind the input fields for each parameter there is now the expected type in grey text. The location had a default value which is put as a placeholder in the input text field and there is a small copy icon aligned at the right in that text field. Pressing this icon will copy the default text into the input field and make this text editable. I again already pressed the 'Run' button, and you can see in the output console that the type of the exposure_time argument is 'float', and the type of the aperture argument is 'int'. The return string is also printed with the arguments filled in.</p>
 </div>
 <div class="paragraph">
 <p>But we can do better. For the filename and location, it would be nice if we could open a file selector box and navigate in our directory structure to select these values. We have done that in the following code snippet where the <code>filename</code> has type hint '<em>FileName</em>' and <code>location</code> has type hint '<em>Directory</em>'. These are what we call a <em>TypeVar</em> and both are bound to the <em>Path</em> type. The default for <code>location</code> now has changed to a Path value instead of a string.</p>
@@ -1205,7 +1209,7 @@ Hello, World! <b class="conum">(3)</b>
 <p>The change with the added decorator parameter <code>capture_response</code> is apparent in the arguments panel where it now says the return values will be captured in 'new_image', but also in the output console you can see that the variable name in which the return value is captured is <code>new_image</code>. So, this function will now, when it is executed, make the return value available in the kernel as the variable named <code>new_image</code>.</p>
 </div>
 <div class="paragraph">
-<p>Lets go one step further and change the type of the camera name. We have only a limited number of camera&#8217;s around the house and we don&#8217;t like to type their name all the time, so, we are going to create a dropdown list (or ComboBox) where we can select the camera we want to capture. Luckely, we do not have to worry about coding this dropdown menu, the Task GUI understands the type hint <code>Enum</code> and will automatically create a dropdown box for this parameter. In the following code snippet, we have created a <code>CameraName</code> enumeration class and use it as a type hint for the camera parameter.</p>
+<p>Let&#8217;s go one step further and change the type of the camera name. We have only a limited number of camera&#8217;s around the house and we don&#8217;t like to type their name all the time, so, we are going to create a dropdown list (or ComboBox) where we can select the camera we want to capture. Luckily, we do not have to worry about coding this dropdown menu, the Task GUI understands the type hint <code>Enum</code> and will automatically create a dropdown box for this parameter. In the following code snippet, we have created a <code>CameraName</code> enumeration class and use it as a type hint for the camera parameter.</p>
 </div>
 <div id="_tabset_4" class="tabset is-loading">
 <div class="ulist tabs">
@@ -1263,6 +1267,202 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div class="paragraph">
 <p>In the GUI, you can see that the input field for the <code>camera</code> parameter is now a dropdown list. I selected the GARDEN camera already. In the output console, the argument for the function is <code>CameraName.GARDEN</code>, and in the f-string that creates the return value, we have to use <code>camera.name</code> because that <code>camera</code> variable is now an Enum object.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_your_functions_result">Your function&#8217;s result</h3>
+<div class="paragraph">
+<p>Let&#8217;s move from the function&#8217;s parameters to its return value(s). Up to now, we have always returned a string which was then printed in rich text in the output console. But what if we have a more complex return value like a table? It turns out that Rich Renderables like Text, Table, Panel, Syntax, etc. all are printed nicely in the output console when you return them from your task.</p>
+</div>
+<div class="paragraph">
+<p>In the following example, I simulated a task that prints a table from our last bird count day in the backyard. Of course, in a real task this would take additional arguments like the date and other criteria and load the data from a database, but this example should give you a hunch of what is possible. The table is a <a href="https://rich.readthedocs.io/en/latest/tables.html">Rich Table</a> and is returned by the task.</p>
+</div>
+<div id="_tabset_5" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_5_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_5_gui">
+<p>GUI</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_5_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+
+<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span>
+
+<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">bird_count</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"backyard"</span><span class="p">):</span>
+
+    <span class="kn">from</span> <span class="nn">rich.table</span> <span class="kn">import</span> <span class="n">Table</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s">"Bird Count for </span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+
+    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Date"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s">"right"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"cyan"</span><span class="p">,</span> <span class="n">no_wrap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Bird name"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"magenta"</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Number"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s">"center"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">number</span> <span class="ow">in</span> <span class="p">{</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"ChiffChaff"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Robin"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Pigeon"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Magpie"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Sparrow"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Great tit"</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
+    <span class="p">}:</span>
+        <span class="n">table</span><span class="p">.</span><span class="n">add_row</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">table</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_5_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/table-bird-count.png" alt="table bird count" width="80%">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_your_functions_output">Your function&#8217;s output</h3>
+<div class="paragraph">
+<p>If you run your function in the kernel, as a GUI App or as a script, your function can output information by e.g. printing, logging, or even displaying images and plots. Output is handled slightly different depending on how you run your function. We will focus here on running in the kernel. For more details about running the GUI App or a script, see <a href="#running_tasks">Running your tasks</a>.</p>
+</div>
+<div class="paragraph">
+<p>Actually, our table example above with the bird count can also serve as function output. If we print the table with Rich Console, the output is caught and shown in the output console of the Task GUI almost exactly like if you return the table from the function. Any Rich Renderable that you print in your function will be shown as expected in the output console of the Task GUI.</p>
+</div>
+<div id="_tabset_6" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_6_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_6_gui">
+<p>GUI</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_6_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+
+<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span>
+
+<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">print_bird_count</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"backyard"</span><span class="p">,</span> <span class="n">date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"today"</span><span class="p">):</span>
+
+    <span class="kn">from</span> <span class="nn">rich.table</span> <span class="kn">import</span> <span class="n">Table</span>
+    <span class="kn">from</span> <span class="nn">rich.console</span> <span class="kn">import</span> <span class="n">Console</span>
+
+    <span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s">"Bird Count for </span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+
+    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Date"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s">"right"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"cyan"</span><span class="p">,</span> <span class="n">no_wrap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Bird name"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"magenta"</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Number"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s">"center"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">number</span> <span class="ow">in</span> <span class="p">{</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"ChiffChaff"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Robin"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Pigeon"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Magpie"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Sparrow"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Great tit"</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
+    <span class="p">}:</span>
+        <span class="n">table</span><span class="p">.</span><span class="n">add_row</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
+
+    <span class="n">console</span> <span class="o">=</span> <span class="n">Console</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">console</span><span class="p">.</span><span class="k">print</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_6_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/print-bird-count.png" alt="print bird count" width="80%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Another type that we would want to inspect is the image type. Our camera example above returned a string to illustrate the behaviour we wanted to demonstrate, but we can also use the IPython display function to show images in a separate window.  Let&#8217;s load one of our bird house pictures in the following example. This loads the image from disk and displays the image in a separate window. You will see in the output console that the image —which is still returned by the task— is captured in the <code>response</code> variable and is now printed as <code>&lt;IPython.core.display.Image object&gt;</code>. So, we return the actual image object in the variable <code>response</code>. We can see this image in the Jupyter QtConsole that can be opened from the second button (<span class="image"><img src="images/command.svg" alt="command" width="20px"></span>]) in the Task GUI toolbar. This button will open a new window with a Jupyter Python Console where you have a Python prompt. Type <code>response</code> at the prompt and the image will be shown. You can now further process this image if needed from the Python REPL.</p>
+</div>
+<div id="_tabset_7" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_7_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_7_gui">
+<p>GUI</p>
+</li>
+<li id="_tabset_7_console">
+<p>Console</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_7_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+
+<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span>
+
+<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">preview_image</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"bird_house"</span><span class="p">):</span>
+
+    <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">display</span>
+
+    <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">HERE</span> <span class="o">/</span> <span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">.png"</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">image</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_7_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/preview-image.png" alt="preview image" width="100%">
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_7_console">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/console-image-bird-house.png" alt="console image bird house" width="100%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+If you want to follow closely on the printed output of your function, you might want to consider using the <code>flush=True</code> argument for the <code>print</code> function.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect2">
@@ -1331,7 +1531,7 @@ def generate_model():
 <div class="title">Warning</div>
 </td>
 <td class="content">
-Be careful when you use this parameter because it will overwrite the variables that you specify when they already exist in the kernel. The intend of this parameter is to be able to work with the response of a task in a more natural way and have tasks use return variables that are agreed in the project. The danger is that if not used carefully, data can be lost.
+Be careful when you use this parameter because it will overwrite the variables that you specify when they already exist in the kernel. The intent of this parameter is to be able to work with the response of a task in a more natural way and have tasks use return variables that are agreed in the project. The danger is that if not used carefully, data can be lost.
 </td>
 </tr>
 </table>
@@ -1379,7 +1579,7 @@ Be careful when you use this parameter because it will overwrite the variables t
 </div>
 </div>
 <div class="sect2">
-<h3 id="_running_your_tasks">Running your tasks</h3>
+<h3 id="running_tasks">Running your tasks</h3>
 <div class="paragraph">
 <p>TBW</p>
 </div>
@@ -1404,19 +1604,59 @@ Be careful when you use this parameter because it will overwrite the variables t
 </div>
 </div>
 <div class="sect2">
-<h3 id="init">The __init__.py file</h3>
+<h3 id="init">The __init__.py files</h3>
+<div class="paragraph">
+<p>The <code>__init__.py</code> file is usually empty, but can contain a few definitions which are picked up by the Task GUI. If you have several TABs in your GUI with task buttons, these TABs were created from sub-packages. The <code>__init__.py</code> file for a sub-package can define the <code>UI_TAB_DISPLAY_NAME</code> to specify a name for the TAB instead of the package name. The <code>__init__.py</code> file of the root package, i.e. the one you used with the <code>--module-path</code> commandline option, can define the order in which the TABs appear in the Task GUI. Define a list of sub-package names in the variable <code>UI_TAB_ORDER</code>. The TABS will appear in that order in the GUI.</p>
+</div>
+<div class="paragraph">
+<p>Of course, if you have functions that are used by different tasks in seperate modules, you would want to define those functions also in the <code>__init__.py</code> file.</p>
+</div>
+<div class="paragraph">
+<p>The <code>__init__.py</code> file for the project I&#8217;m working on currently (see <a href="#csl-task-gui">Figure 1</a>) looks like the code given below. We define a function to start the Task GUI with all required options. This function is then used as an <em>entry_point</em> in the <code>setup.py</code> file of our project. That way we can start the Task Gui with a simple command <code>csl_ui</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span> <span class="nn">executor</span> <span class="kn">import</span> <span class="n">ExternalCommand</span>
+
+<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span>
+
+<span class="n">UI_TAB_ORDER</span> <span class="o">=</span> <span class="p">[</span><span class="s">'tests'</span><span class="p">,</span> <span class="s">'camera'</span><span class="p">,</span> <span class="s">'gse'</span><span class="p">,</span> <span class="s">'configuration'</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">csl_ui</span><span class="p">():</span>
+    <span class="n">logo_path</span> <span class="o">=</span> <span class="n">HERE</span> <span class="o">/</span> <span class="s">"icons/dashboard.svg"</span>
+
+    <span class="c1"># On the client machine, the /data directory is usually mounted read-only.
+</span>    <span class="c1"># If that is the case, write the command log to the users home folder.
+</span>
+    <span class="n">cmd_log</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">environ</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">"UI_LOG_FILE_LOCATION"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cmd_log</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="p">.</span><span class="n">access</span><span class="p">(</span><span class="n">cmd_log</span><span class="p">,</span> <span class="n">os</span><span class="p">.</span><span class="n">W_OK</span><span class="p">):</span>
+        <span class="n">cmd_log</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s">"~"</span><span class="p">).</span><span class="n">expanduser</span><span class="p">())</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">ExternalCommand</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s">"gui-executor --verbose --module-path camtest.tasks.csl "</span>
+        <span class="sa">f</span><span class="s">"--module-path camtest.tasks.shared.camera "</span>
+        <span class="sa">f</span><span class="s">"--kernel-name plato-test-scripts --single "</span>
+        <span class="sa">f</span><span class="s">"--logo </span><span class="si">{</span><span class="n">logo_path</span><span class="si">}</span><span class="s"> --cmd-log </span><span class="si">{</span><span class="n">cmd_log</span><span class="si">}</span><span class="s"> --app-name 'CSL Operator GUI'"</span><span class="p">,</span>
+        <span class="n">asynchronous</span><span class="o">=</span><span class="bp">True</span>
+    <span class="p">)</span>
+    <span class="n">cmd</span><span class="p">.</span><span class="n">start</span><span class="p">()</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_command_log">The command log</h3>
 <div class="paragraph">
 <p>TBW</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p>creating a function to start the GUI in the background</p>
-</li>
-<li>
-<p>add the command to the <code>setup.py</code></p>
-</li>
-</ul>
+</div>
+<div class="sect2">
+<h3 id="_recurring_functions">Recurring Functions</h3>
+<div class="paragraph">
+<p>TBW</p>
 </div>
 </div>
 </div>
@@ -1427,7 +1667,7 @@ Be careful when you use this parameter because it will overwrite the variables t
 <div class="ulist">
 <ul>
 <li>
-<p>Write simple tasks with just a few lines of code. Put the code that does the actual work in a separate function or class and call that function from the task body. Basically, the task function should just be a wrapper, with some code to massage the arguments and prepare the return value. The bulk of the work should go into a function that can also be called from within another environment, outside the Task GUI. Don&#8217;t build your code around the Task GUI.</p>
+<p>Write simple tasks with just a few lines of code. Put the code that does the actual work in a separate function or class and call that function from the task body. Basically, the task function should just be a wrapper, with some code to massage the arguments and prepare the return value. The bulk of the work should go into a function that can also be called from within another environment, outside the Task GUI. Don&#8217;t build your code around the Task GUI, build a Task GUI around your code.</p>
 </li>
 </ul>
 </div>
@@ -1442,7 +1682,7 @@ Be careful when you use this parameter because it will overwrite the variables t
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-09 23:25:42 +0200
+Last updated 2023-04-10 23:24:58 +0200
 </div>
 </div>
 <script>
