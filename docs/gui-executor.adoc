@@ -509,14 +509,38 @@ Since the task that is executed by the GUI is in fact a simple function, it can 
 
 The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter `capture_response` which can be a string or a tuple of strings. See an example below. The task `generate_model` returns three values of which we only need the 'model' and the 'hexhw'. In the `capture_response` you see that the second unused return value is captured in the `\_` and therefore ignored. If you need to ignore more return values, the `*_` is a valid choice.
 
+[tabs]
+======
+Code snippet::
++
+[source,python]
 ----
+from gui_executor.exec import exec_task
+
+UI_MODULE_DISPLAY_NAME = "Capturing function responses"
+
 @exec_task(capture_response=("model", "_", "hexhw"))
-def generate_model():
+def generate_model(name: str = "LDO -> CSL"):
+
+    print(f"Generating model: {name}")
+
     model = "This is a model"
     s = "an unused return value..."
     hexhw = "this is a reference to a hardware device"
+
     return model, s, hexhw
 ----
+GUI::
++
+image::images/capture-response.png[width=80%,align=center]
+
+Console::
++
+image::images/capture-response-console.png[width=80%,align=center]
+
+======
+
+The GUI tab above shows the arguments panel when selecting the `generate_model` task. It tells you in which variables the return values will be available, i.e. `model, _, hexhw`. The Console tab shows a screenshot of the Jupyter Console where we inspected the `model` and `hexhw` variables.
 
 Notice that the `capture_response` represents what you would actually write in your Python script when calling the function directly.
 ----
