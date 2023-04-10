@@ -3,7 +3,7 @@
 :toc: left
 
 [.text-right]
-This documentation is for `gui-executor` ≥ v0.18.0.
+This documentation is for `gui-executor` ≥ v0.18.0. image:images/github.png[link=https://github.com/IvS-KULeuven/gui-executor,width=40px]
 
 == What is the hype?
 
@@ -54,7 +54,7 @@ options:
 
 The Tasks GUI is a generic GUI that allows the user to execute standard tasks by clicking the task button and provide the necessary arguments. An example of such a Task GUI is given in the screenshot below. This screenshot is taken as an example and showcase from a project I'm working on. In further sections we will create such a task GUI step by step.
 
-.A example Task GUI used in a real project. This type of GUI is generated from seven short Python modules containing simple functions to perform one specific task.
+.An example Task GUI used in a real project. This type of GUI is generated from seven short Python modules containing simple functions to perform one specific task.
 [[csl-task-gui,Figure 1]]
 image::images/csl_ui.png[width=60%,align=center]
 
@@ -67,7 +67,7 @@ image::images/csl_ui_args.png[width=60%,align=center]
 
 This 'Analyse' task accepts 5 arguments: a list of observation identifiers, the location of the reduced data, an option to save the generated plots in a given output folder, and a flag to make the tasks output more verbose. Since this task will produce plots, we want to execute it as a GUI App. Finally, the 'Close' button hides the arguments panel again and deselects the task button. The 'Run' button executes the task.
 
-When you exit the Task GUI a dialog will pop up asking if you really want to quit. I know, this is annoying, but the reason is that our tasks run code in the background in a Jupyter kernel and this kernel has state, i.e. the response or return values of tasks that you have run. You might not want to loose that information by quiting the application and killing the kernel. So, this dialog gives you the opportunity to abort and save your data.
+When you exit the Task GUI a dialog will pop up asking if you really want to quit. I know, this is annoying, but the reason is that our tasks run code in the background in a Jupyter kernel and this kernel has state, i.e. the response or return values of tasks that you have run. You might not want to lose that information by quiting the application and killing the kernel. So, this dialog gives you the opportunity to abort and save your data.
 
 image::images/quit_dialog.png[width=50%,align=center]
 
@@ -117,7 +117,7 @@ The `hello.py` file shall contain the following code:
 ----
 from gui_executor.exec import exec_task
 
-@exec_task(immediate_run=True) <1>
+@exec_task(immediate_run=True)  <1>
 def hello_world():
     print("Hello, World!")
 ----
@@ -153,7 +153,7 @@ What do we see in this output:
 
 Let's add another task that takes an argument 'name' as a string with the default value of "John".
 
-[source, python, subs="+quotes"]
+[source,python,subs="+quotes"]
 ----
 from gui_executor.exec import exec_task
 
@@ -197,7 +197,7 @@ If you check back on <<csl-task-gui>>, you can see that each of the tasks is vis
 `allow_kernel_interrupt`:: a flag that, when True, allows the GUI to interrupt the kernel and stop any running task before executing this task. Use this parameter carefully, it is intended for tasks that have an emergency action and need to run immediately regardless if a previous task is still running or not.
 `capture_response`:: a string or a tuple of strings that represent the variable(s) in which the result of the function shall be captured. See <<capture_response>> for more detailed information.
 
-=== Your functions parameters
+=== Your function's parameters
 
 So what about passing arguments to the task. Since a task is just a function, you write your function parameters like any other Python function. The Task GUI will interpret your function parameters and create a panel with input fields that match the type of your parameter (in case you used type hints).
 
@@ -229,7 +229,7 @@ There are five parameters for the `capture_image` function and one return value.
 
 For any given simple function, this is the default behaviour. You do not have to provide more information to run such a function from the Task GUI. All arguments will be passed into the function as strings. When you didn't provide a value, `None` will be passed as an argument. In the screenshot above I have already pressed the 'Run' button, and you can see in the output panel what the arguments look like and what their type is.
 
-Now lets add type hints to the parameters of our function. We will use the string type for the camera name and the filename and location, and we will use a float for the exposure time and an integer for the aperture. For the location, we want to provide a default value.
+Now let's add type hints to the parameters of our function. We will use the string type for the camera name and the filename and location, and we will use a float for the exposure time and an integer for the aperture. For the location, we want to provide a default value.
 
 [tabs]
 ======
@@ -257,7 +257,7 @@ image::images/func_param_02.png[width=60%,align=center]
 
 ======
 
-If you now have a look at the arguments panel, you will see a lot of small things have changed. Behind the input fields for each parameter there is now the expected type in grey text. The location had a default value which is put as a placeholder in the input text field and there is a small copy icon aligned at the right in that text field. Pressing this icon will copy the default text into the input field and make this text editable. I again already pressed the 'Run' button and you can see in the output console that the type of the exposure_time argument is 'float', and the type of the aperture argument is 'int'. The return string is also printed with the arguments filled in.
+If you now have a look at the arguments panel, you will see a lot of small things have changed. Behind the input fields for each parameter there is now the expected type in grey text. The location had a default value which is put as a placeholder in the input text field and there is a small copy icon aligned at the right in that text field. Pressing this icon will copy the default text into the input field and make this text editable. I again already pressed the 'Run' button, and you can see in the output console that the type of the exposure_time argument is 'float', and the type of the aperture argument is 'int'. The return string is also printed with the arguments filled in.
 
 But we can do better. For the filename and location, it would be nice if we could open a file selector box and navigate in our directory structure to select these values. We have done that in the following code snippet where the `filename` has type hint '_FileName_' and `location` has type hint '_Directory_'. These are what we call a _TypeVar_ and both are bound to the _Path_ type. The default for `location` now has changed to a Path value instead of a string.
 
@@ -299,7 +299,7 @@ If you now select the GUI tab above, the changes in the code result in two new i
 
 The change with the added decorator parameter `capture_response` is apparent in the arguments panel where it now says the return values will be captured in 'new_image', but also in the output console you can see that the variable name in which the return value is captured is `new_image`. So, this function will now, when it is executed, make the return value available in the kernel as the variable named `new_image`.
 
-Lets go one step further and change the type of the camera name. We have only a limited number of camera's around the house and we don't like to type their name all the time, so, we are going to create a dropdown list (or ComboBox) where we can select the camera we want to capture. Luckely, we do not have to worry about coding this dropdown menu, the Task GUI understands the type hint `Enum` and will automatically create a dropdown box for this parameter. In the following code snippet, we have created a `CameraName` enumeration class and use it as a type hint for the camera parameter.
+Let's go one step further and change the type of the camera name. We have only a limited number of camera's around the house and we don't like to type their name all the time, so, we are going to create a dropdown list (or ComboBox) where we can select the camera we want to capture. Luckily, we do not have to worry about coding this dropdown menu, the Task GUI understands the type hint `Enum` and will automatically create a dropdown box for this parameter. In the following code snippet, we have created a `CameraName` enumeration class and use it as a type hint for the camera parameter.
 
 [tabs]
 ======
@@ -343,6 +343,141 @@ image::images/func_param_04.png[width=80%,align=center]
 ======
 
 In the GUI, you can see that the input field for the `camera` parameter is now a dropdown list. I selected the GARDEN camera already. In the output console, the argument for the function is `CameraName.GARDEN`, and in the f-string that creates the return value, we have to use `camera.name` because that `camera` variable is now an Enum object.
+
+=== Your function's result
+
+Let's move from the function's parameters to its return value(s). Up to now, we have always returned a string which was then printed in rich text in the output console. But what if we have a more complex return value like a table? It turns out that Rich Renderables like Text, Table, Panel, Syntax, etc. all are printed nicely in the output console when you return them from your task.
+
+In the following example, I simulated a task that prints a table from our last bird count day in the backyard. Of course, in a real task this would take additional arguments like the date and other criteria and load the data from a database, but this example should give you a hunch of what is possible. The table is a https://rich.readthedocs.io/en/latest/tables.html[Rich Table] and is returned by the task.
+
+[tabs]
+======
+Code snippet::
++
+[source,python]
+----
+from pathlib import Path
+
+from gui_executor.exec import exec_task
+
+HERE = Path(__file__).parent.resolve()
+
+@exec_task()
+def bird_count(camera: str = "backyard"):
+
+    from rich.table import Table
+    table = Table(title=f"Bird Count for {camera}")
+
+    table.add_column("Date", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Bird name", style="magenta")
+    table.add_column("Number", justify="center", style="green")
+
+    for date, name, number in {
+        ("16 Feb 2023", "ChiffChaff", 3),
+        ("16 Feb 2023", "Robin", 1),
+        ("16 Feb 2023", "Pigeon", 5),
+        ("16 Feb 2023", "Magpie", 3),
+        ("16 Feb 2023", "Sparrow", 10),
+        ("16 Feb 2023", "Great tit", 9),
+    }:
+        table.add_row(date, name, str(number))
+
+    return table
+----
+
+GUI::
++
+image::images/table-bird-count.png[width=80%,align=center]
+
+======
+
+=== Your function's output
+
+If you run your function in the kernel, as a GUI App or as a script, your function can output information by e.g. printing, logging, or even displaying images and plots. Output is handled slightly different depending on how you run your function. We will focus here on running in the kernel. For more details about running the GUI App or a script, see <<running_tasks>>.
+
+Actually, our table example above with the bird count can also serve as function output. If we print the table with Rich Console, the output is caught and shown in the output console of the Task GUI almost exactly like if you return the table from the function. Any Rich Renderable that you print in your function will be shown as expected in the output console of the Task GUI.
+
+[tabs]
+======
+Code snippet::
++
+[source,python]
+----
+from pathlib import Path
+
+from gui_executor.exec import exec_task
+
+HERE = Path(__file__).parent.resolve()
+
+@exec_task()
+def print_bird_count(camera: str = "backyard", date: str = "today"):
+
+    from rich.table import Table
+    from rich.console import Console
+
+    table = Table(title=f"Bird Count for {camera}")
+
+    table.add_column("Date", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Bird name", style="magenta")
+    table.add_column("Number", justify="center", style="green")
+
+    for date, name, number in {
+        ("16 Feb 2023", "ChiffChaff", 3),
+        ("16 Feb 2023", "Robin", 1),
+        ("16 Feb 2023", "Pigeon", 5),
+        ("16 Feb 2023", "Magpie", 3),
+        ("16 Feb 2023", "Sparrow", 10),
+        ("16 Feb 2023", "Great tit", 9),
+    }:
+        table.add_row(date, name, str(number))
+
+    console = Console(width=200)
+    console.print(table)
+
+----
+
+GUI::
++
+image::images/print-bird-count.png[width=80%,align=center]
+
+======
+
+Another type that we would want to inspect is the image type. Our camera example above returned a string to illustrate the behaviour we wanted to demonstrate, but we can also use the IPython display function to show images in a separate window.  Let's load one of our bird house pictures in the following example. This loads the image from disk and displays the image in a separate window. You will see in the output console that the image —which is still returned by the task— is captured in the `response` variable and is now printed as `<IPython.core.display.Image object>`. So, we return the actual image object in the variable `response`. We can see this image in the Jupyter QtConsole that can be opened from the second button (image:images/command.svg[width=20px]]) in the Task GUI toolbar. This button will open a new window with a Jupyter Python Console where you have a Python prompt. Type `response` at the prompt and the image will be shown. You can now further process this image if needed from the Python REPL.
+
+[tabs]
+======
+Code snippet::
++
+[source,python]
+----
+from pathlib import Path
+
+from gui_executor.exec import exec_task
+
+HERE = Path(__file__).parent.resolve()
+
+@exec_task()
+def preview_image(camera: str = "bird_house"):
+
+    from IPython.display import Image, display
+
+    image = Image(filename=HERE / f"{camera}.png")
+    display(image)
+
+    return image
+----
+
+GUI::
++
+image::images/preview-image.png[width=100%,align=center]
+
+Console::
++
+image::images/console-image-bird-house.png[width=100%,align=center]
+
+======
+
+TIP: If you want to follow closely on the printed output of your function, you might want to consider using the `flush=True` argument for the `print` function.
 
 
 === Advanced Type Hints and Defaults
@@ -388,7 +523,7 @@ Notice that the `capture_response` represents what you would actually write in y
 >>> model, _, hexhw = generate_model()
 ----
 
-WARNING: Be careful when you use this parameter because it will overwrite the variables that you specify when they already exist in the kernel. The intend of this parameter is to be able to work with the response of a task in a more natural way and have tasks use return variables that are agreed in the project. The danger is that if not used carefully, data can be lost.
+WARNING: Be careful when you use this parameter because it will overwrite the variables that you specify when they already exist in the kernel. The intent of this parameter is to be able to work with the response of a task in a more natural way and have tasks use return variables that are agreed in the project. The danger is that if not used carefully, data can be lost.
 
 
 === Choosing your icons
@@ -408,6 +543,7 @@ TBW
 * Creating a new kernel
 * Specify which kernel to use on the command line
 
+[#running_tasks]
 === Running your tasks
 
 TBW
@@ -422,13 +558,54 @@ TBW
 TBW
 
 [#init]
-=== The \\__init__.py file
+=== The \\__init__.py files
+
+The `\\__init__.py` file is usually empty, but can contain a few definitions which are picked up by the Task GUI. If you have several TABs in your GUI with task buttons, these TABs were created from sub-packages. The `\\__init__.py` file for a sub-package can define the `UI_TAB_DISPLAY_NAME` to specify a name for the TAB instead of the package name. The `\\__init__.py` file of the root package, i.e. the one you used with the `--module-path` commandline option, can define the order in which the TABs appear in the Task GUI. Define a list of sub-package names in the variable `UI_TAB_ORDER`. The TABS will appear in that order in the GUI.
+
+Of course, if you have functions that are used by different tasks in seperate modules, you would want to define those functions also in the `\\__init__.py` file.
+
+The `\\__init__.py` file for the project I'm working on currently (see <<csl-task-gui>>) looks like the code given below. We define a function to start the Task GUI with all required options. This function is then used as an _entry_point_ in the `setup.py` file of our project. That way we can start the Task Gui with a simple command `csl_ui`.
+
+[source,python]
+----
+import os
+from pathlib import Path
+
+from executor import ExternalCommand
+
+HERE = Path(__file__).parent.resolve()
+
+UI_TAB_ORDER = ['tests', 'camera', 'gse', 'configuration']
+
+
+def csl_ui():
+    logo_path = HERE / "icons/dashboard.svg"
+
+    # On the client machine, the /data directory is usually mounted read-only.
+    # If that is the case, write the command log to the users home folder.
+
+    cmd_log = os.environ.get("UI_LOG_FILE_LOCATION")
+    if cmd_log is None or not os.access(cmd_log, os.W_OK):
+        cmd_log = str(Path("~").expanduser())
+
+    cmd = ExternalCommand(
+        f"gui-executor --verbose --module-path camtest.tasks.csl "
+        f"--module-path camtest.tasks.shared.camera "
+        f"--kernel-name plato-test-scripts --single "
+        f"--logo {logo_path} --cmd-log {cmd_log} --app-name 'CSL Operator GUI'",
+        asynchronous=True
+    )
+    cmd.start()
+----
+
+=== The command log
 
 TBW
 
-* creating a function to start the GUI in the background
-* add the command to the `setup.py`
+=== Recurring Functions
+
+TBW
 
 == Best Practices
 
-* Write simple tasks with just a few lines of code. Put the code that does the actual work in a separate function or class and call that function from the task body. Basically, the task function should just be a wrapper, with some code to massage the arguments and prepare the return value. The bulk of the work should go into a function that can also be called from within another environment, outside the Task GUI. Don't build your code around the Task GUI.
+* Write simple tasks with just a few lines of code. Put the code that does the actual work in a separate function or class and call that function from the task body. Basically, the task function should just be a wrapper, with some code to massage the arguments and prepare the return value. The bulk of the work should go into a function that can also be called from within another environment, outside the Task GUI. Don't build your code around the Task GUI, build a Task GUI around your code.
