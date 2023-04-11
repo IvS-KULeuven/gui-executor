@@ -1596,20 +1596,24 @@ Be careful when you use this parameter because it will overwrite the variables t
 <div class="sect2">
 <h3 id="_choosing_your_icons">Choosing your icons</h3>
 <div class="paragraph">
-<p>TBW</p>
+<p>If you do not specify a path for an icon, the Task GUI will use the same icon for all task buttons. This becomes boring very rapidly, but also is error-prone since it will be hard to find your task and the wrong button can be pressed by accident. Looking back at <a href="#csl-task-gui">Figure 1</a> you will see that we have created different icons for the different tasks. It gives our Task GUI not only a nice look-and-feel, but also makes it easier to recognise tasks and find the appropriate button.</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p>PNG or SVG</p>
-</li>
-<li>
-<p>normal and selected</p>
-</li>
-<li>
-<p>what when <code>immediate_run=True</code></p>
-</li>
-</ul>
+<div class="paragraph">
+<p>The icon file type can be <code>PNG</code> or <code>SVG</code>. The latter is preferred because of its scalability. For a task button we need two icons that represent a normal state of the button and the selected state. By default, the normal state icon is <span class="image"><img src="images/script-function.svg" alt="script function" width="20px"></span> and the selected state icon is <span class="image"><img src="images/script-function-selected.svg" alt="script function selected" width="20px"></span>. By convention, the selected state icon is the same as the normal state icon with a different accent of colors.</p>
+</div>
+<div class="paragraph">
+<p>The icons are specified as a parameter <code>icons</code> of the <code>exec_task</code> decorator and is a tuple with two Path elements. The first is the normal icon filepath, the second is the selected icon filepath. As an example, the decorator for the <code>switch_on_camera</code> task from <a href="#csl-task-gui">Figure 1</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="n">ICON_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">/</span> <span class="s">"icons/"</span>
+
+<span class="o">@</span><span class="n">exec_ui</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="s">"Switch ON"</span><span class="p">,</span>
+         <span class="n">icons</span><span class="o">=</span><span class="p">(</span><span class="n">ICON_PATH</span> <span class="o">/</span> <span class="s">"n1-camera-swon.svg"</span><span class="p">,</span> <span class="n">ICON_PATH</span> <span class="o">/</span> <span class="s">"n1-camera-swon-selected.svg"</span><span class="p">))</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When your task is an <em>immediate run</em> task, only the normal state icon will be used.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1738,7 +1742,7 @@ Be careful when you use this parameter because it will overwrite the variables t
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-11 13:56:09 +0200
+Last updated 2023-04-11 22:31:13 +0200
 </div>
 </div>
 <script>
