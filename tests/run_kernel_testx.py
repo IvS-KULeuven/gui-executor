@@ -14,7 +14,7 @@ import time
 from rich.console import Console
 from gui_executor.kernel import MyKernel
 
-console = Console()
+console = Console(width=240)
 
 kernel = MyKernel()
 

@@ -2,7 +2,7 @@
 
 * Push your changes to origin
 * Document your changes in ~/docs/gui-executor.adoc
-* Run `asciidoctor gui-executor.adoc -o index.html`
+* Run `asciidoctor -r asciidoctor-tabs -o index.html gui-executor.adoc`
 * Push doc changes to origin
 * Bump the version in `__version__.py` 
 * Push the bumped version

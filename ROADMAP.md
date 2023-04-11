@@ -20,5 +20,5 @@ Logging
   - [ ] The log shall contain error information when a task execution failed
 
 Documentation
-  - [ ] Document environment variables and where they are used
+  - [ ] Document environment variables and where they are used, e.g. CUTELOG_HOST
   - [ ] Document special variables UI_TAB_ORDER, UI_TAB_DISPLAY_NAME, UI_TASK_DISPLAY_NAME
