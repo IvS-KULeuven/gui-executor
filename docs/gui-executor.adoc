@@ -554,11 +554,21 @@ WARNING: Be careful when you use this parameter because it will overwrite the va
 
 === Choosing your icons
 
-TBW
+If you do not specify a path for an icon, the Task GUI will use the same icon for all task buttons. This becomes boring very rapidly, but also is error-prone since it will be hard to find your task and the wrong button can be pressed by accident. Looking back at <<csl-task-gui>> you will see that we have created different icons for the different tasks. It gives our Task GUI not only a nice look-and-feel, but also makes it easier to recognise tasks and find the appropriate button.
 
-* PNG or SVG
-* normal and selected
-* what when `immediate_run=True`
+The icon file type can be `PNG` or `SVG`. The latter is preferred because of its scalability. For a task button we need two icons that represent a normal state of the button and the selected state. By default, the normal state icon is image:images/script-function.svg[width=20px] and the selected state icon is image:images/script-function-selected.svg[width=20px]. By convention, the selected state icon is the same as the normal state icon with a different accent of colors.
+
+The icons are specified as a parameter `icons` of the `exec_task` decorator and is a tuple with two Path elements. The first is the normal icon filepath, the second is the selected icon filepath. As an example, the decorator for the `switch_on_camera` task from <<csl-task-gui>>.
+
+[source,python]
+----
+ICON_PATH = Path(__file__).parent.resolve() / "icons/"
+
+@exec_ui(display_name="Switch ON",
+         icons=(ICON_PATH / "n1-camera-swon.svg", ICON_PATH / "n1-camera-swon-selected.svg"))
+----
+
+When your task is an _immediate run_ task, only the normal state icon will be used.
 
 === The Jupyter Kernels
 
