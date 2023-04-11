@@ -15,6 +15,8 @@ The output of your function will be printed in rich text.
 
 The Task GUI was originally developed to support test operators to quickly execute isolated tasks for an experiment in a lab. We had developed a complex machinery with microservices and scripts that would run from a Python REPL, however, after initial implementation and when going into routine testing in the lab, it turned out that running the scripts from the Python REPL was cumbersome, most of the time a test function was copied from a procedure and executed without changing any parameters. It would be much more convenient for a test operator to execute such script or functions through a dedicated GUI where each button would represent an isolated action to run a specific test. Since we work in a research environment, this sounded as a useful tool in other labs and environments. That's how the `gui-executor` was born.
 
+NOTE: The Task GUI is *not* an IDE and as such it doesn't replace –by far– applications like Spyder, PyCharm or VSCode. The Task GUI is not a developer tool but an operational tool to help executing simple task or functions from a standardised GUI.
+
 == Installation
 
 The `gui-executor` package can be installed via https://pypi.org[PyPI]. You should preferably install the package inside a virtual environment unless you want it to be available from your global Python installation.
