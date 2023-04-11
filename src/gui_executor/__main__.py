@@ -40,7 +40,6 @@ def main():
     parser.add_argument('--version', "-V", action="store_true", help='print the gui-executor version number and exit')
     parser.add_argument('--verbose', "-v", action="count",
                         help="print verbose information, increased verbosity level with multiple occurrences")
-    parser.add_argument('--location', help='location of the Python modules and scripts')
     parser.add_argument('--cmd-log', help='location of the command log files')
     parser.add_argument('--module-path', action="append", help='module path of the Python modules and scripts')
     parser.add_argument('--kernel-name',
@@ -67,17 +66,19 @@ def main():
             print_system_info()
         sys.exit(0)
 
-    if args.debug:
-        from gui_executor import view, client, kernel
-        view.DEBUG = True
-        client.DEBUG = True
-        kernel.DEBUG = True
-
     log = logging.getLogger('gui-executor')
     log.setLevel(1 if args.debug else logging.WARNING)  # to send all records to cutelog
     host = os.environ.get("CUTELOG_HOST", '127.0.0.1')
     socket_handler = SocketHandler(host, 19996)  # default listening address
     log.addHandler(socket_handler)
+
+    if args.debug:
+        from gui_executor import view, client, kernel
+        view.DEBUG = True
+        client.DEBUG = True
+        kernel.DEBUG = True
+        # Add the log messages to stdout for debugging purposes
+        log.addHandler(logging.StreamHandler(sys.stdout))
 
     # We have only implemented the --module-path option for now
 

@@ -26,7 +26,7 @@ def bird_count(camera: str = "backyard"):
     }:
         table.add_row(date, name, str(number))
 
-    console = Console(width=200)
+    console = Console(width=240)
     console.print(table)
 
     return table

@@ -341,7 +341,7 @@ class FunctionRunnableKernel(FunctionRunnable):
         super().__init__(func, args, kwargs, input_queue)
         self.kernel: MyKernel = kernel
         self.startup_timeout = 60  # seconds
-        self.console = Console(record=True, width=120)
+        self.console = Console(record=True, width=240)
         self.running = False
 
     def is_running(self):
@@ -403,6 +403,7 @@ class FunctionRunnableKernel(FunctionRunnable):
                         continue
                 elif io_msg_type == 'display_data':
                     if 'data' in io_msg_content:
+                        DEBUG and LOGGER.debug(f"{id(client)}: display data of type {io_msg_content['data'].keys()}")
                         if 'text/html' in io_msg_content['data']:
                             text = io_msg_content['data']['text/html'].rstrip()
                             self.signals.html.emit(text)
@@ -601,7 +602,7 @@ class ConsoleOutput(QTextEdit):
         # import builtins
         # builtins.print(f"{text = }")
 
-        console = Console(record=True)
+        console = Console(record=True, width=240)
 
         with console.capture() as cap:
             console.print(text)
@@ -617,6 +618,22 @@ class ConsoleOutput(QTextEdit):
         )
 
         self.append_html(exported_html)
+
+    def append_image(self, data):
+        from IPython.display import Image as IPythonImage
+        from IPython.display import display
+        from PIL import Image as PILImage
+
+        DEBUG and LOGGER.debug(f"append_image({data})")
+
+        if isinstance(data, IPythonImage):
+            display(data)
+        elif isinstance(data, PILImage):
+            data.show()
+        else:
+            LOGGER.error("append_image: Unknown data type.")
+
+
 
     @pyqtSlot(str)
     def append_html(self, text):
@@ -943,7 +960,7 @@ class ArgumentsPanel(QScrollArea):
                 grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignVCenter)
 
         vbox.addLayout(grid)
-        vbox.addWidget(QLabel(f"Return value(s) will be captured in and overwrite '{self.function.__ui_capture_response__}'."))
+        vbox.addWidget(QLabel(f"Return value(s) will be captured in, and overwrite, <code>'{self.function.__ui_capture_response__}'</code>."))
 
         hbox = QHBoxLayout()
         button_group = QButtonGroup()
@@ -1601,7 +1618,15 @@ class View(QMainWindow):
 
     @pyqtSlot(object)
     def function_output(self, data: object):
-        self._console_panel.append(data if is_renderable(data) else str(data))
+        from IPython.display import Image as IPythonImage
+        from PIL.Image import Image as PILImage
+
+        if is_renderable(data):
+            self._console_panel.append(data)
+        elif isinstance(data, (IPythonImage, PILImage)):
+            self._console_panel.append_image(data)
+        else:
+            self._console_panel.append(str(data))
 
     @pyqtSlot(str)
     def function_output_html(self, data: str):
@@ -1609,16 +1634,17 @@ class View(QMainWindow):
 
     @pyqtSlot(str)
     def function_output_png(self, data: str):
+        DEBUG and LOGGER.debug(f"function_output_png('{data[:80]}')")
         image = QImage()
         if not image.loadFromData(b64decode(data), 'PNG'):
-            print("Could not convert image/png to QImage")
+            LOGGER.error("Could not convert image/png to QImage")
 
         width = 800
-        self.png_widget = QWidget()
+        self.png_widget = QFrame()  # QWidget()
         self.png_widget.setMinimumSize(width, int(width/16*9))
         pixmap = QPixmap()
         if not pixmap.loadFromData(b64decode(data), 'PNG'):
-            print("Could not convert image/png data to QPixmap")
+            LOGGER.error("Could not convert image/png data to QPixmap")
             pixmap.fromImage(image)
         label = QLabel()
         label.setPixmap(pixmap)
