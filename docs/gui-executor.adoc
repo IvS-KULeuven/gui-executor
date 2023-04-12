@@ -556,7 +556,7 @@ WARNING: Be careful when you use this parameter because it will overwrite the va
 
 If you do not specify a path for an icon, the Task GUI will use the same icon for all task buttons. This becomes boring very rapidly, but also is error-prone since it will be hard to find your task and the wrong button can be pressed by accident. Looking back at <<csl-task-gui>> you will see that we have created different icons for the different tasks. It gives our Task GUI not only a nice look-and-feel, but also makes it easier to recognise tasks and find the appropriate button.
 
-The icon file type can be `PNG` or `SVG`. The latter is preferred because of its scalability. For a task button we need two icons that represent a normal state of the button and the selected state. By default, the normal state icon is image:images/script-function.svg[width=20px] and the selected state icon is image:images/script-function-selected.svg[width=20px]. By convention, the selected state icon is the same as the normal state icon with a different accent of colors.
+The icon file type can be `PNG` or `SVG`. The latter is preferred because of its scalability. For a task button we need two icons that represent a normal state of the button and the selected state. By default, the normal state icon is image:images/script-function.svg[width=20px] and the selected state icon is image:images/script-function-selected.svg[width=20px]. By convention, the selected state icon is the same as the normal state icon with a different accent of colors. The default icon size is 30×30 pixels.
 
 The icons are specified as a parameter `icons` of the `exec_task` decorator and is a tuple with two Path elements. The first is the normal icon filepath, the second is the selected icon filepath. As an example, the decorator for the `switch_on_camera` task from <<csl-task-gui>>.
 
@@ -640,7 +640,46 @@ TBW
 
 === Recurring Functions
 
-TBW
+Apart from tasks that print status information in the output console, there are sometimes specific items that you want to keep track of without the need to execute a task for this. In the project for which this application was developed, we needed to know about two identifiers at all time, i.e. the identifier for the configuration of our equipment (we call it the Setup) and the identifier of the currently running test (we call it the obsid). So, we developed a function which will repeatedly request these identifiers from the microservice that controls the configuration and display them in the status bar at the bottom of the Task GUI. The code snippet below defines a function `show_setup_and_obs_id()` which is decorated with `@exec_recurring_task`. The decorator takes a parameter `status_type` which can be 'NORMAL' or 'PERMANENT'. When `status_type` is NORMAL the message will be printed on the left side of the status bar, when `status_type` is PERMANENT the message will be printed on the right side of the statusbar. The example below is specific for our project, in your case, you will want to put different things in the status bar. The GUI in the TAB shows the output of the function.
+
+[tabs]
+======
+Code snippet::
++
+[source,python]
+----
+from gui_executor.exec import exec_recurring_task
+from gui_executor.exec import StatusType
+
+from egse.state import GlobalState
+
+
+@exec_recurring_task(status_type=StatusType.PERMANENT)
+def show_setup_and_obs_id():
+    from egse.confman import ConfigurationManagerProxy
+    from egse.obsid import ObservationIdentifier
+
+    obsid: ObservationIdentifier
+    with ConfigurationManagerProxy() as cm_proxy:
+        if obsid := cm_proxy.get_obsid().return_code:
+            test_id = f"OBSID = {obsid.test_id}, "
+        else:
+            test_id = ''
+
+    return f"{test_id}Setup ID = {int(GlobalState.setup.get_id())}"
+----
+CSL Operator GUI::
++
+image::images/statusbar-01.png[width=80%,align=center]
+
+======
+
+The return value of a recurring task shall be of type `str`. Make sure the string is not too long so it will fit nicely in the status bar.
+
+The recurring task can in principle be defined in any module that is located in the `module-path`, i.e. where also the usual tasks are defined, but it is preferred to have a separate module `recurring.py` to contain the task definition. It is also possible to define more than one recurring task e.g. one with `status_type=NORMAL` and another with `status_type=PERMANENT`. Both functions will be executed in different threads every second.
+
+The recurring functions are executed every second in a separate thread so they don't block the Task GUI. Take care that your recurring function doesn't take longer than a fraction of a second to execute.
+
 
 == Best Practices
 

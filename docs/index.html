@@ -1599,7 +1599,7 @@ Be careful when you use this parameter because it will overwrite the variables t
 <p>If you do not specify a path for an icon, the Task GUI will use the same icon for all task buttons. This becomes boring very rapidly, but also is error-prone since it will be hard to find your task and the wrong button can be pressed by accident. Looking back at <a href="#csl-task-gui">Figure 1</a> you will see that we have created different icons for the different tasks. It gives our Task GUI not only a nice look-and-feel, but also makes it easier to recognise tasks and find the appropriate button.</p>
 </div>
 <div class="paragraph">
-<p>The icon file type can be <code>PNG</code> or <code>SVG</code>. The latter is preferred because of its scalability. For a task button we need two icons that represent a normal state of the button and the selected state. By default, the normal state icon is <span class="image"><img src="images/script-function.svg" alt="script function" width="20px"></span> and the selected state icon is <span class="image"><img src="images/script-function-selected.svg" alt="script function selected" width="20px"></span>. By convention, the selected state icon is the same as the normal state icon with a different accent of colors.</p>
+<p>The icon file type can be <code>PNG</code> or <code>SVG</code>. The latter is preferred because of its scalability. For a task button we need two icons that represent a normal state of the button and the selected state. By default, the normal state icon is <span class="image"><img src="images/script-function.svg" alt="script function" width="20px"></span> and the selected state icon is <span class="image"><img src="images/script-function-selected.svg" alt="script function selected" width="20px"></span>. By convention, the selected state icon is the same as the normal state icon with a different accent of colors. The default icon size is 30×30 pixels.</p>
 </div>
 <div class="paragraph">
 <p>The icons are specified as a parameter <code>icons</code> of the <code>exec_task</code> decorator and is a tuple with two Path elements. The first is the normal icon filepath, the second is the selected icon filepath. As an example, the decorator for the <code>switch_on_camera</code> task from <a href="#csl-task-gui">Figure 1</a>.</p>
@@ -1716,7 +1716,62 @@ Be careful when you use this parameter because it will overwrite the variables t
 <div class="sect2">
 <h3 id="_recurring_functions">Recurring Functions</h3>
 <div class="paragraph">
-<p>TBW</p>
+<p>Apart from tasks that print status information in the output console, there are sometimes specific items that you want to keep track of without the need to execute a task for this. In the project for which this application was developed, we needed to know about two identifiers at all time, i.e. the identifier for the configuration of our equipment (we call it the Setup) and the identifier of the currently running test (we call it the obsid). So, we developed a function which will repeatedly request these identifiers from the microservice that controls the configuration and display them in the status bar at the bottom of the Task GUI. The code snippet below defines a function <code>show_setup_and_obs_id()</code> which is decorated with <code>@exec_recurring_task</code>. The decorator takes a parameter <code>status_type</code> which can be 'NORMAL' or 'PERMANENT'. When <code>status_type</code> is NORMAL the message will be printed on the left side of the status bar, when <code>status_type</code> is PERMANENT the message will be printed on the right side of the statusbar. The example below is specific for our project, in your case, you will want to put different things in the status bar. The GUI in the TAB shows the output of the function.</p>
+</div>
+<div id="_tabset_9" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_9_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_9_csl_operator_gui">
+<p>CSL Operator GUI</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_9_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_recurring_task</span>
+<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">StatusType</span>
+
+<span class="kn">from</span> <span class="nn">egse.state</span> <span class="kn">import</span> <span class="n">GlobalState</span>
+
+
+<span class="o">@</span><span class="n">exec_recurring_task</span><span class="p">(</span><span class="n">status_type</span><span class="o">=</span><span class="n">StatusType</span><span class="p">.</span><span class="n">PERMANENT</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">show_setup_and_obs_id</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">egse.confman</span> <span class="kn">import</span> <span class="n">ConfigurationManagerProxy</span>
+    <span class="kn">from</span> <span class="nn">egse.obsid</span> <span class="kn">import</span> <span class="n">ObservationIdentifier</span>
+
+    <span class="n">obsid</span><span class="p">:</span> <span class="n">ObservationIdentifier</span>
+    <span class="k">with</span> <span class="n">ConfigurationManagerProxy</span><span class="p">()</span> <span class="k">as</span> <span class="n">cm_proxy</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">obsid</span> <span class="p">:</span><span class="o">=</span> <span class="n">cm_proxy</span><span class="p">.</span><span class="n">get_obsid</span><span class="p">().</span><span class="n">return_code</span><span class="p">:</span>
+            <span class="n">test_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s">"OBSID = </span><span class="si">{</span><span class="n">obsid</span><span class="p">.</span><span class="n">test_id</span><span class="si">}</span><span class="s">, "</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">test_id</span> <span class="o">=</span> <span class="s">''</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">test_id</span><span class="si">}</span><span class="s">Setup ID = </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">GlobalState</span><span class="p">.</span><span class="n">setup</span><span class="p">.</span><span class="n">get_id</span><span class="p">())</span><span class="si">}</span><span class="s">"</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_9_csl_operator_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/statusbar-01.png" alt="statusbar 01" width="80%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The return value of a recurring task shall be of type <code>str</code>. Make sure the string is not too long so it will fit nicely in the status bar.</p>
+</div>
+<div class="paragraph">
+<p>The recurring task can in principle be defined in any module that is located in the <code>module-path</code>, i.e. where also the usual tasks are defined, but it is preferred to have a separate module <code>recurring.py</code> to contain the task definition. It is also possible to define more than one recurring task e.g. one with <code>status_type=NORMAL</code> and another with <code>status_type=PERMANENT</code>. Both functions will be executed in different threads every second.</p>
+</div>
+<div class="paragraph">
+<p>The recurring functions are executed every second in a separate thread so they don&#8217;t block the Task GUI. Take care that your recurring function doesn&#8217;t take longer than a fraction of a second to execute.</p>
 </div>
 </div>
 </div>
@@ -1742,7 +1797,7 @@ Be careful when you use this parameter because it will overwrite the variables t
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-11 22:31:13 +0200
+Last updated 2023-04-12 23:39:18 +0200
 </div>
 </div>
 <script>
