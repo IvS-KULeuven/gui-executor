@@ -636,7 +636,30 @@ def csl_ui():
 
 === The command log
 
-TBW
+The commandline option `--cmd-log` accepts one argument which must be an existing directory where the command log files will be written. The command log is a file that contains the code line that was executed to run the task, preceded with the timestamp when the task started and followed by the duration, i.e. the time it took to finish the task.
+
+As an example, I reran the `capture_image_camera_name` task again and the entry for this task in the log file looks like this.
+
+[source%nowrap,text]
+----
+# <-- 2023-04-13 18:45:27.970997+00:00
+response = capture_image_camera_name(camera=CameraName.FRONT_DOOR, exposure_time=0.3, aperture=11, filename=PosixPath('visitor.png'), location=PosixPath('~/data/images'))
+# --> duration: 0.063239s
+----
+
+When an error occurred and an exception is raised, the Exception message is printed in the command log file. The following log entry shows the function `raise_an_exception` that raised a division by zero error.
+
+[source%nowrap,text]
+----
+# <-- 2023-04-13 19:03:55.841830+00:00
+response = raise_an_exception(value=0.0)
+# ERROR: float division by zero
+# --> duration: 0.037943s
+----
+
+
+The command log file will be located in the folder that was given with the `--cmd-log` commandline argument. There will be only a command log file when the argument is present. The filename will be based on the current date, e.g. `2023-04-13-cmd-log.txt`.
+
 
 === Recurring Functions
 

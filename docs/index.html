@@ -1710,7 +1710,31 @@ Be careful when you use this parameter because it will overwrite the variables t
 <div class="sect2">
 <h3 id="_the_command_log">The command log</h3>
 <div class="paragraph">
-<p>TBW</p>
+<p>The commandline option <code>--cmd-log</code> accepts one argument which must be an existing directory where the command log files will be written. The command log is a file that contains the code line that was executed to run the task, preceded with the timestamp when the task started and followed by the duration, i.e. the time it took to finish the task.</p>
+</div>
+<div class="paragraph">
+<p>As an example, I reran the <code>capture_image_camera_name</code> task again and the entry for this task in the log file looks like this.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight nowrap"><code data-lang="text"># &lt;-- 2023-04-13 18:45:27.970997+00:00
+response = capture_image_camera_name(camera=CameraName.FRONT_DOOR, exposure_time=0.3, aperture=11, filename=PosixPath('visitor.png'), location=PosixPath('~/data/images'))
+# --&gt; duration: 0.063239s</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When an error occurred and an exception is raised, the Exception message is printed in the command log file. The following log entry shows the function <code>raise_an_exception</code> that raised a division by zero error.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight nowrap"><code data-lang="text"># &lt;-- 2023-04-13 19:03:55.841830+00:00
+response = raise_an_exception(value=0.0)
+# ERROR: float division by zero
+# --&gt; duration: 0.037943s</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The command log file will be located in the folder that was given with the <code>--cmd-log</code> commandline argument. There will be only a command log file when the argument is present. The filename will be based on the current date, e.g. <code>2023-04-13-cmd-log.txt</code>.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1797,7 +1821,7 @@ Be careful when you use this parameter because it will overwrite the variables t
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-12 23:39:18 +0200
+Last updated 2023-04-13 21:11:29 +0200
 </div>
 </div>
 <script>
