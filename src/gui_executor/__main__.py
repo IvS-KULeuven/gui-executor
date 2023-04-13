@@ -18,8 +18,8 @@ HERE = Path(__file__).parent.resolve()
 
 # EXAMPLE:
 #   Use a function like this in your package '__init__' file and add it to the entry_points in the setup.py.
-#   This function will load functions that are decorated with '@exec_ui' from all modules in 'camtest.contingency'
-#   and dynamically create the GUI executor for them.
+#   This function will load functions that are decorated with '@exec_ui' or '@exec_task' from all modules in
+#   'camtest.contingency' and dynamically create the GUI executor for them.
 #
 #     def contingency_ui():
 #         cmd = ExternalCommand("gui-executor --module-path camtest.contingency", asynchronous=True)
@@ -89,6 +89,11 @@ def main():
 
     if args.config:
         load_config(args.config)
+
+    if args.cmd_log and not Path(args.cmd_log).exists():
+        print("The argument to --cmd-log must be an existing directory.")
+        parser.print_help()
+        return
 
     app = QApplication([])
     app.setWindowIcon(QIcon(args.logo or str(HERE / "icons/tasks.svg")))

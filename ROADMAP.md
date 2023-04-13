@@ -13,6 +13,7 @@ Execution of tasks
   - [x] Tasks shall execute as a script in its own Python interpreter
   - [x] Tasks shall execute as a GUI script to show plots and tables
   - [x] It shall be possible to stop the execution of a task at all times
+  - [ ] We need a clear strategy on handling concurrent tasks, e.g. output shall be in separate tabs in the output console.
 
 Logging
   - [x] The log shall contain all tasks that were executed with their start time and duration
