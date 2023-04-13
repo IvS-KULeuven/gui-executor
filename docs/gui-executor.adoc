@@ -490,7 +490,47 @@ Then we have a few special cases for more complex arguments to a function. The f
 
 ==== The simple fixed list
 
-TBW
+The `FixedList` is a list of a fixed number of elements of different types. The signature for a FixedList is the following:
+
+[source,pythpn]
+----
+FixedList(literals: List, defaults: List = None, name: str = None)
+----
+
+In practice a `FixedList` is used when the argument to your function is a list with a limited number of arguments, e.g. a list of positions that you want to visit, or the first name, middle initials and last name of a person. In the example below we use a `FixedList` to hold the GPS coordinates where I spotted of a bird.
+
+[tabs]
+======
+Code snippet::
++
+[source%nowrap,python]
+----
+from gui_executor.exec import exec_task
+from gui_executor.utypes import FixedList
+
+@exec_task()
+def save_observation(
+        coordinates: FixedList([float, float], name="lat, long"),
+        time: str,
+        bird_name: str,
+):
+    """
+    Saves the observation into the database.
+
+    Args:
+        coordinates (list): the longitude and latitude coordinates of the observation (decimal degrees)
+        time (str): the time of the observation [YYYY/MM/DD HH:MM:SS]
+        bird_name (str): the name of the bird
+
+    """
+    print(f"A {bird_name} was spotted at [{coordinates[0]:.6f}, {coordinates[1]:.6f}]")
+----
+
+Arguments Panel::
++
+image::images/fixed-list.png[width=80%,align=center]
+======
+Looking at the _Arguments Panel_ tab, the horizontal space after the `coordinates` label will be divided amongst the elements in the list. That's why this type is only useful for a very limited number of inputs.
 
 ==== The dynamic list of lists
 

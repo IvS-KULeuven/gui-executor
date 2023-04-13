@@ -1488,7 +1488,64 @@ If you want to follow closely on the printed output of your function, you might 
 <div class="sect3">
 <h4 id="_the_simple_fixed_list">The simple fixed list</h4>
 <div class="paragraph">
-<p>TBW</p>
+<p>The <code>FixedList</code> is a list of a fixed number of elements of different types. The signature for a FixedList is the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="pythpn">FixedList(literals: List, defaults: List = None, name: str = None)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In practice a <code>FixedList</code> is used when the argument to your function is a list with a limited number of arguments, e.g. a list of positions that you want to visit, or the first name, middle initials and last name of a person. In the example below we use a <code>FixedList</code> to hold the GPS coordinates where I spotted of a bird.</p>
+</div>
+<div id="_tabset_8" class="tabset is-loading">
+<div class="ulist tabs">
+<ul>
+<li id="_tabset_8_code_snippet">
+<p>Code snippet</p>
+</li>
+<li id="_tabset_8_arguments_panel">
+<p>Arguments Panel</p>
+</li>
+</ul>
+</div>
+<div class="content">
+<div class="tab-pane" aria-labelledby="_tabset_8_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight nowrap"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<span class="kn">from</span> <span class="nn">gui_executor.utypes</span> <span class="kn">import</span> <span class="n">FixedList</span>
+
+<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">save_observation</span><span class="p">(</span>
+        <span class="n">coordinates</span><span class="p">:</span> <span class="n">FixedList</span><span class="p">([</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s">"lat, long"</span><span class="p">),</span>
+        <span class="n">time</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">bird_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="s">"""
+    Saves the observation into the database.
+
+    Args:
+        coordinates (list): the longitude and latitude coordinates of the observation (decimal degrees)
+        time (str): the time of the observation [YYYY/MM/DD HH:MM:SS]
+        bird_name (str): the name of the bird
+
+    """</span>
+    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"A </span><span class="si">{</span><span class="n">bird_name</span><span class="si">}</span><span class="s"> was spotted at [</span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="s">]"</span><span class="p">)</span></code></pre>
+</div>
+</div>
+</div>
+<div class="tab-pane" aria-labelledby="_tabset_8_arguments_panel">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/fixed-list.png" alt="fixed list" width="80%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Looking at the <em>Arguments Panel</em> tab, the horizontal space after the <code>coordinates</code> label will be divided amongst the elements in the list. That&#8217;s why this type is only useful for a very limited number of inputs.</p>
 </div>
 </div>
 <div class="sect3">
@@ -1518,22 +1575,22 @@ If you want to follow closely on the printed output of your function, you might 
 <div class="paragraph">
 <p>The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter <code>capture_response</code> which can be a string or a tuple of strings. See an example below. The task <code>generate_model</code> returns three values of which we only need the 'model' and the 'hexhw'. In the <code>capture_response</code> you see that the second unused return value is captured in the <code>_</code> and therefore ignored. If you need to ignore more return values, the <code>*_</code> is a valid choice.</p>
 </div>
-<div id="_tabset_8" class="tabset is-loading">
+<div id="_tabset_9" class="tabset is-loading">
 <div class="ulist tabs">
 <ul>
-<li id="_tabset_8_code_snippet">
+<li id="_tabset_9_code_snippet">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_8_gui">
+<li id="_tabset_9_gui">
 <p>GUI</p>
 </li>
-<li id="_tabset_8_console">
+<li id="_tabset_9_console">
 <p>Console</p>
 </li>
 </ul>
 </div>
 <div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_8_code_snippet">
+<div class="tab-pane" aria-labelledby="_tabset_9_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
@@ -1553,14 +1610,14 @@ If you want to follow closely on the printed output of your function, you might 
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_8_gui">
+<div class="tab-pane" aria-labelledby="_tabset_9_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response.png" alt="capture response" width="80%">
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_8_console">
+<div class="tab-pane" aria-labelledby="_tabset_9_console">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response-console.png" alt="capture response console" width="80%">
@@ -1742,19 +1799,19 @@ response = raise_an_exception(value=0.0)
 <div class="paragraph">
 <p>Apart from tasks that print status information in the output console, there are sometimes specific items that you want to keep track of without the need to execute a task for this. In the project for which this application was developed, we needed to know about two identifiers at all time, i.e. the identifier for the configuration of our equipment (we call it the Setup) and the identifier of the currently running test (we call it the obsid). So, we developed a function which will repeatedly request these identifiers from the microservice that controls the configuration and display them in the status bar at the bottom of the Task GUI. The code snippet below defines a function <code>show_setup_and_obs_id()</code> which is decorated with <code>@exec_recurring_task</code>. The decorator takes a parameter <code>status_type</code> which can be 'NORMAL' or 'PERMANENT'. When <code>status_type</code> is NORMAL the message will be printed on the left side of the status bar, when <code>status_type</code> is PERMANENT the message will be printed on the right side of the statusbar. The example below is specific for our project, in your case, you will want to put different things in the status bar. The GUI in the TAB shows the output of the function.</p>
 </div>
-<div id="_tabset_9" class="tabset is-loading">
+<div id="_tabset_10" class="tabset is-loading">
 <div class="ulist tabs">
 <ul>
-<li id="_tabset_9_code_snippet">
+<li id="_tabset_10_code_snippet">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_9_csl_operator_gui">
+<li id="_tabset_10_csl_operator_gui">
 <p>CSL Operator GUI</p>
 </li>
 </ul>
 </div>
 <div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_9_code_snippet">
+<div class="tab-pane" aria-labelledby="_tabset_10_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_recurring_task</span>
@@ -1779,7 +1836,7 @@ response = raise_an_exception(value=0.0)
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_9_csl_operator_gui">
+<div class="tab-pane" aria-labelledby="_tabset_10_csl_operator_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/statusbar-01.png" alt="statusbar 01" width="80%">
@@ -1821,7 +1878,7 @@ response = raise_an_exception(value=0.0)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-13 21:11:29 +0200
+Last updated 2023-04-13 23:15:21 +0200
 </div>
 </div>
 <script>

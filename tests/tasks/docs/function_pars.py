@@ -2,6 +2,8 @@ from enum import IntEnum
 from pathlib import Path
 
 from gui_executor.exec import exec_task, FileName, Directory
+from gui_executor.utypes import FixedList
+
 
 @exec_task()
 def capture_image(camera, exposure_time, aperture, filename, location):
@@ -63,3 +65,21 @@ def capture_image_camera_name(
     ...  # here any further processing of the image can be done
 
     return image
+
+
+@exec_task()
+def save_observation(
+        coordinates: FixedList([float, float], name="lat, long"),
+        time: str,
+        bird_name: str,
+):
+    """
+    Saves the observation into the database.
+
+    Args:
+        coordinates (list): the longitude and latitude coordinates of the observation (decimal degrees)
+        time (str): the time of the observation [YYYY/MM/DD HH:MM:SS]
+        bird_name (str): the name of the bird
+
+    """
+    print(f"A {bird_name} was spotted at [{coordinates[0]:.6f}, {coordinates[1]:.6f}]")
