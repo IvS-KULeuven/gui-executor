@@ -34,12 +34,14 @@ from PyQt5.QtCore import QRunnable
 from PyQt5.QtCore import QSize
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QUrl
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtGui import QContextMenuEvent
 from PyQt5.QtGui import QCursor
+from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QIcon
@@ -62,6 +64,7 @@ from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QMenu
+from PyQt5.QtWidgets import QMenuBar
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QRadioButton
@@ -1208,6 +1211,10 @@ class View(QMainWindow):
 
         self.setGeometry(300, 300, 600, 800)
 
+        # Create a main menu for Task GUI Application actions
+
+        self._create_menu_bar()
+
         # The main frame in which all the other frames are located, the outer Application frame
 
         self.app_frame = QFrame()
@@ -1299,6 +1306,34 @@ class View(QMainWindow):
         self._timer.setInterval(1000)  # This interval shall be in the settings
         self._timer.timeout.connect(self.run_recurring_tasks)
         self._timer.start()
+
+    def _create_menu_bar(self):
+        menu_bar = self.menuBar()
+        menu_bar.setNativeMenuBar(True)
+
+        file_menu = menu_bar.addMenu('File')
+        help_menu = menu_bar.addMenu('Help')
+
+        reload_action = QAction(self)
+        reload_action.setText("Reload tasks...")
+        reload_action.triggered.connect(self.reload_tasks)
+
+        open_url_action = QAction(self)
+        open_url_action.setText("Developer Manual...")
+        open_url_action.triggered.connect(partial(self.open_url, "https://ivs-kuleuven.github.io/gui-executor/"))
+
+        file_menu.addAction(reload_action)
+        help_menu.addAction(open_url_action)
+
+    def open_url(self, url: str):
+        url = QUrl(url)
+        if not QDesktopServices.openUrl(url):
+            QMessageBox.warning(self, 'Open Url', f'Could not open url {url.url()}')
+
+    def reload_tasks(self):
+        QMessageBox.warning(
+            self, 'Reloading tasks', 'Sorry, this option is not yet implemented.'
+        )
 
     def closeEvent(self, event: QCloseEvent) -> None:
 
