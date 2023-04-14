@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import logging
 import os
 import sys
@@ -54,6 +55,7 @@ def main():
 
     verbosity = 0 if args.verbose is None else args.verbose
     kernel_name = args.kernel_name or "python3"
+    app_name = args.app_name or "GUI Executor"
     module_path_list = args.module_path
 
     single = 1 if args.single is None else args.single
@@ -95,6 +97,18 @@ def main():
         parser.print_help()
         return
 
+    if sys.platform.startswith('darwin'):
+        # Set app name, if PyObjC is installed
+        # Python 3: pip3 install pyobjc-framework-Cocoa
+        with contextlib.suppress(ImportError):
+            from Foundation import NSBundle
+            if bundle := NSBundle.mainBundle():
+                if (
+                    app_info := bundle.localizedInfoDictionary()
+                    or bundle.infoDictionary()
+                ):
+                    app_info['CFBundleName'] = app_name
+
     app = QApplication([])
     app.setWindowIcon(QIcon(args.logo or str(HERE / "icons/tasks.svg")))
 
@@ -106,7 +120,7 @@ def main():
 
         model = Model(module_path_list)
         view = View(model,
-                    app_name=args.app_name or "GUI Executor",
+                    app_name=app_name,
                     cmd_log=args.cmd_log, verbosity=verbosity, kernel_name=kernel_name)
 
         view.show()
