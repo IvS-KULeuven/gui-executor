@@ -1717,7 +1717,50 @@ Be careful when you use this parameter because it will overwrite the variables t
 <div class="sect2">
 <h3 id="input_requests">Requesting input</h3>
 <div class="paragraph">
-<p>TBW</p>
+<p>The tasks and functions get their input from the arguments that are provided through the arguments panel. Sometimes however you will need input from the user and in the task this is then requested through the <code>input()</code> function. When you use this function, the message that you pass to the function will be printed on <code>stdout</code> and the REPL will be waiting on <code>stdin</code> for your reply.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="o">&gt;&gt;&gt;</span> <span class="n">rc</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s">"Do you want to continue [Y/n]? "</span><span class="p">)</span>
+<span class="n">Do</span> <span class="n">you</span> <span class="n">want</span> <span class="n">to</span> <span class="k">continue</span> <span class="p">[</span><span class="n">Y</span><span class="o">/</span><span class="n">n</span><span class="p">]</span><span class="err">?</span> <span class="n">n</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rc</span>
+<span class="s">'n'</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Since we are now running your task from within the Task GUI, the task will be blocked and we need a way to provide the input on <code>stdin</code>. The current implementation is a little awkward, but we are working on it to make it more intuitive.</p>
+</div>
+<div class="paragraph">
+<p>Whenever you use an <code>input('prompt')</code> function in your task (or any functions that you call from there), you will need an <code>input_request</code> argument in the <code>@exec_task</code> decorator. The <code>input_request</code> parameter is a tuple of strings where each string is a pattern that can match part of the 'prompt'. A simple example is given below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">input_request</span><span class="o">=</span><span class="p">(</span><span class="s">"[Y/n]"</span><span class="p">,</span> <span class="s">"[c/A]"</span><span class="p">),</span> <span class="n">display_name</span><span class="o">=</span><span class="s">"Continue or Abort?"</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">continue_or_abort_question</span><span class="p">():</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">"There should be a dialog appearing with a Continue or Abort question..."</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s">"Do you want to continue [Y/n]"</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">response</span> <span class="o">=</span> <span class="si">}</span><span class="s">"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">response</span><span class="p">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">'n'</span><span class="p">:</span>
+        <span class="k">return</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above code will match <code>"[Y/n]"</code> as part of the 'prompt' and the Task GUI will show the dialog from the next screenshot. That dialog asks you to answer the question from the output console with Yes or No. So, make sure that it is clear from your prompt message when the user needs to answer Yes and when she needs to answer No.</p>
+</div>
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/input_request_dialog.png" alt="input request dialog" width="50%">
+</div>
+</div>
+<div class="paragraph">
+<p>We are looking into a better handling of input requests. The problem is that it&#8217;s not in all circumstance clear when input is requested and what the question is. That&#8217;s why we ask to adapt your prompt message to a clear Yes/No answer.</p>
+</div>
+<div class="paragraph">
+<p>So, why do we need the <code>input_request</code> parameter in the decorator? When you run your task in the kernel, any request on <code>stdin</code> will automatically be recognised by the kernel, communicated to the client and the Yes/No message dialog above will appear. In principle, since the kernel is capable of detecting the input request, we do not need the parameter for the decorator. However, when you run the same task as a GUI App or a script, an input request can not be detected and we need another way to identify an input request. Therefor, it is recommended to always provide the <code>input_request</code> parameter when input is requested from the task.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1878,7 +1921,7 @@ response = raise_an_exception(value=0.0)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-13 23:15:21 +0200
+Last updated 2023-04-23 21:59:37 +0200
 </div>
 </div>
 <script>
