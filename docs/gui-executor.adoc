@@ -631,7 +631,43 @@ TBW
 [#input_requests]
 === Requesting input
 
-TBW
+The tasks and functions get their input from the arguments that are provided through the arguments panel. Sometimes however you will need input from the user and in the task this is then requested through the `input()` function. When you use this function, the message that you pass to the function will be printed on `stdout` and the REPL will be waiting on `stdin` for your reply.
+
+[source,python]
+----
+>>> rc = input("Do you want to continue [Y/n]? ")
+Do you want to continue [Y/n]? n
+
+>>> rc
+'n'
+----
+
+Since we are now running your task from within the Task GUI, the task will be blocked and we need a way to provide the input on `stdin`. The current implementation is a little awkward, but we are working on it to make it more intuitive.
+
+Whenever you use an `input('prompt')` function in your task (or any functions that you call from there), you will need an `input_request` argument in the `@exec_task` decorator. The `input_request` parameter is a tuple of strings where each string is a pattern that can match part of the 'prompt'. A simple example is given below:
+
+[source,python]
+----
+@exec_task(input_request=("[Y/n]", "[c/A]"), display_name="Continue or Abort?")
+def continue_or_abort_question():
+
+    print("There should be a dialog appearing with a Continue or Abort question...", flush=True)
+
+    response = input("Do you want to continue [Y/n]")
+    print(f"{response = }", flush=True)
+
+    if response.lower() == 'n':
+        return
+
+----
+
+The above code will match `"[Y/n]"` as part of the 'prompt' and the Task GUI will show the dialog from the next screenshot. That dialog asks you to answer the question from the output console with Yes or No. So, make sure that it is clear from your prompt message when the user needs to answer Yes and when she needs to answer No.
+
+image::images/input_request_dialog.png[width=50%,align=center]
+
+We are looking into a better handling of input requests. The problem is that it's not in all circumstance clear when input is requested and what the question is. That's why we ask to adapt your prompt message to a clear Yes/No answer.
+
+So, why do we need the `input_request` parameter in the decorator? When you run your task in the kernel, any request on `stdin` will automatically be recognised by the kernel, communicated to the client and the Yes/No message dialog above will appear. In principle, since the kernel is capable of detecting the input request, we do not need the parameter for the decorator. However, when you run the same task as a GUI App or a script, an input request can not be detected and we need another way to identify an input request. Therefor, it is recommended to always provide the `input_request` parameter when input is requested from the task.
 
 [#init]
 === The \\__init__.py files
