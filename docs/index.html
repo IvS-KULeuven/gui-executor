@@ -1713,6 +1713,44 @@ Be careful when you use this parameter because it will overwrite the variables t
 </li>
 </ul>
 </div>
+<div class="sect3">
+<h4 id="_running_a_task_in_the_jupyter_console">Running a task in the Jupyter Console</h4>
+<div class="paragraph">
+<p>Of course there is also the Jupyter QtConsole which connects to the same kernel that also runs the tasks when you press their button. You can run a task that you have available as a button also from the Jupyter QtConsole by importing the task and execute it with the proper arguments.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s see how this would work with our <code>print_bird_count()</code> task. This task is located in the module <code>tasks.docs.function_output</code> and it takes two arguments <code>camera</code> and <code>date</code>, but they both have a default value so we can execute the function without arguments.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>In [7]: from tasks.docs.function_output import print_bird_count
+
+In [8]: print_bird_count?
+Signature: print_bird_count(camera: str = 'backyard', date: str = 'today')
+Docstring:
+Prints a table with the number of birds we counted on a specific day.
+
+Args:
+    camera: the camera name for which we want to print the table
+    date: the date for which we want to see the counts
+File:      ~/Documents/PyCharmProjects/gui-executor/tests/tasks/docs/function_output.py
+Type:      function
+
+In [9]: print_bird_count()
+       Bird Count for backyard
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┓
+┃        Date ┃ Bird name  ┃ Number ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━┩
+│ 16 Feb 2023 │ Magpie     │   3    │
+│ 16 Feb 2023 │ ChiffChaff │   3    │
+│ 16 Feb 2023 │ Great tit  │   9    │
+│ 16 Feb 2023 │ Pigeon     │   5    │
+│ 16 Feb 2023 │ Robin      │   1    │
+│ 16 Feb 2023 │ Sparrow    │   10   │
+└─────────────┴────────────┴────────┘</pre>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="input_requests">Requesting input</h3>
@@ -1921,7 +1959,7 @@ response = raise_an_exception(value=0.0)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-23 21:59:37 +0200
+Last updated 2023-04-26 22:23:54 +0200
 </div>
 </div>
 <script>
