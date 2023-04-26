@@ -6,7 +6,14 @@ HERE = Path(__file__).parent.resolve()
 
 @exec_task()
 def print_bird_count(camera: str = "backyard", date: str = "today"):
+    """
+    Prints a table with the number of birds we counted on a specific day.
 
+    Args:
+        camera: the camera name for which we want to print the table
+        date: the date for which we want to see the counts
+
+    """
     from rich.table import Table
     from rich.console import Console
 
