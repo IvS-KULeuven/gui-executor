@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gui-executor"
+description = "Execute Python code in an automatically generated GUI App."
+dynamic = ["version", "readme"]
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["GUI", "execute", "task"]
+authors = [
+    {name = "Rik Huygen", email = "rik.huygen@kuleuven.be"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3.8",
+    "Environment :: X11 Applications :: Qt",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "rich >= 13",
+    "executor",
+    "PyYAML",
+    "matplotlib",
+    "distro",
+    "PyQt5 >= 5.15",
+    "ipython >= 8",
+    "ipykernel == 6.15.1",
+    "jupyter-client == 6.1.12",
+#    "jupyter-console == 6.4.2",
+    "jupyter-core == 4.11.1",
+    "qtconsole == 5.4.3",
+
+]
+
+[project.optional-dependencies]
+test = ["faker", "lorem-text"]
+
+[project.gui-scripts]
+gui-executor = "gui_executor.__main__:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "gui_executor.__version__.__version__"}
+readme = {file = ["README.md"]}
+
+[project.urls]
+documentation = "https://ivs-kuleuven.github.io/gui-executor/"
+repository = "https://github.com/IvS-KULeuven/gui-executor"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+gui_executor = ["icons"]

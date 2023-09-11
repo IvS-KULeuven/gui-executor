@@ -8,7 +8,9 @@
 * Push the bumped version
 * Upload to PyPI
   ```
-  $ python3 setup.py upload
+  $ python -m build
+  $ twine upload dist/gui-executor-x.y.z.tar.gz dist/gui_executor-x.y.z-py3-none-any.whl
+  $ git tag x.y.z
   ```
 * Create a pull request and merge the pull request
 * Push the tags to upstream

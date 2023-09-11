@@ -46,3 +46,8 @@ def hexapod_to_retracted_position():
          display_name="Homing")
 def hexapod_homing():
     ...
+
+
+@exec_ui(icons=(HERE/"icons/aeu-on.svg", HERE/"icons/aeu-on-selected.svg"), display_name="AEU")
+def aeu_icon():
+    ...

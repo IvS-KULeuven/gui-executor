@@ -23,3 +23,7 @@ Logging
 Documentation
   - [ ] Document environment variables and where they are used, e.g. CUTELOG_HOST
   - [ ] Document special variables UI_TAB_ORDER, UI_TAB_DISPLAY_NAME, UI_TASK_DISPLAY_NAME
+
+To Think About
+  - [ ] What about two modes, a user mode and an expert mode. Tasks that are expert mode are not shown in the GUI until expert mode is selected. Expert mode can be selected in Settings (doesn't exist yet) or else ?
+  - 
