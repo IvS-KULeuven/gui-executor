@@ -26,7 +26,7 @@ dependencies = [
     "PyYAML",
     "matplotlib",
     "distro",
-    "PyQt5 >= 5.15",
+#    "PyQt5 >= 5.15",
     "ipython >= 8",
     "ipykernel == 6.15.1",
     "jupyter-client == 6.1.12",

@@ -74,3 +74,16 @@ def fixed_list_with_name(
 ):
     rich.print("x_list = ", x_list)
     return x_list
+
+
+@exec_ui(display_name="list → Numpy Array")
+def list_to_array(angles: list):
+
+    import numpy as np
+
+    if isinstance(angles, list):
+        angles = np.array(angles)
+
+    thetas, phis = angles[:, 0], angles[:, 1]
+
+    print(f"{thetas = }, {phis= }")
