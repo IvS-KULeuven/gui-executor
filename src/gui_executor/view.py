@@ -103,6 +103,7 @@ from .utils import capture
 from .utils import combo_box_from_enum
 from .utils import create_code_snippet
 from .utils import create_code_snippet_renderable
+from .utils import extract_var_name_args_and_kwargs
 from .utils import is_renderable
 from .utils import select_directory
 from .utils import select_file
@@ -1595,7 +1596,9 @@ class View(QMainWindow):
             if button.function.__ui_allow_kernel_interrupt__:
                 self.interrupt_kernel()
 
-            self.run_function(button.function, [], {}, button.function.__ui_runnable__)
+            ui_args = get_arguments(button.function)
+            args, kwargs = extract_var_name_args_and_kwargs(ui_args)
+            self.run_function(button.function, args, kwargs, button.function.__ui_runnable__)
 
             # Remove any existing arguments panel from a previous button
 
