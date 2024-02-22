@@ -142,6 +142,9 @@ class VariableName(TypeObject):
     def get_widget(self):
         return VariableNameWidget(self.value)
 
+    def get_value(self):
+        return var_name(self.value)
+
 
 class var_name:
     def __init__(self, name: str):
@@ -157,7 +160,7 @@ class VariableNameWidget(UQWidget):
         self.value = value
 
         layout = QHBoxLayout()
-        layout.addWidget(QLabel(f"This variable shall be known in the kernel."))
+        layout.addWidget(QLabel(f"The variable '{value}' shall be known in the kernel."))
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)

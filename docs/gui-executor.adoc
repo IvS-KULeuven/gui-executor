@@ -190,7 +190,7 @@ The default behaviour is as follows: The function is decorated with `@exec_task(
 
 If you check back on <<csl-task-gui>>, you can see that each of the tasks is visualised with a nice icon and a proper task name, most task names are black but there are some blue task names. All these features are the result from optional parameters on the decorator. Let's describe these parameters now in the following paragraphs. Remember all decorator parameters are optional.
 
-`immediate_run`:: When this parameter is set to True, the task name will be blue and when you click the task, it will run immediately without first showing the arguments panel with a 'Run' button. Don't use this option for tasks that take arguments. This option is usually used for tasks that only print information or emergency action that must run as soon as possible.
+`immediate_run`:: When this parameter is set to True, the task name will be blue and when you click the task, it will run immediately without first showing the arguments panel with a 'Run' button. Don't use this option for tasks that take arguments, unless these arguments are of type `VariableName` (see <<var_name>>). This option is usually used for tasks that only print information or emergency action that must run as soon as possible.
 `description`:: a string with a short description of the function, intended to be used as a tooltip if no docstring is present for the function.
 `display_name`:: a string that will be used as the name of the task (at the right of the button). When this parameter is not given, the function name will be used.
 `use_kernel, use_gui_app, use_script_app`:: These flags can be used to specify how the task shall be executed. The default is to execute a task in the Jupyter kernel. Other options are (1) a GUI app which will run the function in a separate process that is a Qt application and (2) a script which will run the function as a script in a separate Python interpreter. Use these parameters exclusively, i.e. only one must be present.
@@ -540,6 +540,7 @@ TBW
 
 TBW
 
+[#var_name]
 ==== The variable name
 
 Sometimes you don't want to pass fixed numbers or strings into your task through the variables panel, but you want to use a variable that is defined in the Python Console, i.e. in the kernel. That variable can be anything you have defined in the Python Console, or it can be a returned value from a previous task that you have executed (see the section <<capture_response>> which describes how the names of your return values can be changed).
@@ -581,6 +582,10 @@ Error::
 image::images/variable_name_error.png[width=80%,align=center]
 
 ======
+
+
+[TIP]
+Since variable name arguments are transparently filled with the variable name that exists in the kernel, you can use the `VariableName` type arguments when you have an `immediate_run=True` task, but you can only use variable name arguments, not normal positional or keyword arguments.
 
 
 === Expert Type Hints and defaults

@@ -262,6 +262,35 @@ def stringify_var_name_checks(args, kwargs):
     )
 
 
+def extract_var_name_args_and_kwargs(ui_args: dict):
+    """
+    Returns the args and kwargs that are of user type VariableName.
+
+    Args:
+        ui_args: a dictionary with the arguments and their types.
+
+    Returns:
+        Positional arguments are returned in a list, keyword arguments are returned in a dictionary.
+
+    """
+    from gui_executor.utypes import VariableName
+    from gui_executor.exec import ArgumentKind
+
+    args = [
+        v.annotation.get_value()
+        for k, v in ui_args.items()
+        if isinstance(v.annotation, VariableName) and v.kind == ArgumentKind.POSITIONAL_ONLY
+    ]
+
+    kwargs = {
+        k: v.annotation.get_value()
+        for k, v in ui_args.items()
+        if isinstance(v.annotation, VariableName) and v.kind in (ArgumentKind.POSITIONAL_OR_KEYWORD, ArgumentKind.KEYWORD_ONLY)
+    }
+
+    return args, kwargs
+
+
 def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: bool = True):
 
     # Check if one of the args/kwargs is an Enum
