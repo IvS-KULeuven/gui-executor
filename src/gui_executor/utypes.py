@@ -10,6 +10,7 @@ The user types provided by this module are:
   * CallBack: used when allowed values and defaults needs to be determined at run time
   * FixedList: a simple fixed list of values
   * ListList: a list of lists with the outer list expandable
+  * VariableName: a variable from the REPL which shall be passed into the task
 
 """
 from __future__ import annotations
@@ -62,6 +63,7 @@ class UQWidget(QWidget):
         raise NotImplementedError
 
     def _cast_arg(self, field: QLineEdit | QCheckBox, literal: str | Callable):
+
         if literal is bool:
             return field.checkState() == Qt.Checked
 
@@ -130,6 +132,38 @@ class CallbackWidget(UQWidget):
             return self.func_rc[self.widget.currentIndex()]
         else:
             return self.func_rc[self.widget.currentText()]
+
+
+class VariableName(TypeObject):
+    def __init__(self, value: str, name: str = "var_name"):
+        super().__init__(name)
+        self.value = value
+
+    def get_widget(self):
+        return VariableNameWidget(self.value)
+
+
+class var_name:
+    def __init__(self, name: str):
+        self.name = name
+
+    def __repr__(self):
+        return self.name
+
+
+class VariableNameWidget(UQWidget):
+    def __init__(self, value: str = None):
+        super().__init__()
+        self.value = value
+
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel(f"This variable shall be known in the kernel."))
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.setLayout(layout)
+
+    def get_value(self):
+        return var_name(self.value)
 
 
 class FixedList(TypeObject):

@@ -3,7 +3,7 @@
 :toc: left
 
 [.text-right]
-This documentation is for `gui-executor` ≥ v0.18.0. image:images/github.png[link=https://github.com/IvS-KULeuven/gui-executor,width=40px]
+This documentation is for `gui-executor` ≥ v0.18.5. image:images/github.png[link=https://github.com/IvS-KULeuven/gui-executor,width=40px]
 
 == What is the hype?
 
@@ -539,6 +539,49 @@ TBW
 ==== The call back function
 
 TBW
+
+==== The variable name
+
+Sometimes you don't want to pass fixed numbers or strings into your task through the variables panel, but you want to use a variable that is defined in the Python Console, i.e. in the kernel. That variable can be anything you have defined in the Python Console, or it can be a returned value from a previous task that you have executed (see the section <<capture_response>> which describes how the names of your return values can be changed).
+
+The code below illustrates how this works. The task argument is 'model' which is the variable that is used in your task. The variable name that is taken from the kernel is `ldo_model`. This latter name shall be defined in the kernel, either manually, or as a return from a previously executed task. If the variable is not defined in the kernel, an error message will be printed.
+
+[tabs]
+======
+Code snippet::
++
+[source,python]
+----
+from gui_executor.exec import exec_task
+
+UI_MODULE_DISPLAY_NAME = "Passing known variables"
+
+@exec_task()
+def process_model(name: str = "LDO -> CSL", model: VariableName("ldo_model") = None):
+
+    print(f"Processing model: {name}")
+    print(f"{model = }")
+
+    # ... your code comess here
+
+    result = "The result of your processing..."
+
+    return result
+----
+Variables Panel::
++
+image::images/variable_name_panel.png[width=80%,align=center]
+
+Output Panel::
++
+image::images/variable_name_output.png[width=80%,align=center]
+
+Error::
++
+image::images/variable_name_error.png[width=80%,align=center]
+
+======
+
 
 === Expert Type Hints and defaults
 

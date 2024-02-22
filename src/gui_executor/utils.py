@@ -252,6 +252,16 @@ def stringify_imports(args, kwargs):
     )
 
 
+def stringify_var_name_checks(args, kwargs):
+    from gui_executor.utypes import var_name
+    return "\n".join(
+        f'if \'{arg}\' not in locals(): '
+        f'print("[red]ERROR: Variable name \'{arg}\' is not known in the kernel.[/]"); error = True'
+        for arg in (*args, *kwargs.values())
+        if isinstance(arg, var_name)
+    )
+
+
 def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: bool = True):
 
     # Check if one of the args/kwargs is an Enum
@@ -260,23 +270,28 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
 
     # [3405691582] magic number is defined in gui_executor.transforms
 
-    return textwrap.dedent(
+    code = textwrap.dedent(
         f"""\
             # [3405691582]
             from rich import print
             from {func.__ui_module__} import {func.__name__}
             from pathlib import Path, PurePath, PosixPath  # might be used by argument types
             {stringify_imports(args, kwargs)}
+            error = False
+            {stringify_var_name_checks(args, kwargs)}
             
             def main():
                 response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})  # [3405691582]
                 if response is not None:
                     print(response)
                 return response
-                    
-            {f"{func.__ui_capture_response__} = main()" if call_func else ''}
+            
+            if not error:
+                {f"{func.__ui_capture_response__} = main()" if call_func else 'pass'}
         """
     )
+
+    return code
 
 
 def create_code_snippet_renderable(func: Callable, args: List, kwargs: Dict):
