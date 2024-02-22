@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.17">
+<meta name="generator" content="Asciidoctor 2.0.20">
 <title>A Task Executor GUI</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -84,10 +84,10 @@ code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;
 ul,ol,dl{line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
 ul,ol{margin-left:1.5em}
 ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0}
-ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
-ul.square{list-style-type:square}
 ul.circle{list-style-type:circle}
 ul.disc{list-style-type:disc}
+ul.square{list-style-type:square}
+ul.circle ul:not([class]),ul.disc ul:not([class]),ul.square ul:not([class]){list-style:inherit}
 ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
 dl dt{margin-bottom:.3125em;font-weight:bold}
 dl dd{margin-bottom:1.25em}
@@ -208,13 +208,10 @@ table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
 .admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6);word-wrap:anywhere}
 .admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
 .exampleblock>.content{border:1px solid #e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;border-radius:4px}
-.exampleblock>.content>:first-child{margin-top:0}
-.exampleblock>.content>:last-child{margin-bottom:0}
 .sidebarblock{border:1px solid #dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;border-radius:4px}
-.sidebarblock>:first-child{margin-top:0}
-.sidebarblock>:last-child{margin-bottom:0}
 .sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
-.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content>:first-child,.sidebarblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child,.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
 .literalblock pre,.listingblock>.content>pre{border-radius:4px;overflow-x:auto;padding:1em;font-size:.8125em}
 @media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
 @media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
@@ -393,7 +390,7 @@ b.conum *{color:inherit!important}
 dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
 h1,h2,p,td.content,span.alt,summary{letter-spacing:-.01em}
 p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
-p,blockquote,dt,td.content,span.alt,summary{font-size:1.0625rem}
+p,blockquote,dt,td.content,td.hdlist1,span.alt,summary{font-size:1.0625rem}
 p{margin-bottom:1.25rem}
 .sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
 .exampleblock>.content{background:#fffef7;border-color:#e0e0dc;box-shadow:0 1px 4px #e0e0dc}
@@ -438,287 +435,226 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <style>
 pre.rouge table td { padding: 5px; }
 pre.rouge table pre { margin: 0; }
-pre.rouge .cm {
-  color: #999988;
-  font-style: italic;
+pre.rouge, pre.rouge .w {
+  color: #24292f;
+  background-color: #f6f8fa;
 }
-pre.rouge .cp {
-  color: #999999;
-  font-weight: bold;
-}
-pre.rouge .c1 {
-  color: #999988;
-  font-style: italic;
-}
-pre.rouge .cs {
-  color: #999999;
-  font-weight: bold;
-  font-style: italic;
-}
-pre.rouge .c, pre.rouge .ch, pre.rouge .cd, pre.rouge .cpf {
-  color: #999988;
-  font-style: italic;
-}
-pre.rouge .err {
-  color: #a61717;
-  background-color: #e3d2d2;
-}
-pre.rouge .gd {
-  color: #000000;
-  background-color: #ffdddd;
-}
-pre.rouge .ge {
-  color: #000000;
-  font-style: italic;
+pre.rouge .k, pre.rouge .kd, pre.rouge .kn, pre.rouge .kp, pre.rouge .kr, pre.rouge .kt, pre.rouge .kv {
+  color: #cf222e;
 }
 pre.rouge .gr {
-  color: #aa0000;
+  color: #f6f8fa;
 }
-pre.rouge .gh {
-  color: #999999;
+pre.rouge .gd {
+  color: #82071e;
+  background-color: #ffebe9;
+}
+pre.rouge .nb {
+  color: #953800;
+}
+pre.rouge .nc {
+  color: #953800;
+}
+pre.rouge .no {
+  color: #953800;
+}
+pre.rouge .nn {
+  color: #953800;
+}
+pre.rouge .sr {
+  color: #116329;
+}
+pre.rouge .na {
+  color: #116329;
+}
+pre.rouge .nt {
+  color: #116329;
 }
 pre.rouge .gi {
-  color: #000000;
-  background-color: #ddffdd;
+  color: #116329;
+  background-color: #dafbe1;
 }
-pre.rouge .go {
-  color: #888888;
+pre.rouge .kc {
+  color: #0550ae;
 }
-pre.rouge .gp {
-  color: #555555;
+pre.rouge .l, pre.rouge .ld, pre.rouge .m, pre.rouge .mb, pre.rouge .mf, pre.rouge .mh, pre.rouge .mi, pre.rouge .il, pre.rouge .mo, pre.rouge .mx {
+  color: #0550ae;
 }
-pre.rouge .gs {
+pre.rouge .sb {
+  color: #0550ae;
+}
+pre.rouge .bp {
+  color: #0550ae;
+}
+pre.rouge .ne {
+  color: #0550ae;
+}
+pre.rouge .nl {
+  color: #0550ae;
+}
+pre.rouge .py {
+  color: #0550ae;
+}
+pre.rouge .nv, pre.rouge .vc, pre.rouge .vg, pre.rouge .vi, pre.rouge .vm {
+  color: #0550ae;
+}
+pre.rouge .o, pre.rouge .ow {
+  color: #0550ae;
+}
+pre.rouge .gh {
+  color: #0550ae;
   font-weight: bold;
 }
 pre.rouge .gu {
-  color: #aaaaaa;
-}
-pre.rouge .gt {
-  color: #aa0000;
-}
-pre.rouge .kc {
-  color: #000000;
+  color: #0550ae;
   font-weight: bold;
 }
-pre.rouge .kd {
-  color: #000000;
-  font-weight: bold;
-}
-pre.rouge .kn {
-  color: #000000;
-  font-weight: bold;
-}
-pre.rouge .kp {
-  color: #000000;
-  font-weight: bold;
-}
-pre.rouge .kr {
-  color: #000000;
-  font-weight: bold;
-}
-pre.rouge .kt {
-  color: #445588;
-  font-weight: bold;
-}
-pre.rouge .k, pre.rouge .kv {
-  color: #000000;
-  font-weight: bold;
-}
-pre.rouge .mf {
-  color: #009999;
-}
-pre.rouge .mh {
-  color: #009999;
-}
-pre.rouge .il {
-  color: #009999;
-}
-pre.rouge .mi {
-  color: #009999;
-}
-pre.rouge .mo {
-  color: #009999;
-}
-pre.rouge .m, pre.rouge .mb, pre.rouge .mx {
-  color: #009999;
-}
-pre.rouge .sa {
-  color: #000000;
-  font-weight: bold;
-}
-pre.rouge .sb {
-  color: #d14;
-}
-pre.rouge .sc {
-  color: #d14;
-}
-pre.rouge .sd {
-  color: #d14;
-}
-pre.rouge .s2 {
-  color: #d14;
-}
-pre.rouge .se {
-  color: #d14;
-}
-pre.rouge .sh {
-  color: #d14;
-}
-pre.rouge .si {
-  color: #d14;
-}
-pre.rouge .sx {
-  color: #d14;
-}
-pre.rouge .sr {
-  color: #009926;
-}
-pre.rouge .s1 {
-  color: #d14;
-}
-pre.rouge .ss {
-  color: #990073;
-}
-pre.rouge .s, pre.rouge .dl {
-  color: #d14;
-}
-pre.rouge .na {
-  color: #008080;
-}
-pre.rouge .bp {
-  color: #999999;
-}
-pre.rouge .nb {
-  color: #0086B3;
-}
-pre.rouge .nc {
-  color: #445588;
-  font-weight: bold;
-}
-pre.rouge .no {
-  color: #008080;
+pre.rouge .s, pre.rouge .sa, pre.rouge .sc, pre.rouge .dl, pre.rouge .sd, pre.rouge .s2, pre.rouge .se, pre.rouge .sh, pre.rouge .sx, pre.rouge .s1, pre.rouge .ss {
+  color: #0a3069;
 }
 pre.rouge .nd {
-  color: #3c5d5d;
-  font-weight: bold;
-}
-pre.rouge .ni {
-  color: #800080;
-}
-pre.rouge .ne {
-  color: #990000;
-  font-weight: bold;
+  color: #8250df;
 }
 pre.rouge .nf, pre.rouge .fm {
-  color: #990000;
+  color: #8250df;
+}
+pre.rouge .err {
+  color: #f6f8fa;
+  background-color: #82071e;
+}
+pre.rouge .c, pre.rouge .ch, pre.rouge .cd, pre.rouge .cm, pre.rouge .cp, pre.rouge .cpf, pre.rouge .c1, pre.rouge .cs {
+  color: #6e7781;
+}
+pre.rouge .gl {
+  color: #6e7781;
+}
+pre.rouge .gt {
+  color: #6e7781;
+}
+pre.rouge .ni {
+  color: #24292f;
+}
+pre.rouge .si {
+  color: #24292f;
+}
+pre.rouge .ge {
+  color: #24292f;
+  font-style: italic;
+}
+pre.rouge .gs {
+  color: #24292f;
   font-weight: bold;
-}
-pre.rouge .nl {
-  color: #990000;
-  font-weight: bold;
-}
-pre.rouge .nn {
-  color: #555555;
-}
-pre.rouge .nt {
-  color: #000080;
-}
-pre.rouge .vc {
-  color: #008080;
-}
-pre.rouge .vg {
-  color: #008080;
-}
-pre.rouge .vi {
-  color: #008080;
-}
-pre.rouge .nv, pre.rouge .vm {
-  color: #008080;
-}
-pre.rouge .ow {
-  color: #000000;
-  font-weight: bold;
-}
-pre.rouge .o {
-  color: #000000;
-  font-weight: bold;
-}
-pre.rouge .w {
-  color: #bbbbbb;
-}
-pre.rouge {
-  background-color: #f8f8f8;
 }
 </style>
 <style>
 /*! Asciidoctor Tabs | Copyright (c) 2018-present Dan Allen | MIT License */
-.tabs > ul {
-  display: flex;
-  flex-wrap: wrap;
-  list-style: none;
-  margin: 0 -0.25em 0 0;
-  padding: 0;
-}
-
-.tabs > ul li {
-  align-items: center;
-  border: 1px solid black;
-  border-bottom: 0;
-  cursor: pointer;
-  display: flex;
-  font-weight: bold;
-  height: 2em;
-  line-height: 1;
-  margin-right: 0.25em;
-  padding: 0 1em;
-  position: relative;
-}
-
-.tabs > ul li, .tabs > ul p {
-  margin-bottom: 0;
-}
-
-.tabs > ul li + li[id] {
-  margin-top: 0;
-}
-
-.tabset {
+.tabs {
   margin-bottom: 1.25em;
 }
 
-.tabset.is-loading .tabs li:not(:first-child),
-.tabset:not(.is-loading) .tabs li:not(.is-active) {
-  background-color: black;
-  color: white;
+.tablist > ul {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.tabset.is-loading .tabs li:first-child::after,
-.tabs li.is-active::after {
-  background-color: white;
+.tablist > ul li {
+  align-items: center;
+  background-color: #fff;
+  cursor: pointer;
+  display: flex;
+  font-weight: bold;
+  line-height: 1.5;
+  padding: 0.25em 1em;
+  position: relative;
+}
+
+.tablist > ul li:focus-visible {
+  outline: none;
+}
+
+.tablist.ulist,
+.tablist.ulist > ul li {
+  margin: 0;
+}
+
+.tablist.ulist > ul li + li {
+  margin-left: 0.25em;
+}
+
+.tabs .tablist li::after {
   content: "";
   display: block;
-  height: 3px; /* Chrome doesn't always paint the line accurately, so add a little extra */
+  height: 1px;
   position: absolute;
-  bottom: -1.5px;
+  bottom: -1px;
   left: 0;
   right: 0;
 }
 
-.tabset > .content {
-  border: 1px solid gray;
+.tabs.is-loading .tablist li:not(:first-child),
+.tabs:not(.is-loading) .tablist li:not(.is-selected) {
+  background-color: #f5f5f5;
+}
+
+.tabs.is-loading .tablist li:first-child::after,
+.tabs:not(.is-loading) .tablist li.is-selected::after {
+  background-color: #fff;
+}
+
+/*
+.tabs:not(.is-loading) .tablist li,
+.tabs:not(.is-loading) .tablist li::after {
+  transition: background-color 200ms ease-in-out;
+}
+*/
+
+.tablist > ul p {
+  line-height: inherit;
+  margin: 0;
+}
+
+.tabpanel {
+  background-color: #fff;
   padding: 1.25em;
 }
 
-.tabset.is-loading .tab-pane:not(:first-child),
-.tabset:not(.is-loading) .tab-pane:not(.is-active) {
+.tablist > ul li,
+.tabpanel {
+  border: 1px solid #dcdcdc;
+}
+
+.tablist > ul li {
+  border-bottom: 0;
+}
+
+.tabs.is-loading .tabpanel + .tabpanel,
+.tabs:not(.is-loading) .tabpanel.is-hidden {
   display: none;
 }
 
-.tab-pane > :first-child {
+.tabpanel > :first-child {
   margin-top: 0;
 }
 
-.tab-pane > :last-child > :last-child {
+/* #content is a signature of the Asciidoctor standalone HTML output */
+#content .tabpanel > :last-child,
+#content .tabpanel > :last-child > :last-child,
+#content .tabpanel > :last-child > :last-child > li:last-child > :last-child {
+  margin-bottom: 0;
+}
+
+.tablecontainer {
+  overflow-x: auto;
+}
+
+#content .tablecontainer {
+  margin-bottom: 1.25em;
+}
+
+#content .tablecontainer > table.tableblock {
   margin-bottom: 0;
 }
 </style>
@@ -759,7 +695,7 @@ pre.rouge {
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph text-right">
-<p>This documentation is for <code>gui-executor</code> ≥ v0.18.0. <span class="image"><a class="image" href="https://github.com/IvS-KULeuven/gui-executor"><img src="images/github.png" alt="github" width="40px"></a></span></p>
+<p>This documentation is for <code>gui-executor</code> ≥ v0.18.5. <span class="image"><a class="image" href="https://github.com/IvS-KULeuven/gui-executor"><img src="images/github.png" alt="github" width="40px"></a></span></p>
 </div>
 </div>
 </div>
@@ -920,11 +856,11 @@ options:
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <b class="conum">(1)</b>
+<span class="nd">@exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <b class="conum">(1)</b>
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">():</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"Hello, World!"</span><span class="p">)</span></code></pre>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Hello, World!</span><span class="sh">"</span><span class="p">)</span></code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -986,18 +922,19 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="o"><strong></span><span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="s">"Hello Tasks"</span><span class="o"></strong></span>  <b class="conum">(1)</b>
+<span class="o"><strong></span><span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Hello Tasks</span><span class="sh">"</span><span class="o"></strong></span>  <b class="conum">(1)</b>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="nd">@exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">():</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">"Hello, World!"</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Hello, World!</span><span class="sh">"</span><span class="p">)</span>
 
-<span class="o"><strong>@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="s">"Hello..."</span><span class="p">)</span>  <b class="conum">(2)</b>
-<span class="k">def</span> <span class="nf">hello_you</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"John"</span><span class="p">):</span>  <b class="conum">(3)</b>
-    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Hello, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">!"</span><span class="p">)</span>
-<span class="o"></strong></span></code></pre>
+<span class="o"><strong></span><span class="nd">@exec_task</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Hello</span><span class="gp">...</span><span class="sh">"</span><span class="s">)  <b class="conum">(2)</b>
+def hello_you(name: str = </span><span class="sh">"</span><span class="n">John</span><span class="sh">"</span><span class="s">):  <b class="conum">(3)</b>
+    print(f</span><span class="sh">"</span><span class="n">Hello</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="p">}</span><span class="err">!</span><span class="sh">"</span><span class="s">)
+</strong>
+</span></code></pre>
 </div>
 </div>
 <div class="olist arabic">
@@ -1077,33 +1014,33 @@ Hello, World! <b class="conum">(3)</b>
 <div class="paragraph">
 <p>Suppose we have a task to capture an image from a camera and save this image into a file in a folder. Such a function could look like the code below. How that looks in the GUI is shown in the TAB next to the code snippet.</p>
 </div>
-<div id="_tabset_1" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_1" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_1_code_snippet">
+<li id="_tabs_1_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_1_gui">
+<li id="_tabs_1_gui" class="tab">
 <p>GUI</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_1_code_snippet">
+<div id="_tabs_1_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_1_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="nd">@exec_task</span><span class="p">()</span>
 <span class="k">def</span> <span class="nf">capture_image</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
-    <span class="p">...</span>
-    <span class="n">image</span> <span class="o">=</span> <span class="s">"Captured image not shown for privacy reasons..."</span>
+    <span class="bp">...</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Captured image not shown for privacy reasons</span><span class="gp">...</span><span class="sh">"</span><span class="s">
 
-    <span class="k">return</span> <span class="n">image</span></code></pre>
+    return image</span></code></pre>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_1_gui">
+<div id="_tabs_1_gui--panel" class="tabpanel" aria-labelledby="_tabs_1_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/func_param_01.png" alt="func param 01" width="60%">
@@ -1121,37 +1058,37 @@ Hello, World! <b class="conum">(3)</b>
 <div class="paragraph">
 <p>Now let&#8217;s add type hints to the parameters of our function. We will use the string type for the camera name and the filename and location, and we will use a float for the exposure time and an integer for the aperture. For the location, we want to provide a default value.</p>
 </div>
-<div id="_tabset_2" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_2" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_2_code_snippet">
+<li id="_tabs_2_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_2_gui">
+<li id="_tabs_2_gui" class="tab">
 <p>GUI</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_2_code_snippet">
+<div id="_tabs_2_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_2_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="nd">@exec_task</span><span class="p">()</span>
 <span class="k">def</span> <span class="nf">capture_image</span><span class="p">(</span>
     <span class="n">camera</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"~/data/images"</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">~/data/images</span><span class="sh">"</span>
 <span class="p">):</span>
     <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
-</span>    <span class="n">image</span> <span class="o">=</span> <span class="sa">f</span><span class="s">"Captured image from camera '</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">' with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">."</span>
+</span>    <span class="n">image</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Captured image from camera </span><span class="sh">'</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="sh">'</span><span class="s"> with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">.</span><span class="sh">"</span>
     <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
 </span>
     <span class="k">return</span> <span class="n">image</span></code></pre>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_2_gui">
+<div id="_tabs_2_gui--panel" class="tabpanel" aria-labelledby="_tabs_2_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/func_param_02.png" alt="func param 02" width="60%">
@@ -1169,34 +1106,34 @@ Hello, World! <b class="conum">(3)</b>
 <div class="paragraph">
 <p>Another change we added was the <code>capture_response</code> parameter of the decorator. The return value of the function is no longer captured in the variable <code>response</code>, but in the variable <code>new_image</code>.</p>
 </div>
-<div id="_tabset_3" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_3" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_3_code_snippet">
+<li id="_tabs_3_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_3_gui">
+<li id="_tabs_3_gui" class="tab">
 <p>GUI</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_3_code_snippet">
+<div id="_tabs_3_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_3_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span><span class="p">,</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">Directory</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span><span class="p">,</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">Directory</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="s">'new_image'</span><span class="p">)</span>
+<span class="nd">@exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="sh">'</span><span class="s">new_image</span><span class="sh">'</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">capture_image_file_type_hints</span><span class="p">(</span>
         <span class="n">camera</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">filename</span><span class="p">:</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s">"~/data/images"</span><span class="p">)</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Directory</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="sh">"</span><span class="s">~/data/images</span><span class="sh">"</span><span class="p">)</span>
 <span class="p">):</span>
     <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
 </span>
     <span class="n">image</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s">"Captured image from camera '</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">' with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">, "</span>
-        <span class="sa">f</span><span class="s">"saving it as </span><span class="si">{</span><span class="n">filename</span><span class="o">=</span><span class="si">}</span><span class="s"> at </span><span class="si">{</span><span class="n">location</span><span class="o">=</span><span class="si">}</span><span class="s">."</span>
+        <span class="sa">f</span><span class="sh">"</span><span class="s">Captured image from camera </span><span class="sh">'</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="sh">'</span><span class="s"> with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
+        <span class="sa">f</span><span class="sh">"</span><span class="s">saving it as </span><span class="si">{</span><span class="n">filename</span><span class="o">=</span><span class="si">}</span><span class="s"> at </span><span class="si">{</span><span class="n">location</span><span class="o">=</span><span class="si">}</span><span class="s">.</span><span class="sh">"</span>
     <span class="p">)</span>
 
     <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
@@ -1205,7 +1142,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_3_gui">
+<div id="_tabs_3_gui--panel" class="tabpanel" aria-labelledby="_tabs_3_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/func_param_03.png" alt="func param 03" width="80%">
@@ -1223,24 +1160,24 @@ Hello, World! <b class="conum">(3)</b>
 <div class="paragraph">
 <p>Let&#8217;s go one step further and change the type of the camera name. We have only a limited number of camera&#8217;s around the house and we don&#8217;t like to type their name all the time, so, we are going to create a dropdown list (or ComboBox) where we can select the camera we want to capture. Luckily, we do not have to worry about coding this dropdown menu, the Task GUI understands the type hint <code>Enum</code> and will automatically create a dropdown box for this parameter. In the following code snippet, we have created a <code>CameraName</code> enumeration class and use it as a type hint for the camera parameter.</p>
 </div>
-<div id="_tabset_4" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_4" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_4_code_snippet">
+<li id="_tabs_4_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_4_gui">
+<li id="_tabs_4_gui" class="tab">
 <p>GUI</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_4_code_snippet">
+<div id="_tabs_4_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_4_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">IntEnum</span>
-<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span><span class="p">,</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">Directory</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="n">enum</span> <span class="kn">import</span> <span class="n">IntEnum</span>
+<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span><span class="p">,</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">Directory</span>
 
 <span class="k">class</span> <span class="nc">CameraName</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
     <span class="n">FRONT_DOOR</span> <span class="o">=</span> <span class="mi">1</span>
@@ -1250,16 +1187,16 @@ Hello, World! <b class="conum">(3)</b>
     <span class="n">BIRD_HOUSE_1</span> <span class="o">=</span> <span class="mi">5</span>
     <span class="n">BIRD_HOUSE_2</span> <span class="o">=</span> <span class="mi">6</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="s">'new_image'</span><span class="p">)</span>
+<span class="nd">@exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="sh">'</span><span class="s">new_image</span><span class="sh">'</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">capture_image_camera_name</span><span class="p">(</span>
         <span class="n">camera</span><span class="p">:</span> <span class="n">CameraName</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">filename</span><span class="p">:</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s">"~/data/images"</span><span class="p">)</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Directory</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="sh">"</span><span class="s">~/data/images</span><span class="sh">"</span><span class="p">)</span>
 <span class="p">):</span>
     <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
 </span>
     <span class="n">image</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s">"Captured image from camera '</span><span class="si">{</span><span class="n">camera</span><span class="p">.</span><span class="n">name</span><span class="si">}</span><span class="s">' with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">, "</span>
-        <span class="sa">f</span><span class="s">"saving it as </span><span class="si">{</span><span class="n">filename</span><span class="o">=</span><span class="si">}</span><span class="s"> at </span><span class="si">{</span><span class="n">location</span><span class="o">=</span><span class="si">}</span><span class="s">."</span>
+        <span class="sa">f</span><span class="sh">"</span><span class="s">Captured image from camera </span><span class="sh">'</span><span class="si">{</span><span class="n">camera</span><span class="p">.</span><span class="n">name</span><span class="si">}</span><span class="sh">'</span><span class="s"> with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
+        <span class="sa">f</span><span class="sh">"</span><span class="s">saving it as </span><span class="si">{</span><span class="n">filename</span><span class="o">=</span><span class="si">}</span><span class="s"> at </span><span class="si">{</span><span class="n">location</span><span class="o">=</span><span class="si">}</span><span class="s">.</span><span class="sh">"</span>
     <span class="p">)</span>
 
     <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
@@ -1268,7 +1205,7 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_4_gui">
+<div id="_tabs_4_gui--panel" class="tabpanel" aria-labelledby="_tabs_4_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/func_param_04.png" alt="func param 04" width="80%">
@@ -1289,52 +1226,52 @@ Hello, World! <b class="conum">(3)</b>
 <div class="paragraph">
 <p>In the following example, I simulated a task that prints a table from our last bird count day in the backyard. Of course, in a real task this would take additional arguments like the date and other criteria and load the data from a database, but this example should give you a hunch of what is possible. The table is a <a href="https://rich.readthedocs.io/en/latest/tables.html">Rich Table</a> and is returned by the task.</p>
 </div>
-<div id="_tabset_5" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_5" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_5_code_snippet">
+<li id="_tabs_5_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_5_gui">
+<li id="_tabs_5_gui" class="tab">
 <p>GUI</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_5_code_snippet">
+<div id="_tabs_5_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_5_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="n">HERE</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">bird_count</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"backyard"</span><span class="p">):</span>
+<span class="nd">@exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">bird_count</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">backyard</span><span class="sh">"</span><span class="p">):</span>
 
-    <span class="kn">from</span> <span class="nn">rich.table</span> <span class="kn">import</span> <span class="n">Table</span>
-    <span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s">"Bird Count for </span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="n">rich.table</span> <span class="kn">import</span> <span class="n">Table</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="nc">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">Bird Count for </span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 
-    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Date"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s">"right"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"cyan"</span><span class="p">,</span> <span class="n">no_wrap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Bird name"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"magenta"</span><span class="p">)</span>
-    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Number"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s">"center"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Date</span><span class="sh">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="sh">"</span><span class="s">right</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">cyan</span><span class="sh">"</span><span class="p">,</span> <span class="n">no_wrap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Bird name</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">magenta</span><span class="sh">"</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Number</span><span class="sh">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="sh">"</span><span class="s">center</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">green</span><span class="sh">"</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">number</span> <span class="ow">in</span> <span class="p">{</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"ChiffChaff"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Robin"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Pigeon"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Magpie"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Sparrow"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Great tit"</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ChiffChaff</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Robin</span><span class="sh">"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Pigeon</span><span class="sh">"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Magpie</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Sparrow</span><span class="sh">"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Great tit</span><span class="sh">"</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
     <span class="p">}:</span>
-        <span class="n">table</span><span class="p">.</span><span class="n">add_row</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
+        <span class="n">table</span><span class="p">.</span><span class="nf">add_row</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nf">str</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">table</span></code></pre>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_5_gui">
+<div id="_tabs_5_gui--panel" class="tabpanel" aria-labelledby="_tabs_5_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/table-bird-count.png" alt="table bird count" width="80%">
@@ -1352,55 +1289,55 @@ Hello, World! <b class="conum">(3)</b>
 <div class="paragraph">
 <p>Actually, our table example above with the bird count can also serve as function output. If we print the table with Rich Console, the output is caught and shown in the output console of the Task GUI almost exactly like if you return the table from the function. Any Rich Renderable that you print in your function will be shown as expected in the output console of the Task GUI.</p>
 </div>
-<div id="_tabset_6" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_6" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_6_code_snippet">
+<li id="_tabs_6_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_6_gui">
+<li id="_tabs_6_gui" class="tab">
 <p>GUI</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_6_code_snippet">
+<div id="_tabs_6_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_6_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="n">HERE</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">print_bird_count</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"backyard"</span><span class="p">,</span> <span class="n">date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"today"</span><span class="p">):</span>
+<span class="nd">@exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">print_bird_count</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">backyard</span><span class="sh">"</span><span class="p">,</span> <span class="n">date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">today</span><span class="sh">"</span><span class="p">):</span>
 
-    <span class="kn">from</span> <span class="nn">rich.table</span> <span class="kn">import</span> <span class="n">Table</span>
-    <span class="kn">from</span> <span class="nn">rich.console</span> <span class="kn">import</span> <span class="n">Console</span>
+    <span class="kn">from</span> <span class="n">rich.table</span> <span class="kn">import</span> <span class="n">Table</span>
+    <span class="kn">from</span> <span class="n">rich.console</span> <span class="kn">import</span> <span class="n">Console</span>
 
-    <span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s">"Bird Count for </span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="nc">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">Bird Count for </span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 
-    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Date"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s">"right"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"cyan"</span><span class="p">,</span> <span class="n">no_wrap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Bird name"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"magenta"</span><span class="p">)</span>
-    <span class="n">table</span><span class="p">.</span><span class="n">add_column</span><span class="p">(</span><span class="s">"Number"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s">"center"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">"green"</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Date</span><span class="sh">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="sh">"</span><span class="s">right</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">cyan</span><span class="sh">"</span><span class="p">,</span> <span class="n">no_wrap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Bird name</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">magenta</span><span class="sh">"</span><span class="p">)</span>
+    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Number</span><span class="sh">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="sh">"</span><span class="s">center</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">green</span><span class="sh">"</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">number</span> <span class="ow">in</span> <span class="p">{</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"ChiffChaff"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Robin"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Pigeon"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Magpie"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Sparrow"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
-        <span class="p">(</span><span class="s">"16 Feb 2023"</span><span class="p">,</span> <span class="s">"Great tit"</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ChiffChaff</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Robin</span><span class="sh">"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Pigeon</span><span class="sh">"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Magpie</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Sparrow</span><span class="sh">"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Great tit</span><span class="sh">"</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
     <span class="p">}:</span>
-        <span class="n">table</span><span class="p">.</span><span class="n">add_row</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
+        <span class="n">table</span><span class="p">.</span><span class="nf">add_row</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nf">str</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
 
-    <span class="n">console</span> <span class="o">=</span> <span class="n">Console</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-    <span class="n">console</span><span class="p">.</span><span class="k">print</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></code></pre>
+    <span class="n">console</span> <span class="o">=</span> <span class="nc">Console</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">console</span><span class="p">.</span><span class="nf">print</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></code></pre>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_6_gui">
+<div id="_tabs_6_gui--panel" class="tabpanel" aria-labelledby="_tabs_6_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/print-bird-count.png" alt="print bird count" width="80%">
@@ -1412,50 +1349,50 @@ Hello, World! <b class="conum">(3)</b>
 <div class="paragraph">
 <p>Another type that we would want to inspect is the image type. Our camera example above returned a string to illustrate the behaviour we wanted to demonstrate, but we can also use the IPython display function to show images in a separate window.  Let&#8217;s load one of our bird house pictures in the following example. This loads the image from disk and displays the image in a separate window. You will see in the output console that the image —which is still returned by the task— is captured in the <code>response</code> variable and is now printed as <code>&lt;IPython.core.display.Image object&gt;</code>. So, we return the actual image object in the variable <code>response</code>. We can see this image in the Jupyter QtConsole that can be opened from the second button (<span class="image"><img src="images/command.svg" alt="command" width="20px"></span>]) in the Task GUI toolbar. This button will open a new window with a Jupyter Python Console where you have a Python prompt. Type <code>response</code> at the prompt and the image will be shown. You can now further process this image if needed from the Python REPL.</p>
 </div>
-<div id="_tabset_7" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_7" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_7_code_snippet">
+<li id="_tabs_7_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_7_gui">
+<li id="_tabs_7_gui" class="tab">
 <p>GUI</p>
 </li>
-<li id="_tabset_7_console">
+<li id="_tabs_7_console" class="tab">
 <p>Console</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_7_code_snippet">
+<div id="_tabs_7_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_7_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="n">HERE</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">preview_image</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"bird_house"</span><span class="p">):</span>
+<span class="nd">@exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">preview_image</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">bird_house</span><span class="sh">"</span><span class="p">):</span>
 
-    <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">display</span>
+    <span class="kn">from</span> <span class="n">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">display</span>
 
-    <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">HERE</span> <span class="o">/</span> <span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">.png"</span><span class="p">)</span>
-    <span class="n">display</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="nc">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">HERE</span> <span class="o">/</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">.png</span><span class="sh">"</span><span class="p">)</span>
+    <span class="nf">display</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">image</span></code></pre>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_7_gui">
+<div id="_tabs_7_gui--panel" class="tabpanel" aria-labelledby="_tabs_7_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/preview-image.png" alt="preview image" width="100%">
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_7_console">
+<div id="_tabs_7_console--panel" class="tabpanel" aria-labelledby="_tabs_7_console">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/console-image-bird-house.png" alt="console image bird house" width="100%">
@@ -1498,31 +1435,31 @@ If you want to follow closely on the printed output of your function, you might 
 <div class="paragraph">
 <p>In practice a <code>FixedList</code> is used when the argument to your function is a list with a limited number of arguments, e.g. a list of positions that you want to visit, or the first name, middle initials and last name of a person. In the example below we use a <code>FixedList</code> to hold the GPS coordinates where I spotted of a bird.</p>
 </div>
-<div id="_tabset_8" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_8" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_8_code_snippet">
+<li id="_tabs_8_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_8_arguments_panel">
+<li id="_tabs_8_arguments_panel" class="tab">
 <p>Arguments Panel</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_8_code_snippet">
+<div id="_tabs_8_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_8_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight nowrap"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
-<span class="kn">from</span> <span class="nn">gui_executor.utypes</span> <span class="kn">import</span> <span class="n">FixedList</span>
+<pre class="rouge highlight nowrap"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<span class="kn">from</span> <span class="n">gui_executor.utypes</span> <span class="kn">import</span> <span class="n">FixedList</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">()</span>
+<span class="nd">@exec_task</span><span class="p">()</span>
 <span class="k">def</span> <span class="nf">save_observation</span><span class="p">(</span>
-        <span class="n">coordinates</span><span class="p">:</span> <span class="n">FixedList</span><span class="p">([</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s">"lat, long"</span><span class="p">),</span>
+        <span class="n">coordinates</span><span class="p">:</span> <span class="nc">FixedList</span><span class="p">([</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">lat, long</span><span class="sh">"</span><span class="p">),</span>
         <span class="n">time</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">bird_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="s">"""
+    <span class="sh">"""</span><span class="s">
     Saves the observation into the database.
 
     Args:
@@ -1530,12 +1467,12 @@ If you want to follow closely on the printed output of your function, you might 
         time (str): the time of the observation [YYYY/MM/DD HH:MM:SS]
         bird_name (str): the name of the bird
 
-    """</span>
-    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"A </span><span class="si">{</span><span class="n">bird_name</span><span class="si">}</span><span class="s"> was spotted at [</span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="s">]"</span><span class="p">)</span></code></pre>
+    </span><span class="sh">"""</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">A </span><span class="si">{</span><span class="n">bird_name</span><span class="si">}</span><span class="s"> was spotted at [</span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="s">]</span><span class="sh">"</span><span class="p">)</span></code></pre>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_8_arguments_panel">
+<div id="_tabs_8_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_8_arguments_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/fixed-list.png" alt="fixed list" width="80%">
@@ -1560,6 +1497,77 @@ If you want to follow closely on the printed output of your function, you might 
 <p>TBW</p>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_the_variable_name">The variable name</h4>
+<div class="paragraph">
+<p>Sometimes you don&#8217;t want to pass fixed numbers or strings into your task through the variables panel, but you want to use a variable that is defined in the Python Console, i.e. in the kernel. That variable can be anything you have defined in the Python Console, or it can be a returned value from a previous task that you have executed (see the section <a href="#capture_response">Capture the result</a> which describes how the names of your return values can be changed).</p>
+</div>
+<div class="paragraph">
+<p>The code below illustrates how this works. The task argument is 'model' which is the variable that is used in your task. The variable name that is taken from the kernel is <code>ldo_model</code>. This latter name shall be defined in the kernel, either manually, or as a return from a previously executed task. If the variable is not defined in the kernel, an error message will be printed.</p>
+</div>
+<div id="_tabs_9" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
+<ul>
+<li id="_tabs_9_code_snippet" class="tab">
+<p>Code snippet</p>
+</li>
+<li id="_tabs_9_variables_panel" class="tab">
+<p>Variables Panel</p>
+</li>
+<li id="_tabs_9_output_panel" class="tab">
+<p>Output Panel</p>
+</li>
+<li id="_tabs_9_error" class="tab">
+<p>Error</p>
+</li>
+</ul>
+</div>
+<div id="_tabs_9_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_9_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+
+<span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Passing known variables</span><span class="sh">"</span>
+
+<span class="nd">@exec_task</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">process_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">LDO -&gt; CSL</span><span class="sh">"</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nc">VariableName</span><span class="p">(</span><span class="sh">"</span><span class="s">ldo_model</span><span class="sh">"</span><span class="p">)</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Processing model: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">model</span> <span class="o">=</span> <span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+    <span class="c1"># ... your code comess here
+</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="sh">"</span><span class="s">The result of your processing</span><span class="gp">...</span><span class="sh">"</span><span class="s">
+
+    return result</span></code></pre>
+</div>
+</div>
+</div>
+<div id="_tabs_9_variables_panel--panel" class="tabpanel" aria-labelledby="_tabs_9_variables_panel">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/variable_name_panel.png" alt="variable name panel" width="80%">
+</div>
+</div>
+</div>
+<div id="_tabs_9_output_panel--panel" class="tabpanel" aria-labelledby="_tabs_9_output_panel">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/variable_name_output.png" alt="variable name output" width="80%">
+</div>
+</div>
+</div>
+<div id="_tabs_9_error--panel" class="tabpanel" aria-labelledby="_tabs_9_error">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/variable_name_error.png" alt="variable name error" width="80%">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_expert_type_hints_and_defaults">Expert Type Hints and defaults</h3>
@@ -1575,49 +1583,49 @@ If you want to follow closely on the printed output of your function, you might 
 <div class="paragraph">
 <p>The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter <code>capture_response</code> which can be a string or a tuple of strings. See an example below. The task <code>generate_model</code> returns three values of which we only need the 'model' and the 'hexhw'. In the <code>capture_response</code> you see that the second unused return value is captured in the <code>_</code> and therefore ignored. If you need to ignore more return values, the <code>*_</code> is a valid choice.</p>
 </div>
-<div id="_tabset_9" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_10" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_9_code_snippet">
+<li id="_tabs_10_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_9_gui">
+<li id="_tabs_10_gui" class="tab">
 <p>GUI</p>
 </li>
-<li id="_tabset_9_console">
+<li id="_tabs_10_console" class="tab">
 <p>Console</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_9_code_snippet">
+<div id="_tabs_10_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_10_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
 
-<span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="s">"Capturing function responses"</span>
+<span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Capturing function responses</span><span class="sh">"</span>
 
-<span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="p">(</span><span class="s">"model"</span><span class="p">,</span> <span class="s">"_"</span><span class="p">,</span> <span class="s">"hexhw"</span><span class="p">))</span>
-<span class="k">def</span> <span class="nf">generate_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s">"LDO -&gt; CSL"</span><span class="p">):</span>
+<span class="nd">@exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="p">(</span><span class="sh">"</span><span class="s">model</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">_</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">hexhw</span><span class="sh">"</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">generate_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">LDO -&gt; CSL</span><span class="sh">"</span><span class="p">):</span>
 
-    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"Generating model: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Generating model: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 
-    <span class="n">model</span> <span class="o">=</span> <span class="s">"This is a model"</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="s">"an unused return value..."</span>
-    <span class="n">hexhw</span> <span class="o">=</span> <span class="s">"this is a reference to a hardware device"</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="sh">"</span><span class="s">This is a model</span><span class="sh">"</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="sh">"</span><span class="s">an unused return value</span><span class="gp">...</span><span class="sh">"</span><span class="s">
+    hexhw = </span><span class="sh">"</span><span class="n">this</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">reference</span> <span class="n">to</span> <span class="n">a</span> <span class="n">hardware</span> <span class="n">device</span><span class="sh">"</span><span class="s">
 
-    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">hexhw</span></code></pre>
+    return model, s, hexhw</span></code></pre>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_9_gui">
+<div id="_tabs_10_gui--panel" class="tabpanel" aria-labelledby="_tabs_10_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response.png" alt="capture response" width="80%">
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_9_console">
+<div id="_tabs_10_console--panel" class="tabpanel" aria-labelledby="_tabs_10_console">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response-console.png" alt="capture response console" width="80%">
@@ -1663,10 +1671,10 @@ Be careful when you use this parameter because it will overwrite the variables t
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="n">ICON_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">/</span> <span class="s">"icons/"</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="n">ICON_PATH</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span> <span class="o">/</span> <span class="sh">"</span><span class="s">icons/</span><span class="sh">"</span>
 
-<span class="o">@</span><span class="n">exec_ui</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="s">"Switch ON"</span><span class="p">,</span>
-         <span class="n">icons</span><span class="o">=</span><span class="p">(</span><span class="n">ICON_PATH</span> <span class="o">/</span> <span class="s">"n1-camera-swon.svg"</span><span class="p">,</span> <span class="n">ICON_PATH</span> <span class="o">/</span> <span class="s">"n1-camera-swon-selected.svg"</span><span class="p">))</span></code></pre>
+<span class="nd">@exec_ui</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Switch ON</span><span class="sh">"</span><span class="p">,</span>
+         <span class="n">icons</span><span class="o">=</span><span class="p">(</span><span class="n">ICON_PATH</span> <span class="o">/</span> <span class="sh">"</span><span class="s">n1-camera-swon.svg</span><span class="sh">"</span><span class="p">,</span> <span class="n">ICON_PATH</span> <span class="o">/</span> <span class="sh">"</span><span class="s">n1-camera-swon-selected.svg</span><span class="sh">"</span><span class="p">))</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1759,11 +1767,11 @@ In [9]: print_bird_count()
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="o">&gt;&gt;&gt;</span> <span class="n">rc</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s">"Do you want to continue [Y/n]? "</span><span class="p">)</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="gp">&gt;&gt;&gt;</span> <span class="n">rc</span> <span class="o">=</span> <span class="nf">input</span><span class="p">(</span><span class="sh">"</span><span class="s">Do you want to continue [Y/n]? </span><span class="sh">"</span><span class="p">)</span>
 <span class="n">Do</span> <span class="n">you</span> <span class="n">want</span> <span class="n">to</span> <span class="k">continue</span> <span class="p">[</span><span class="n">Y</span><span class="o">/</span><span class="n">n</span><span class="p">]</span><span class="err">?</span> <span class="n">n</span>
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">rc</span>
-<span class="s">'n'</span></code></pre>
+<span class="gp">&gt;&gt;&gt;</span> <span class="n">rc</span>
+<span class="sh">'</span><span class="s">n</span><span class="sh">'</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1774,16 +1782,17 @@ In [9]: print_bird_count()
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="o">@</span><span class="n">exec_task</span><span class="p">(</span><span class="n">input_request</span><span class="o">=</span><span class="p">(</span><span class="s">"[Y/n]"</span><span class="p">,</span> <span class="s">"[c/A]"</span><span class="p">),</span> <span class="n">display_name</span><span class="o">=</span><span class="s">"Continue or Abort?"</span><span class="p">)</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="nd">@exec_task</span><span class="p">(</span><span class="n">input_request</span><span class="o">=</span><span class="p">(</span><span class="sh">"</span><span class="s">[Y/n]</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">[c/A]</span><span class="sh">"</span><span class="p">),</span> <span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Continue or Abort?</span><span class="sh">"</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">continue_or_abort_question</span><span class="p">():</span>
 
-    <span class="k">print</span><span class="p">(</span><span class="s">"There should be a dialog appearing with a Continue or Abort question..."</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">There should be a dialog appearing with a Continue or Abort question</span><span class="gp">...</span><span class="sh">"</span><span class="s">, flush=True)
 
-    <span class="n">response</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s">"Do you want to continue [Y/n]"</span><span class="p">)</span>
-    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">response</span> <span class="o">=</span> <span class="si">}</span><span class="s">"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    response = input(</span><span class="sh">"</span><span class="n">Do</span> <span class="n">you</span> <span class="n">want</span> <span class="n">to</span> <span class="k">continue</span> <span class="p">[</span><span class="n">Y</span><span class="o">/</span><span class="n">n</span><span class="p">]</span><span class="sh">"</span><span class="s">)
+    print(f</span><span class="sh">"</span><span class="p">{</span><span class="n">response</span> <span class="o">=</span> <span class="p">}</span><span class="sh">"</span><span class="s">, flush=True)
 
-    <span class="k">if</span> <span class="n">response</span><span class="p">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">'n'</span><span class="p">:</span>
-        <span class="k">return</span></code></pre>
+    if response.lower() == </span><span class="sh">'</span><span class="s">n</span><span class="sh">'</span><span class="s">:
+        return
+</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1814,34 +1823,34 @@ In [9]: print_bird_count()
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">import</span> <span class="n">os</span>
+<span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span> <span class="nn">executor</span> <span class="kn">import</span> <span class="n">ExternalCommand</span>
+<span class="kn">from</span> <span class="n">executor</span> <span class="kn">import</span> <span class="n">ExternalCommand</span>
 
-<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="n">resolve</span><span class="p">()</span>
+<span class="n">HERE</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span>
 
-<span class="n">UI_TAB_ORDER</span> <span class="o">=</span> <span class="p">[</span><span class="s">'tests'</span><span class="p">,</span> <span class="s">'camera'</span><span class="p">,</span> <span class="s">'gse'</span><span class="p">,</span> <span class="s">'configuration'</span><span class="p">]</span>
+<span class="n">UI_TAB_ORDER</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">tests</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">camera</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">gse</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">configuration</span><span class="sh">'</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">csl_ui</span><span class="p">():</span>
-    <span class="n">logo_path</span> <span class="o">=</span> <span class="n">HERE</span> <span class="o">/</span> <span class="s">"icons/dashboard.svg"</span>
+    <span class="n">logo_path</span> <span class="o">=</span> <span class="n">HERE</span> <span class="o">/</span> <span class="sh">"</span><span class="s">icons/dashboard.svg</span><span class="sh">"</span>
 
     <span class="c1"># On the client machine, the /data directory is usually mounted read-only.
 </span>    <span class="c1"># If that is the case, write the command log to the users home folder.
 </span>
-    <span class="n">cmd_log</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">environ</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">"UI_LOG_FILE_LOCATION"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">cmd_log</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="p">.</span><span class="n">access</span><span class="p">(</span><span class="n">cmd_log</span><span class="p">,</span> <span class="n">os</span><span class="p">.</span><span class="n">W_OK</span><span class="p">):</span>
-        <span class="n">cmd_log</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s">"~"</span><span class="p">).</span><span class="n">expanduser</span><span class="p">())</span>
+    <span class="n">cmd_log</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">environ</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sh">"</span><span class="s">UI_LOG_FILE_LOCATION</span><span class="sh">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cmd_log</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="p">.</span><span class="nf">access</span><span class="p">(</span><span class="n">cmd_log</span><span class="p">,</span> <span class="n">os</span><span class="p">.</span><span class="n">W_OK</span><span class="p">):</span>
+        <span class="n">cmd_log</span> <span class="o">=</span> <span class="nf">str</span><span class="p">(</span><span class="nc">Path</span><span class="p">(</span><span class="sh">"</span><span class="s">~</span><span class="sh">"</span><span class="p">).</span><span class="nf">expanduser</span><span class="p">())</span>
 
-    <span class="n">cmd</span> <span class="o">=</span> <span class="n">ExternalCommand</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s">"gui-executor --verbose --module-path camtest.tasks.csl "</span>
-        <span class="sa">f</span><span class="s">"--module-path camtest.tasks.shared.camera "</span>
-        <span class="sa">f</span><span class="s">"--kernel-name plato-test-scripts --single "</span>
-        <span class="sa">f</span><span class="s">"--logo </span><span class="si">{</span><span class="n">logo_path</span><span class="si">}</span><span class="s"> --cmd-log </span><span class="si">{</span><span class="n">cmd_log</span><span class="si">}</span><span class="s"> --app-name 'CSL Operator GUI'"</span><span class="p">,</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="nc">ExternalCommand</span><span class="p">(</span>
+        <span class="sa">f</span><span class="sh">"</span><span class="s">gui-executor --verbose --module-path camtest.tasks.csl </span><span class="sh">"</span>
+        <span class="sa">f</span><span class="sh">"</span><span class="s">--module-path camtest.tasks.shared.camera </span><span class="sh">"</span>
+        <span class="sa">f</span><span class="sh">"</span><span class="s">--kernel-name plato-test-scripts --single </span><span class="sh">"</span>
+        <span class="sa">f</span><span class="sh">"</span><span class="s">--logo </span><span class="si">{</span><span class="n">logo_path</span><span class="si">}</span><span class="s"> --cmd-log </span><span class="si">{</span><span class="n">cmd_log</span><span class="si">}</span><span class="s"> --app-name </span><span class="sh">'</span><span class="s">CSL Operator GUI</span><span class="sh">'"</span><span class="p">,</span>
         <span class="n">asynchronous</span><span class="o">=</span><span class="bp">True</span>
     <span class="p">)</span>
-    <span class="n">cmd</span><span class="p">.</span><span class="n">start</span><span class="p">()</span></code></pre>
+    <span class="n">cmd</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span></code></pre>
 </div>
 </div>
 </div>
@@ -1880,44 +1889,44 @@ response = raise_an_exception(value=0.0)
 <div class="paragraph">
 <p>Apart from tasks that print status information in the output console, there are sometimes specific items that you want to keep track of without the need to execute a task for this. In the project for which this application was developed, we needed to know about two identifiers at all time, i.e. the identifier for the configuration of our equipment (we call it the Setup) and the identifier of the currently running test (we call it the obsid). So, we developed a function which will repeatedly request these identifiers from the microservice that controls the configuration and display them in the status bar at the bottom of the Task GUI. The code snippet below defines a function <code>show_setup_and_obs_id()</code> which is decorated with <code>@exec_recurring_task</code>. The decorator takes a parameter <code>status_type</code> which can be 'NORMAL' or 'PERMANENT'. When <code>status_type</code> is NORMAL the message will be printed on the left side of the status bar, when <code>status_type</code> is PERMANENT the message will be printed on the right side of the statusbar. The example below is specific for our project, in your case, you will want to put different things in the status bar. The GUI in the TAB shows the output of the function.</p>
 </div>
-<div id="_tabset_10" class="tabset is-loading">
-<div class="ulist tabs">
+<div id="_tabs_11" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
 <ul>
-<li id="_tabset_10_code_snippet">
+<li id="_tabs_11_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabset_10_csl_operator_gui">
+<li id="_tabs_11_csl_operator_gui" class="tab">
 <p>CSL Operator GUI</p>
 </li>
 </ul>
 </div>
-<div class="content">
-<div class="tab-pane" aria-labelledby="_tabset_10_code_snippet">
+<div id="_tabs_11_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_11_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_recurring_task</span>
-<span class="kn">from</span> <span class="nn">gui_executor.exec</span> <span class="kn">import</span> <span class="n">StatusType</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_recurring_task</span>
+<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">StatusType</span>
 
-<span class="kn">from</span> <span class="nn">egse.state</span> <span class="kn">import</span> <span class="n">GlobalState</span>
+<span class="kn">from</span> <span class="n">egse.state</span> <span class="kn">import</span> <span class="n">GlobalState</span>
 
 
-<span class="o">@</span><span class="n">exec_recurring_task</span><span class="p">(</span><span class="n">status_type</span><span class="o">=</span><span class="n">StatusType</span><span class="p">.</span><span class="n">PERMANENT</span><span class="p">)</span>
+<span class="nd">@exec_recurring_task</span><span class="p">(</span><span class="n">status_type</span><span class="o">=</span><span class="n">StatusType</span><span class="p">.</span><span class="n">PERMANENT</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">show_setup_and_obs_id</span><span class="p">():</span>
-    <span class="kn">from</span> <span class="nn">egse.confman</span> <span class="kn">import</span> <span class="n">ConfigurationManagerProxy</span>
-    <span class="kn">from</span> <span class="nn">egse.obsid</span> <span class="kn">import</span> <span class="n">ObservationIdentifier</span>
+    <span class="kn">from</span> <span class="n">egse.confman</span> <span class="kn">import</span> <span class="n">ConfigurationManagerProxy</span>
+    <span class="kn">from</span> <span class="n">egse.obsid</span> <span class="kn">import</span> <span class="n">ObservationIdentifier</span>
 
     <span class="n">obsid</span><span class="p">:</span> <span class="n">ObservationIdentifier</span>
-    <span class="k">with</span> <span class="n">ConfigurationManagerProxy</span><span class="p">()</span> <span class="k">as</span> <span class="n">cm_proxy</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">obsid</span> <span class="p">:</span><span class="o">=</span> <span class="n">cm_proxy</span><span class="p">.</span><span class="n">get_obsid</span><span class="p">().</span><span class="n">return_code</span><span class="p">:</span>
-            <span class="n">test_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s">"OBSID = </span><span class="si">{</span><span class="n">obsid</span><span class="p">.</span><span class="n">test_id</span><span class="si">}</span><span class="s">, "</span>
+    <span class="k">with</span> <span class="nc">ConfigurationManagerProxy</span><span class="p">()</span> <span class="k">as</span> <span class="n">cm_proxy</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">obsid</span> <span class="p">:</span><span class="o">=</span> <span class="n">cm_proxy</span><span class="p">.</span><span class="nf">get_obsid</span><span class="p">().</span><span class="n">return_code</span><span class="p">:</span>
+            <span class="n">test_id</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">OBSID = </span><span class="si">{</span><span class="n">obsid</span><span class="p">.</span><span class="n">test_id</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">test_id</span> <span class="o">=</span> <span class="s">''</span>
+            <span class="n">test_id</span> <span class="o">=</span> <span class="sh">''</span>
 
-    <span class="k">return</span> <span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">test_id</span><span class="si">}</span><span class="s">Setup ID = </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">GlobalState</span><span class="p">.</span><span class="n">setup</span><span class="p">.</span><span class="n">get_id</span><span class="p">())</span><span class="si">}</span><span class="s">"</span></code></pre>
+    <span class="k">return</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">test_id</span><span class="si">}</span><span class="s">Setup ID = </span><span class="si">{</span><span class="nf">int</span><span class="p">(</span><span class="n">GlobalState</span><span class="p">.</span><span class="n">setup</span><span class="p">.</span><span class="nf">get_id</span><span class="p">())</span><span class="si">}</span><span class="sh">"</span></code></pre>
 </div>
 </div>
 </div>
-<div class="tab-pane" aria-labelledby="_tabset_10_csl_operator_gui">
+<div id="_tabs_11_csl_operator_gui--panel" class="tabpanel" aria-labelledby="_tabs_11_csl_operator_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/statusbar-01.png" alt="statusbar 01" width="80%">
@@ -1959,54 +1968,135 @@ response = raise_an_exception(value=0.0)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-04-26 22:23:54 +0200
+Last updated 2024-02-22 09:48:37 +0100
 </div>
 </div>
 <script>
-/*! Asciidoctor Tabs | Copyright (c) 2018-present Dan Allen | MIT License */
-;(function () {
+;(function () { /*! Asciidoctor Tabs | Copyright (c) 2018-present Dan Allen | MIT License */
   'use strict'
 
-  var hash = window.location.hash
-  find('.tabset').forEach(function (tabset) {
-    var active
-    var tabs = tabset.querySelector('.tabs')
-    if (tabs) {
-      var first
-      find('li', tabs).forEach(function (tab, idx) {
-        var id = (tab.querySelector('a[id]') || tab).id
-        if (!id) return
-        var pane = tabset.querySelector('.tab-pane[aria-labelledby~="' + id + '"]')
-        if (!pane) return
-        if (!idx) first = { tab: tab, pane: pane }
-        if (!active && hash === '#' + id && (active = true)) {
-          tab.classList.add('is-active')
-          if (pane) pane.classList.add('is-active')
-        } else if (!idx) {
-          tab.classList.remove('is-active')
-          if (pane) pane.classList.remove('is-active')
+  var config = (document.currentScript || {}).dataset || {}
+  var forEach = Array.prototype.forEach
+
+  init(document.querySelectorAll('.tabs'))
+
+  function init (tabsBlocks) {
+    if (!tabsBlocks.length) return
+    forEach.call(tabsBlocks, function (tabs) {
+      var syncIds = tabs.classList.contains('is-sync') ? {} : undefined
+      var tablist = tabs.querySelector('.tablist ul')
+      tablist.setAttribute('role', 'tablist')
+      var start
+      forEach.call(tablist.querySelectorAll('li'), function (tab, idx) {
+        tab.tabIndex = -1
+        tab.setAttribute('role', tab.classList.add('tab') || 'tab')
+        var id, anchor, syncId
+        if (!(id = tab.id) && (anchor = tab.querySelector('a[id]'))) {
+          id = tab.id = anchor.parentNode.removeChild(anchor).id
         }
-        tab.addEventListener('click', activateTab.bind({ tabset: tabset, tab: tab, pane: pane }))
+        var panel = id && tabs.querySelector('.tabpanel[aria-labelledby~="' + id + '"]')
+        if (!panel) return idx ? undefined : toggleSelected(tab, true) // invalid state
+        syncIds && (((syncId = tab.textContent.trim()) in syncIds) ? (syncId = undefined) : true) &&
+          (syncIds[(tab.dataset.syncId = syncId)] = tab)
+        idx || (syncIds && (start = { tab: tab, panel: panel })) ? toggleHidden(panel, true) : toggleSelected(tab, true)
+        tab.setAttribute('aria-controls', panel.id)
+        panel.setAttribute('role', 'tabpanel')
+        var onClick = syncId === undefined ? activateTab : activateTabSync
+        tab.addEventListener('click', onClick.bind({ tabs: tabs, tab: tab, panel: panel }))
       })
-      if (!active && first) {
-        first.tab.classList.add('is-active')
-        if (first.pane) first.pane.classList.add('is-active')
+      if (!tabs.closest('.tabpanel')) {
+        forEach.call(tabs.querySelectorAll('.tabpanel table.tableblock'), function (table) {
+          var container = Object.assign(document.createElement('div'), { className: 'tablecontainer' })
+          table.parentNode.insertBefore(container, table).appendChild(table)
+        })
       }
-    }
-    tabset.classList.remove('is-loading')
-  })
+      if (start) {
+        var syncGroupId
+        for (var i = 0, lst = tabs.classList, len = lst.length, className; i !== len; i++) {
+          if (!(className = lst.item(i)).startsWith('data-sync-group-id=')) continue
+          tabs.dataset.syncGroupId = syncGroupId = lst.remove(className) || className.slice(19).replace(/\u00a0/g, ' ')
+          break
+        }
+        if (syncGroupId === undefined) tabs.dataset.syncGroupId = syncGroupId = Object.keys(syncIds).sort().join('|')
+        var preferredSyncId = 'syncStorageKey' in config &&
+          window[(config.syncStorageScope || 'local') + 'Storage'].getItem(config.syncStorageKey + '-' + syncGroupId)
+        var tab = preferredSyncId && syncIds[preferredSyncId]
+        tab && Object.assign(start, { tab: tab, panel: document.getElementById(tab.getAttribute('aria-controls')) })
+        toggleSelected(start.tab, true) || toggleHidden(start.panel, false)
+      }
+    })
+    onHashChange()
+    toggleClassOnEach(tabsBlocks, 'is-loading', 'remove')
+    window.setTimeout(toggleClassOnEach.bind(null, tabsBlocks, 'is-loaded', 'add'), 0)
+    window.addEventListener('hashchange', onHashChange)
+  }
 
   function activateTab (e) {
     var tab = this.tab
-    var pane = this.pane
-    find('.tabs li, .tab-pane', this.tabset).forEach(function (it) {
-      it === tab || it === pane ? it.classList.add('is-active') : it.classList.remove('is-active')
+    var tabs = this.tabs || (this.tabs = tab.closest('.tabs'))
+    var panel = this.panel || (this.panel = document.getElementById(tab.getAttribute('aria-controls')))
+    querySelectorWithSiblings(tabs, '.tablist .tab', 'tab').forEach(function (el) {
+      toggleSelected(el, el === tab)
     })
+    querySelectorWithSiblings(tabs, '.tabpanel', 'tabpanel').forEach(function (el) {
+      toggleHidden(el, el !== panel)
+    })
+    if (!this.isSync && 'syncStorageKey' in config && 'syncGroupId' in tabs.dataset) {
+      var storageKey = config.syncStorageKey + '-' + tabs.dataset.syncGroupId
+      window[(config.syncStorageScope || 'local') + 'Storage'].setItem(storageKey, tab.dataset.syncId)
+    }
+    if (!e) return
+    var loc = window.location
+    var hashIdx = loc.hash ? loc.href.indexOf('#') : -1
+    if (~hashIdx) window.history.replaceState(null, '', loc.href.slice(0, hashIdx))
     e.preventDefault()
   }
 
-  function find (selector, from) {
-    return Array.prototype.slice.call((from || document).querySelectorAll(selector))
+  function activateTabSync (e) {
+    activateTab.call(this, e)
+    var thisTabs = this.tabs
+    var thisTab = this.tab
+    var initialY = thisTabs.getBoundingClientRect().y
+    forEach.call(document.querySelectorAll('.tabs'), function (tabs) {
+      if (tabs === thisTabs || tabs.dataset.syncGroupId !== thisTabs.dataset.syncGroupId) return
+      querySelectorWithSiblings(tabs, '.tablist .tab', 'tab').forEach(function (tab) {
+        if (tab.dataset.syncId === thisTab.dataset.syncId) activateTab.call({ tabs: tabs, tab: tab, isSync: true })
+      })
+    })
+    var shiftedBy = thisTabs.getBoundingClientRect().y - initialY
+    if (shiftedBy && (shiftedBy = Math.round(shiftedBy))) window.scrollBy({ top: shiftedBy, behavior: 'instant' })
+  }
+
+  function querySelectorWithSiblings (scope, selector, siblingClass) {
+    var el = scope.querySelector(selector)
+    if (!el) return []
+    var result = [el]
+    while ((el = el.nextElementSibling) && el.classList.contains(siblingClass)) result.push(el)
+    return result
+  }
+
+  function toggleClassOnEach (elements, className, method) {
+    forEach.call(elements, function (el) {
+      el.classList[method](className)
+    })
+  }
+
+  function toggleHidden (el, state) {
+    el.classList[(el.hidden = state) ? 'add' : 'remove']('is-hidden')
+  }
+
+  function toggleSelected (el, state) {
+    el.setAttribute('aria-selected', '' + state)
+    el.classList[state ? 'add' : 'remove']('is-selected')
+    el.tabIndex = state ? 0 : -1
+  }
+
+  function onHashChange () {
+    var id = window.location.hash.slice(1)
+    if (!id) return
+    var tab = document.getElementById(~id.indexOf('%') ? decodeURIComponent(id) : id)
+    if (!(tab && tab.classList.contains('tab'))) return
+    'syncId' in tab.dataset ? activateTabSync.call({ tab: tab }) : activateTab.call({ tab: tab })
   }
 })()
 </script>

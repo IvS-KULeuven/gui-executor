@@ -3,7 +3,7 @@
 :toc: left
 
 [.text-right]
-This documentation is for `gui-executor` ≥ v0.18.0. image:images/github.png[link=https://github.com/IvS-KULeuven/gui-executor,width=40px]
+This documentation is for `gui-executor` ≥ v0.18.5. image:images/github.png[link=https://github.com/IvS-KULeuven/gui-executor,width=40px]
 
 == What is the hype?
 
