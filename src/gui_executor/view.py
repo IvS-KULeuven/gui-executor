@@ -1422,6 +1422,17 @@ class View(QMainWindow):
             # make sure the user doesn't by accident quit the kernel
             client.run_snippet("del quit, exit")
 
+            # but allow the user to get out without quiting the kernel
+            client.run_snippet(textwrap.dedent(
+                """\
+                def quit(keep_kernel=True): 
+                    import IPython as ip
+                    ip = ip.get_ipython()
+                    ip.keepkernel_on_exit = keep_kernel
+                    ip.ask_exit()
+                """
+            ))
+
             # If there is a startup script, run it now
             try:
                 startup = os.environ["PYTHONSTARTUP"]
@@ -1436,6 +1447,8 @@ class View(QMainWindow):
                             runpy.run_path(path_name=startup)
                         except KeyError:
                             raise Warning("Couldn't load startup script, PYTHONSTARTUP not defined.")
+                        except Exception as exc:
+                            print(f"ERROR: loading startup script: {exc=}")
                         """
                     )
                 )
