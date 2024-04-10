@@ -9,6 +9,7 @@ import inspect
 import logging
 import os
 import queue
+import re
 import select
 import sys
 import tempfile
@@ -30,6 +31,7 @@ import rich
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QProcess
+from PyQt5.QtCore import QRegExp
 from PyQt5.QtCore import QRunnable
 from PyQt5.QtCore import QSize
 from PyQt5.QtCore import QThreadPool
@@ -48,6 +50,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QImage
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QApplication
@@ -863,6 +866,14 @@ class TextInputField(QLineEdit):
         self.setText(self._default)
 
 
+def is_optional(annotation) -> Tuple[bool, str]:
+    pattern = r"typing\.Union\[(.*), NoneType\]"
+    if match := re.search(pattern, str(annotation)):
+        return True, match.group(1)
+    else:
+        return False, str(annotation)
+
+
 class ArgumentsPanel(QScrollArea):
     def __init__(self, button: DynamicButton, ui_args: Dict[str, Argument]):
         super().__init__()
@@ -906,6 +917,9 @@ class ArgumentsPanel(QScrollArea):
         grid = QGridLayout()
 
         for idx, (name, arg) in enumerate(ui_args.items()):
+            DEBUG and LOGGER.debug(f"{idx=}, {name=}, {arg=}, {arg.annotation = }, {type(arg.annotation) = }")
+            is_optional_arg = False
+            optional_arg = None
             if arg.annotation is bool:
                 input_field = QCheckBox("")
                 input_field.setCheckState(Qt.Checked if arg.default else Qt.Unchecked)
@@ -917,14 +931,27 @@ class ArgumentsPanel(QScrollArea):
                     input_field.setCurrentText(arg.default.name)
             else:
                 input_field: TextInputField = TextInputField(name=name, default=arg.default)
-                if arg.annotation is not None:
-                    input_field.setToolTip(f"The expected type is {arg.annotation.__name__}.")
-                else:
+                if arg.annotation is None:
                     input_field.setToolTip("No type has been specified..")
+                else:
+                    is_optional_arg, optional_arg = is_optional(arg.annotation)
+                    try:
+                        input_field.setToolTip(f"The expected type is {arg.annotation.__name__}.")
+                    except AttributeError:
+                        input_field.setToolTip(f"The expected type is {str(arg.annotation)}.")
                 if arg.annotation is int:
                     input_field.setValidator(QIntValidator())
                 elif arg.annotation is float:
                     input_field.setValidator(QDoubleValidator())
+                elif is_optional_arg:
+                    if optional_arg == 'int':
+                        reg_exp = QRegExp(r"^(\d+|None)$", Qt.CaseSensitive)
+                    elif optional_arg == 'float':
+                        reg_exp = QRegExp(r"^(-?\d+(\.\d+)?([eE][-+]?\d+)?|None)$", Qt.CaseSensitive)
+                    else:
+                        reg_exp = QRegExp(r".*")
+                    reg_ex_validator = QRegExpValidator(reg_exp, input_field)
+                    input_field.setValidator(reg_ex_validator)
 
             if arg.kind == ArgumentKind.POSITIONAL_ONLY:
                 self._args_fields[name] = input_field
@@ -934,7 +961,15 @@ class ArgumentsPanel(QScrollArea):
                 print("ERROR: Only POSITIONAL_ONLY, POSITIONAL_OR_KEYWORD, and KEYWORD_ONLY arguments are supported!")
 
             label = QLabel(name)
-            type_hint = QLabel(f"[{arg.annotation.__name__}]" if arg.annotation is not None else None)
+            try:
+                type_hint = QLabel(f"[{arg.annotation.__name__}]" if arg.annotation is not None else None)
+            except AttributeError:
+                if is_optional_arg:
+                    type_hint = QLabel(f"[{optional_arg} | None]")
+                else:
+                    DEBUG and LOGGER.debug(f"Could not determine type hint from {arg.annotation}")
+                    type_hint = QLabel(f"[unknown]")
+
             type_hint.setStyleSheet("color: gray")
 
             if arg.annotation is Directory:
@@ -1058,6 +1093,8 @@ class ArgumentsPanel(QScrollArea):
     def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | QComboBox | UQWidget):
         arg = self._ui_args[name]
 
+        is_optional_arg, optional_arg = is_optional(arg.annotation)
+
         if arg.annotation is bool:
             return field.checkState() == Qt.Checked
         elif isinstance(arg.annotation, TypeObject):
@@ -1068,11 +1105,21 @@ class ArgumentsPanel(QScrollArea):
 
             if not (value := field.displayText() or field.placeholderText()):
                 return None
+            if value == 'None':
+                return None
+
             try:
                 if arg.annotation is tuple or arg.annotation is list:
                     return ast.literal_eval(value) if value else arg.annotation()
                 elif arg.annotation in (Path, Directory, FileName, FilePath):
                     return Path(value)
+                elif is_optional_arg:
+                    if optional_arg == 'int':
+                        return int(value)
+                    elif optional_arg == 'float':
+                        return float(value)
+                    else:
+                        raise ValueError(f"Optional type not implemented for {optional_arg}")
                 return arg.annotation(value)
             except (ValueError, TypeError, SyntaxError):
                 return value
