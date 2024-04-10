@@ -51,3 +51,17 @@ def value_of(digit: Digit = Digit.FIVE):
 def select_operating_mode(mode: OperatingMode):
 
     print(f"{mode.name} = {mode.value} \[{mode=}]")
+
+
+class HexapodID(Enum):
+    MAKE_SELECTION = "Select a Hexapod"
+    HEX_1 = "HEX_1"
+    HEX_2 = "HEX_2"
+
+
+@exec_ui()
+def select_hexapod(hexapod: HexapodID):
+
+    print(f"{hexapod.name=}, {hexapod.value=}")
+
+    return hexapod
