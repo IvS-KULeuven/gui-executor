@@ -261,6 +261,8 @@ image::images/func_param_02.png[width=60%,align=center]
 
 If you now have a look at the arguments panel, you will see a lot of small things have changed. Behind the input fields for each parameter there is now the expected type in grey text. The location had a default value which is put as a placeholder in the input text field and there is a small copy icon aligned at the right in that text field. Pressing this icon will copy the default text into the input field and make this text editable. I again already pressed the 'Run' button, and you can see in the output console that the type of the exposure_time argument is 'float', and the type of the aperture argument is 'int'. The return string is also printed with the arguments filled in.
 
+One more thing, sometimes you need to be able to input a `None` instead of an integer, float, or string. You can do this with the `typing` class `Optional`, e.g. `Optional[int]` allows you to use either `None` or an integer as argument.
+
 But we can do better. For the filename and location, it would be nice if we could open a file selector box and navigate in our directory structure to select these values. We have done that in the following code snippet where the `filename` has type hint '_FileName_' and `location` has type hint '_Directory_'. These are what we call a _TypeVar_ and both are bound to the _Path_ type. The default for `location` now has changed to a Path value instead of a string.
 
 Another change we added was the `capture_response` parameter of the decorator. The return value of the function is no longer captured in the variable `response`, but in the variable `new_image`.
