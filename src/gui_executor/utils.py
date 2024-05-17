@@ -131,6 +131,14 @@ def copy_func(func, module_display_name=None, function_display_name=None):
     if function_display_name:
         new_func.__ui_display_name__ = function_display_name
 
+    # Update the lineno of the function source, this shall be the lineno where the copy_func() is called.
+    # This will overwrite the lineno of the original function as set by for wrapper
+
+    caller = inspect.currentframe().f_back
+    # module_name = inspect.getmodule(caller).__name__
+    # print(f"{module_name} {func.__name__ = } {caller.f_lineno = }")
+    new_func.__ui_lineno__ = caller.f_lineno
+
     return new_func
 
 
