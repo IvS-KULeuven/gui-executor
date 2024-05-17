@@ -1613,6 +1613,8 @@ class View(QMainWindow):
         modules = self._model.get_ui_modules(module_path_list=[module_path])
         number_of_buttons = 0
 
+        # print(f"{module_path = }, {modules = }")
+
         for _, mod in sorted(modules.values()):
             try:
                 funcs = self._model.get_ui_buttons_functions(mod)
@@ -1623,8 +1625,8 @@ class View(QMainWindow):
                 # in the module file, because we want the functions to be sorted in the order they appear
                 # in the source code file and not alphabetically.
 
-                for name, func in sorted(funcs.items(), key=lambda x: x[1].__wrapped__.__code__.co_firstlineno):
-                    # print(f"{func.__name__} -> {func.__wrapped__.__code__.co_firstlineno = }")
+                for name, func in sorted(funcs.items(), key=lambda x: x[1].__ui_lineno__):
+                    # print(f"{func.__name__} -> {func.__ui_lineno__ = }")
                     button = DynamicButton(func.__name__, func)
                     button.mousePressEvent = partial(self.the_button_was_pressed, button, panel)
                     # button.mouseDoubleClickEvent = self.the_button_was_double_clicked
