@@ -134,6 +134,7 @@ def exec_ui(
         wrapper.__ui_description__ = description
         wrapper.__ui_display_name__ = display_name
         wrapper.__ui_file__ = func.__code__.co_filename
+        wrapper.__ui_lineno__ = func.__code__.co_firstlineno
         wrapper.__ui_module__ = func.__module__
         wrapper.__ui_input_request__ = input_request
         wrapper.__ui_immediate_run__ = immediate_run
