@@ -5,9 +5,9 @@ from gui_executor.exec import exec_task
 import locale
 
 @exec_task()
-def input_float_no_default(value: float) -> float:
+def input_float_no_default(value: float, opt_val: Optional[int]) -> float:
     # When no value was provided in the arguments panel, value will be None
-    print(f"{value = }, {type(value)=}")
+    print(f"{value = }, {type(value)=}, {opt_val = }")
     if value is not None:
         print(f"{float(value) = }")
         if isinstance(value, str):
