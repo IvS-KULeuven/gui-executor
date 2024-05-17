@@ -2,7 +2,7 @@ from typing import Tuple
 
 from gui_executor.exec import exec_task, FileName, FilePath, Directory
 
-UI_MODULE_DISPLAY_NAME = "Capture Responses"
+UI_MODULE_DISPLAY_NAME = "02 – Capture Responses"
 
 
 @exec_task()
