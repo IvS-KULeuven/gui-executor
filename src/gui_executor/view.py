@@ -753,7 +753,7 @@ class DynamicButton(QWidget):
                     border-bottom-style: solid; 
                     border-bottom-color: blue;
                     border-radius: 0px;
-                    color: blue;
+                    color: cornflowerblue;
                 """)
             )
 
