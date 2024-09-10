@@ -46,6 +46,9 @@ class Model:
         for module_path in module_path_list:
             for name, path in find_subpackages(module_path).items():
                 mod = importlib.import_module(f"{module_path}.{name}")
+                hide_tab = getattr(mod, 'UI_TAB_HIDE', None)
+                if isinstance(hide_tab, Callable) and hide_tab():
+                    continue
                 display_name = getattr(mod, "UI_TAB_DISPLAY_NAME", name)
                 response[name] = (display_name, path)
         return response
