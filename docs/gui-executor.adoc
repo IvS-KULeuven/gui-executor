@@ -3,7 +3,7 @@
 :toc: left
 
 [.text-right]
-This documentation is for `gui-executor` ≥ v0.18.5. image:images/github.png[link=https://github.com/IvS-KULeuven/gui-executor,width=40px]
+This documentation is for `gui-executor` ≥ v0.21.0. image:images/github.png[link=https://github.com/IvS-KULeuven/gui-executor,width=40px]
 
 == What is the hype?
 
@@ -757,6 +757,8 @@ So, why do we need the `input_request` parameter in the decorator? When you run 
 === The \\__init__.py files
 
 The `\\__init__.py` file is usually empty, but can contain a few definitions which are picked up by the Task GUI. If you have several TABs in your GUI with task buttons, these TABs were created from sub-packages. The `\\__init__.py` file for a sub-package can define the `UI_TAB_DISPLAY_NAME` to specify a name for the TAB instead of the package name. The `\\__init__.py` file of the root package, i.e. the one you used with the `--module-path` commandline option, can define the order in which the TABs appear in the Task GUI. Define a list of sub-package names in the variable `UI_TAB_ORDER`. The TABS will appear in that order in the GUI.
+
+You can define the `UI_TAB_HIDE` variable in the `\\__init__.py` file and assign a `Callable`, e.g. a function, that returns a bool. When `True`, the sub-package TAB will be hidden. This can be used to hide/unhide certain tabs for users/developers.
 
 Of course, if you have functions that are used by different tasks in seperate modules, you would want to define those functions also in the `\\__init__.py` file.
 
