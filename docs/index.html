@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.20">
+<meta name="generator" content="Asciidoctor 2.0.23">
 <title>A Task Executor GUI</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -140,7 +140,7 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #content::before{content:none}
 #header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
 #header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
-#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header>h1:only-child{border-bottom:1px solid #dddddf;padding-bottom:8px}
 #header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:flex;flex-flow:row wrap}
 #header .details span:first-child{margin-left:-.125em}
 #header .details span.email a{color:rgba(0,0,0,.85)}
@@ -162,6 +162,7 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #toctitle{color:#7a2518;font-size:1.2em}
 @media screen and (min-width:768px){#toctitle{font-size:1.375em}
 body.toc2{padding-left:15em;padding-right:0}
+body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
 #toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
 #toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
 #toc.toc2>ul{font-size:.9em;margin-bottom:0}
@@ -327,7 +328,7 @@ a.image{text-decoration:none;display:inline-block}
 a.image object{pointer-events:none}
 sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
 sup.footnote a,sup.footnoteref a{text-decoration:none}
-sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+sup.footnote a:active,sup.footnoteref a:active,#footnotes .footnote a:first-of-type:active{text-decoration:underline}
 #footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
 #footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
 #footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
@@ -695,7 +696,7 @@ pre.rouge .gs {
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph text-right">
-<p>This documentation is for <code>gui-executor</code> ≥ v0.18.5. <span class="image"><a class="image" href="https://github.com/IvS-KULeuven/gui-executor"><img src="images/github.png" alt="github" width="40px"></a></span></p>
+<p>This documentation is for <code>gui-executor</code> ≥ v0.21.0. <span class="image"><a class="image" href="https://github.com/IvS-KULeuven/gui-executor"><img src="images/github.png" alt="github" width="40px"></a></span></p>
 </div>
 </div>
 </div>
@@ -930,11 +931,10 @@ Hello, World! <b class="conum">(3)</b>
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">():</span>
     <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Hello, World!</span><span class="sh">"</span><span class="p">)</span>
 
-<span class="o"><strong></span><span class="nd">@exec_task</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Hello</span><span class="gp">...</span><span class="sh">"</span><span class="s">)  <b class="conum">(2)</b>
-def hello_you(name: str = </span><span class="sh">"</span><span class="n">John</span><span class="sh">"</span><span class="s">):  <b class="conum">(3)</b>
-    print(f</span><span class="sh">"</span><span class="n">Hello</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="p">}</span><span class="err">!</span><span class="sh">"</span><span class="s">)
-</strong>
-</span></code></pre>
+<span class="o"><strong></span><span class="nd">@exec_task</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Hello...</span><span class="sh">"</span><span class="p">)</span>  <b class="conum">(2)</b>
+<span class="k">def</span> <span class="nf">hello_you</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">John</span><span class="sh">"</span><span class="p">):</span>  <b class="conum">(3)</b>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Hello, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">!</span><span class="sh">"</span><span class="p">)</span>
+<span class="o"></strong></span></code></pre>
 </div>
 </div>
 <div class="olist arabic">
@@ -1034,9 +1034,9 @@ def hello_you(name: str = </span><span class="sh">"</span><span class="n">John</
 <span class="nd">@exec_task</span><span class="p">()</span>
 <span class="k">def</span> <span class="nf">capture_image</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
     <span class="bp">...</span>
-    <span class="n">image</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Captured image not shown for privacy reasons</span><span class="gp">...</span><span class="sh">"</span><span class="s">
+    <span class="n">image</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Captured image not shown for privacy reasons...</span><span class="sh">"</span>
 
-    return image</span></code></pre>
+    <span class="k">return</span> <span class="n">image</span></code></pre>
 </div>
 </div>
 </div>
@@ -1541,9 +1541,9 @@ If you want to follow closely on the printed output of your function, you might 
 
     <span class="c1"># ... your code comess here
 </span>
-    <span class="n">result</span> <span class="o">=</span> <span class="sh">"</span><span class="s">The result of your processing</span><span class="gp">...</span><span class="sh">"</span><span class="s">
+    <span class="n">result</span> <span class="o">=</span> <span class="sh">"</span><span class="s">The result of your processing...</span><span class="sh">"</span>
 
-    return result</span></code></pre>
+    <span class="k">return</span> <span class="n">result</span></code></pre>
 </div>
 </div>
 </div>
@@ -1626,10 +1626,10 @@ Since variable name arguments are transparently filled with the variable name th
     <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Generating model: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 
     <span class="n">model</span> <span class="o">=</span> <span class="sh">"</span><span class="s">This is a model</span><span class="sh">"</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="sh">"</span><span class="s">an unused return value</span><span class="gp">...</span><span class="sh">"</span><span class="s">
-    hexhw = </span><span class="sh">"</span><span class="n">this</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">reference</span> <span class="n">to</span> <span class="n">a</span> <span class="n">hardware</span> <span class="n">device</span><span class="sh">"</span><span class="s">
+    <span class="n">s</span> <span class="o">=</span> <span class="sh">"</span><span class="s">an unused return value...</span><span class="sh">"</span>
+    <span class="n">hexhw</span> <span class="o">=</span> <span class="sh">"</span><span class="s">this is a reference to a hardware device</span><span class="sh">"</span>
 
-    return model, s, hexhw</span></code></pre>
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">hexhw</span></code></pre>
 </div>
 </div>
 </div>
@@ -1782,10 +1782,10 @@ In [9]: print_bird_count()
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="gp">&gt;&gt;&gt;</span> <span class="n">rc</span> <span class="o">=</span> <span class="nf">input</span><span class="p">(</span><span class="sh">"</span><span class="s">Do you want to continue [Y/n]? </span><span class="sh">"</span><span class="p">)</span>
+<pre class="rouge highlight"><code data-lang="python"><span class="o">&gt;&gt;&gt;</span> <span class="n">rc</span> <span class="o">=</span> <span class="nf">input</span><span class="p">(</span><span class="sh">"</span><span class="s">Do you want to continue [Y/n]? </span><span class="sh">"</span><span class="p">)</span>
 <span class="n">Do</span> <span class="n">you</span> <span class="n">want</span> <span class="n">to</span> <span class="k">continue</span> <span class="p">[</span><span class="n">Y</span><span class="o">/</span><span class="n">n</span><span class="p">]</span><span class="err">?</span> <span class="n">n</span>
 
-<span class="gp">&gt;&gt;&gt;</span> <span class="n">rc</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rc</span>
 <span class="sh">'</span><span class="s">n</span><span class="sh">'</span></code></pre>
 </div>
 </div>
@@ -1800,14 +1800,13 @@ In [9]: print_bird_count()
 <pre class="rouge highlight"><code data-lang="python"><span class="nd">@exec_task</span><span class="p">(</span><span class="n">input_request</span><span class="o">=</span><span class="p">(</span><span class="sh">"</span><span class="s">[Y/n]</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">[c/A]</span><span class="sh">"</span><span class="p">),</span> <span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Continue or Abort?</span><span class="sh">"</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">continue_or_abort_question</span><span class="p">():</span>
 
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">There should be a dialog appearing with a Continue or Abort question</span><span class="gp">...</span><span class="sh">"</span><span class="s">, flush=True)
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">There should be a dialog appearing with a Continue or Abort question...</span><span class="sh">"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
-    response = input(</span><span class="sh">"</span><span class="n">Do</span> <span class="n">you</span> <span class="n">want</span> <span class="n">to</span> <span class="k">continue</span> <span class="p">[</span><span class="n">Y</span><span class="o">/</span><span class="n">n</span><span class="p">]</span><span class="sh">"</span><span class="s">)
-    print(f</span><span class="sh">"</span><span class="p">{</span><span class="n">response</span> <span class="o">=</span> <span class="p">}</span><span class="sh">"</span><span class="s">, flush=True)
+    <span class="n">response</span> <span class="o">=</span> <span class="nf">input</span><span class="p">(</span><span class="sh">"</span><span class="s">Do you want to continue [Y/n]</span><span class="sh">"</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">response</span> <span class="o">=</span> <span class="si">}</span><span class="sh">"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
-    if response.lower() == </span><span class="sh">'</span><span class="s">n</span><span class="sh">'</span><span class="s">:
-        return
-</span></code></pre>
+    <span class="k">if</span> <span class="n">response</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span> <span class="o">==</span> <span class="sh">'</span><span class="s">n</span><span class="sh">'</span><span class="p">:</span>
+        <span class="k">return</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1829,6 +1828,9 @@ In [9]: print_bird_count()
 <h3 id="init">The __init__.py files</h3>
 <div class="paragraph">
 <p>The <code>__init__.py</code> file is usually empty, but can contain a few definitions which are picked up by the Task GUI. If you have several TABs in your GUI with task buttons, these TABs were created from sub-packages. The <code>__init__.py</code> file for a sub-package can define the <code>UI_TAB_DISPLAY_NAME</code> to specify a name for the TAB instead of the package name. The <code>__init__.py</code> file of the root package, i.e. the one you used with the <code>--module-path</code> commandline option, can define the order in which the TABs appear in the Task GUI. Define a list of sub-package names in the variable <code>UI_TAB_ORDER</code>. The TABS will appear in that order in the GUI.</p>
+</div>
+<div class="paragraph">
+<p>You can define the <code>UI_TAB_HIDE</code> variable in the <code>__init__.py</code> file and assign a <code>Callable</code>, e.g. a function, that returns a bool. When <code>True</code>, the sub-package TAB will be hidden. This can be used to hide/unhide certain tabs for users/developers.</p>
 </div>
 <div class="paragraph">
 <p>Of course, if you have functions that are used by different tasks in seperate modules, you would want to define those functions also in the <code>__init__.py</code> file.</p>
@@ -1983,7 +1985,7 @@ response = raise_an_exception(value=0.0)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2024-04-10 22:04:11 +0200
+Last updated 2024-09-10 23:31:23 +0200
 </div>
 </div>
 <script>

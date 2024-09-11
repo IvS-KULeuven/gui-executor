@@ -1577,13 +1577,21 @@ class View(QMainWindow):
             mod = importlib.import_module(module_path)
             tab_order: List = getattr(mod, "UI_TAB_ORDER", None)
 
-            # If we do not have sub packages, we will not create tabs, and we also only need one
-            # FunctionButtonsPanel which will be called "Main".
+            # If the module contains a variable UI_TAB_HIDE that is a Callable (function),
+            # execute the function to determine if the module shall be included or not.
+
+            hide_tab = getattr(mod, 'UI_TAB_HIDE', None)
+            if isinstance(hide_tab, Callable) and hide_tab():
+                continue
+
+            # Create a Panel for the module, only when the module contains tasks.
 
             panel = FunctionButtonsPanel()
             if self.add_buttons_to_panel(panel, module_path=module_path):
                 tab_name = getattr(mod, "UI_TAB_DISPLAY_NAME", "Main")
                 buttons_panels[tab_name] = panel
+
+            # Create a Panel for each sub-package
 
             if subpackages := self._model.get_ui_subpackages(module_path_list=[module_path]):
                 if tab_order is None:
@@ -1593,6 +1601,7 @@ class View(QMainWindow):
                     # sorted_subpackages = sorted(subpackages.items(), key=lambda x: tab_order.index(x[0]))
                     # This way seems to be faster: see https://stackoverflow.com/a/21773891/4609203
                     sorted_subpackages = [(name, subpackages[name]) for name in tab_order if name in subpackages]
+
                 for name, (display_name, _) in sorted_subpackages:
                     panel = FunctionButtonsPanel()
                     self.add_buttons_to_panel(panel, module_path=f"{module_path}.{name}")

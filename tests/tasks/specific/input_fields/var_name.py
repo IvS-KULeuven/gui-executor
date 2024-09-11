@@ -43,3 +43,20 @@ def process_model_kwarg_immediately(model: VariableName("ldo_model") = None):
 @exec_task(immediate_run=True)
 def process_model_kwarg_only_immediately(*, model: VariableName("ldo_model")):
     print(f"Running model immediately... {model=}")
+
+
+@exec_task(display_name="Source", capture_response=("ra", "dec"))
+def get_radec(source: str):
+
+    ra = 37.413
+    dec = 89.264
+
+    return ra, dec
+
+
+@exec_task(display_name="Coordinates")
+def show_radec(
+        ra: VariableName("ra") = None,
+        dec: VariableName("dec") = -13.4,
+):
+    print(f"ra = {ra}\ndec = {dec}")
