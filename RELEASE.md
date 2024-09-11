@@ -8,8 +8,8 @@
 * Push the bumped version
 * Upload to PyPI
   ```
-  $ python -m build
-  $ twine upload dist/gui-executor-x.y.z.tar.gz dist/gui_executor-x.y.z-py3-none-any.whl
+  $ pipx run build
+  $ pipx run twine upload dist/gui_executor-x.y.z*
   $ git tag x.y.z
   ```
 * Create a pull request and merge the pull request
