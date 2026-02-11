@@ -52,10 +52,21 @@ def default_float() -> float:
 
 
 @exec_ui()
-def list_callback(number: Callback(list_of_floats, name="float", default=default_float)):
+def list_callback(
+    number: Callback(list_of_floats, name="float", default=default_float),
+):
     print(f"You selected {number}")
 
 
 @exec_ui()
-def list_callback_keyword(number: Callback(lambda: [None, 1, 2, 3], name="Bandpass colors") = None):
+def list_callback_keyword_ints(
+    number: Callback(lambda: [None, 1, 2, 3], name="Bandpass colors") = None,
+):
     print(f"You selected {number}")
+
+
+@exec_ui()
+def list_callback_keyword_strings(
+    mode: Callback(lambda: ["full", "full_E_or_F"], name="CCD number") = None,
+):
+    print(f"You selected {mode}")

@@ -11,13 +11,12 @@ HERE = Path(__file__).parent.resolve()
 
 
 def test_script_execution():
-
     config = load_config(HERE / "data/scripts.yaml")
 
     cmd = config.get_command_for_script("Long Running Command")
 
     args = cmd.get_required_args()
-    assert ('duration', 'int') in args
+    assert ("duration", "int") in args
 
     duration = 2
     cmd.parse_args(duration=duration)
@@ -36,7 +35,6 @@ def test_script_execution():
 
 
 def test_script_execution_high_level_command():
-
     config = load_config(HERE / "data/scripts.yaml")
 
     duration = 3
@@ -67,7 +65,6 @@ def test_script_execution_high_level_command():
 
 
 def test_script_execution_value_error():
-
     config = load_config(HERE / "data/scripts.yaml")
 
     cmd = config.get_command_for_script("Raise ValueError")

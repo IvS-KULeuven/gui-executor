@@ -4,9 +4,9 @@ from gui_executor.exec import exec_task
 
 HERE = Path(__file__).parent.resolve()
 
+
 @exec_task()
 def bird_count(camera: str = "backyard"):
-
     from rich.table import Table
     from rich.console import Console
 

@@ -10,12 +10,15 @@ from gui_executor.exec import exec_ui
 # The reason for the two simple functions concatenate_args and compare_args is to
 # be able to test that more than the first function is found.
 
+
 @exec_ui(description="button function to concat arguments")
 def concatenate_args(arg1, arg2):
     """Concatenates the two arguments with the '+' operator."""
     print(f"concatenate_args({arg1=}, {arg2=})")
     if arg1 is None or arg2 is None:
-        raise ValueError("One of the arguments is empty and returns None, both arguments should contain a value")
+        raise ValueError(
+            "One of the arguments is empty and returns None, both arguments should contain a value"
+        )
     return arg1 + arg2
 
 
@@ -48,7 +51,11 @@ def long_duration_func(duration: int = 10):
 
 
 @exec_ui(use_gui_app=True)
-def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_filename: str = "plot.png"):
+def simple_plot(
+    save: bool = False,
+    png_dir: str = "/Users/rik/Desktop",
+    png_filename: str = "plot.png",
+):
     """
     Create a simple plot and return fig, and ax.
 
@@ -74,16 +81,16 @@ def simple_plot(save: bool = False, png_dir: str = "/Users/rik/Desktop", png_fil
     import matplotlib.pyplot as plt
     import numpy as np
 
-    x_1 = np.linspace(-.5, 3.3, 50)
-    y_1 = x_1 ** 2 - 2 * x_1 + 1
+    x_1 = np.linspace(-0.5, 3.3, 50)
+    y_1 = x_1**2 - 2 * x_1 + 1
 
     fig, ax = plt.subplots()
-    plt.title('Reusing this figure', fontsize=20)
+    plt.title("Reusing this figure", fontsize=20)
     ax.plot(x_1, y_1)
-    ax.set_xlabel('x', fontsize=18)
-    ax.set_ylabel('y', fontsize=18, rotation=0, labelpad=10)
-    ax.legend(['Eq 1'])
-    ax.axis('equal')
+    ax.set_xlabel("x", fontsize=18)
+    ax.set_ylabel("y", fontsize=18, rotation=0, labelpad=10)
+    ax.legend(["Eq 1"])
+    ax.axis("equal")
 
     if save:
         print(f"Saving plot to {png_dir}/{png_filename} ...", flush=True)
@@ -109,15 +116,17 @@ def two_simple_plots():
     ax.plot(t, s)
 
     ax.set(
-        xlabel='time (s)', ylabel='voltage (mV)',
-        title='About as simple as it gets, folks')
+        xlabel="time (s)",
+        ylabel="voltage (mV)",
+        title="About as simple as it gets, folks",
+    )
     ax.grid()
 
     # Data for plot 2
 
     n_points = 100
     xa = [i * 12 / 100 for i in range(n_points)]
-    ya = [math.sin(x) * math.exp(-x/4) for x in xa]
+    ya = [math.sin(x) * math.exp(-x / 4) for x in xa]
 
     fig2, ax = plt.subplots()
     ax.plot(xa, ya)
@@ -127,7 +136,6 @@ def two_simple_plots():
 
 @exec_ui(use_gui_app=True)
 def a_simple_table():
-
     from faker import Faker
 
     table = Table(title="Configuration")
@@ -194,18 +202,22 @@ def output_in_several_steps(n_steps: int = 10, sleep: float = 1.0):
         if n == 3:
             response = input("Continue? > ")
             print(response)
-            if response.lower() == 'n':
+            if response.lower() == "n":
                 raise RuntimeError("No further steps requested.")
         elif n == 5:
-            print(textwrap.dedent("""\
+            print(
+                textwrap.dedent("""\
                     An error message...
                     Line two of the error message
                     ...and the last line of this error message
-                """), file=sys.stderr, flush=True)
+                """),
+                file=sys.stderr,
+                flush=True,
+            )
         elif n == 7:
             response = input("Abort? > ")
             print(response)
-            if response.lower() == 'y':
+            if response.lower() == "y":
                 raise RuntimeError("Function was aborted!")
 
 

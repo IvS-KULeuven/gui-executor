@@ -6,6 +6,7 @@ Run this script as (the trailing x is to prevent pytest from picking up this fil
   $ python src/tests/run_kernel_testx.py
 
 """
+
 import contextlib
 import queue
 import textwrap
@@ -41,48 +42,49 @@ snippet = textwrap.dedent(
     
     print("finished!", flush=True)
 
-""")
+"""
+)
 
-msg_id = kernel.client.execute(snippet, allow_stdin=True)
+msg_id = kernel.get_client().execute(snippet, allow_stdin=True)
 
-io_msg = kernel.client.get_iopub_msg(timeout=1.0)
+io_msg = kernel.get_client().get_iopub_msg(timeout=1.0)
 console.log(io_msg)
 
-io_msg_content = io_msg['content']  # execution_state should be 'busy'
+io_msg_content = io_msg["content"]  # execution_state should be 'busy'
 
 while True:
     # with contextlib.suppress(queue.Empty):
     try:
-        io_msg = kernel.client.get_iopub_msg(timeout=1.0)
+        io_msg = kernel.get_client().get_iopub_msg(timeout=1.0)
         console.log(io_msg)
 
-        io_msg_content = io_msg['content']
+        io_msg_content = io_msg["content"]
 
-        if io_msg['msg_type'] == 'stream':
-            if 'text' in io_msg_content:
-                text = io_msg_content['text'].rstrip()
+        if io_msg["msg_type"] == "stream":
+            if "text" in io_msg_content:
+                text = io_msg_content["text"].rstrip()
                 console.log(f"[red]{text}[/red]")
-        elif io_msg['msg_type'] == 'status':
-            if io_msg_content['execution_state'] == 'idle':
+        elif io_msg["msg_type"] == "status":
+            if io_msg_content["execution_state"] == "idle":
                 console.log("Execution State is Idle, terminating...")
                 break
 
     except queue.Empty:
         with contextlib.suppress(queue.Empty):
-            in_msg = kernel.client.get_stdin_msg(timeout=0.1)
+            in_msg = kernel.get_client().get_stdin_msg(timeout=0.1)
             console.log(in_msg)
 
-            if in_msg['msg_type'] == 'input_request':
-                in_msg_content = in_msg['content']
+            if in_msg["msg_type"] == "input_request":
+                in_msg_content = in_msg["content"]
 
-                if "Continue?" in in_msg_content['prompt']:
+                if "Continue?" in in_msg_content["prompt"]:
                     console.log("[red]We got an input request, sending 'Y'.[/red]")
                     time.sleep(5.0)
-                    kernel.client.input('y')
+                    kernel.get_client().input("y")
 
-msg = kernel.client.get_shell_msg(msg_id)
+msg = kernel.get_client().get_shell_msg(msg_id)
 console.log("Returned shell message:")
 console.log(msg)
 
-msg_id = kernel.client.shutdown()
+msg_id = kernel.get_client().shutdown()
 del kernel

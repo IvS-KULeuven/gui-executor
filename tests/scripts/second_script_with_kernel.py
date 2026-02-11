@@ -1,4 +1,3 @@
-
 # The variable 'first_script' was defined in the first_script_with_kernel
 # The purpose of this script is to test if we run in the same kernel.
 

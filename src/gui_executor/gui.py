@@ -10,7 +10,6 @@ from PyQt5.QtWidgets import QLabel
 
 
 class IconLabel(QLabel):
-
     icon_size = QSize(16, 16)
 
     def __init__(self, icon_path: Path | str, size: QSize = icon_size):
@@ -23,7 +22,6 @@ class IconLabel(QLabel):
         self.icon_path = str(icon_path)
 
     def paintEvent(self, *args, **kwargs):
-
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setPen(Qt.NoPen)

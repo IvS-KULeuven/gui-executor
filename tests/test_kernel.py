@@ -4,12 +4,14 @@ import pytest
 import rich
 
 from gui_executor.kernel import MyKernel
+from gui_executor.client import MyClient
 
 
 @pytest.fixture(scope="module")
 def kernel():
     kernel = MyKernel()
-    kernel.run_snippet("a = None")
+    client = MyClient(kernel)
+    client.run_snippet("a = None")
 
     yield kernel
 
@@ -18,7 +20,6 @@ def kernel():
 
 @pytest.mark.order(1)
 def test_kernel_initialisation(kernel):
-
     snippet = textwrap.dedent("""\
         a = 42
         for _ in range(5):
@@ -26,7 +27,7 @@ def test_kernel_initialisation(kernel):
             print(f"{a = }")
         print(f"total = {a}")
     """)
-    out = kernel.run_snippet(snippet)
+    out = MyClient(kernel).run_snippet(snippet)
     print()
     print(f"*****\n{out}\n*****")
     assert "a = 44" in out
@@ -40,19 +41,18 @@ def test_kernel_is_alive(kernel):
 
 @pytest.mark.order(2)
 def test_kernel_after_initialisation(kernel):
-    out = kernel.run_snippet("""print(f"{a = }")""")
+    out = MyClient(kernel).run_snippet("""print(f"{a = }")""")
     print()
     print(f"*****\n{out}\n*****")
     assert "a = 52" in out
 
-    out = kernel.run_snippet('a is not None')
+    out = MyClient(kernel).run_snippet("a is not None")
     print()
     print(f"*****\n{out}\n*****")
     assert out == "True"
 
 
 def test_kernel_info(kernel):
-
     rich.print()
 
     info = kernel.get_kernel_info()
@@ -63,7 +63,6 @@ def test_kernel_info(kernel):
 
 
 def test_run_snippet(kernel):
-
     print()
 
     snippet = textwrap.dedent("""
@@ -75,10 +74,11 @@ def test_run_snippet(kernel):
         
     """)
 
-    msg_id = kernel.client.execute(snippet)
-    msg = kernel.client.get_shell_msg(msg_id)
-    print(f"1 {'-'*20} {msg = }")
+    client = MyClient(kernel)
+    msg_id = client.execute(snippet)
+    msg = client.get_shell_msg(msg_id)
+    print(f"1 {'-' * 20} {msg = }")
 
-    io_msg = kernel.client.get_iopub_msg(timeout=1.0)
-    io_msg_content = io_msg['content']
-    print(f"2 {'-'*20} {io_msg_content = }")
+    io_msg = client.get_iopub_msg(timeout=1.0)
+    io_msg_content = io_msg["content"]
+    print(f"2 {'-' * 20} {io_msg_content = }")

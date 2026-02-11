@@ -8,7 +8,6 @@ HERE = Path(__file__).parent.resolve()
 
 
 def test_check_environment_for_script():
-
     config = load_config(HERE / "data/scripts.yaml")
 
     cmd = config.get_command_for_script("Check Environment")
@@ -17,7 +16,6 @@ def test_check_environment_for_script():
 
 
 def test_check_environment_for_snippet():
-
     config = load_config(HERE / "data/snippets.yaml")
 
     cmd = config.get_command_for_snippet("Check Environment")

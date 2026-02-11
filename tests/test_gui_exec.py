@@ -18,7 +18,6 @@ HERE = Path(__file__).parent.resolve()
 
 
 def test_exec_ui():
-
     @exec_ui(description="Press and get Pressed.")
     def press():
         return "Pressed"
@@ -57,7 +56,6 @@ def test_find_modules():
 
 
 def test_find_sub_modules():
-
     print()
 
     assert has_sub_modules("tasks") is True
@@ -69,7 +67,6 @@ def test_find_sub_modules():
 
 
 def test_ui_script():
-
     with sys_path(HERE):  # make sure Python knows where to look for the module
         funcs = find_ui_button_functions("contingency.ui_test_script")
 
@@ -78,7 +75,10 @@ def test_ui_script():
 
     concatenate_args = funcs["concatenate_args"]
     assert concatenate_args("one", "two") == "onetwo"
-    assert concatenate_args.__doc__ == "Concatenates the two arguments with the '+' operator."
+    assert (
+        concatenate_args.__doc__
+        == "Concatenates the two arguments with the '+' operator."
+    )
 
     compare_args = funcs["compare_args"]
     assert not compare_args(23, "two")
@@ -87,7 +87,6 @@ def test_ui_script():
 
 
 def test_ui_function_args():
-
     print()
 
     # This test is here only to learn about how to interpret the Signatures
@@ -99,9 +98,9 @@ def test_ui_function_args():
     sig = inspect.signature(func)
     pars = sig.parameters
 
-    assert 'x' in pars
-    assert pars['x'].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
-    assert 'y' in pars
+    assert "x" in pars
+    assert pars["x"].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+    assert "y" in pars
 
     func = funcs["func_with_only_kwargs"]
     sig = inspect.signature(func)
@@ -110,22 +109,21 @@ def test_ui_function_args():
     print(f"{pars = }")
     print([p for p in pars.items()])
 
-    assert 'a' in pars
-    assert pars['a'].kind == inspect.Parameter.KEYWORD_ONLY
-    assert 'b' in pars
-    assert pars['b'].kind == inspect.Parameter.KEYWORD_ONLY
+    assert "a" in pars
+    assert pars["a"].kind == inspect.Parameter.KEYWORD_ONLY
+    assert "b" in pars
+    assert pars["b"].kind == inspect.Parameter.KEYWORD_ONLY
 
-    assert pars['a'].annotation == str
-    assert pars['a'].default == inspect.Parameter.empty
+    assert pars["a"].annotation == str
+    assert pars["a"].default == inspect.Parameter.empty
 
-    assert pars['b'].annotation == int
-    assert pars['b'].default == 42
+    assert pars["b"].annotation == int
+    assert pars["b"].default == 42
 
     print(f"{pars['b'] = }")
 
 
 def test_get_arguments():
-
     print()
 
     with sys_path(HERE):  # make sure Python knows where to look for the module
@@ -137,32 +135,35 @@ def test_get_arguments():
 
     arg_a = args["a"]
     print(f"{arg_a.annotation = }")
-    assert arg_a.name == 'a'
+    assert arg_a.name == "a"
     assert arg_a.kind == ArgumentKind.KEYWORD_ONLY
     assert arg_a.annotation == str
     assert arg_a.default is None
 
     arg_b = args["b"]
-    assert arg_b.name == 'b'
+    assert arg_b.name == "b"
     assert arg_b.kind == ArgumentKind.KEYWORD_ONLY
     assert arg_b.annotation == int
     assert arg_b.default == 42
 
-    arg_c = args['c']
+    arg_c = args["c"]
 
-    assert arg_c.name == 'c'
+    assert arg_c.name == "c"
     assert arg_c.kind == ArgumentKind.KEYWORD_ONLY
     assert arg_c.annotation is None
     assert arg_c.default is None
 
 
 def test_end_observation():
-
     print()
 
-    with sys_path("/Users/rik/git/plato-test-scripts/src"), \
-         sys_path("/Users/rik/git/plato-test-scripts/venv38/lib/python3.8/site-packages/"), \
-         sys_path("/Users/rik/git/plato-common-egse/src"):
+    with (
+        sys_path("/Users/rik/git/plato-test-scripts/src"),
+        sys_path(
+            "/Users/rik/git/plato-test-scripts/venv38/lib/python3.8/site-packages/"
+        ),
+        sys_path("/Users/rik/git/plato-common-egse/src"),
+    ):
         funcs = find_ui_button_functions("camtest.contingency.end_observation")
         funcs.update(find_ui_button_functions("camtest.contingency.start_observation"))
 

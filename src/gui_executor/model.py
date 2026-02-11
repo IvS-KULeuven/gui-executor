@@ -20,8 +20,7 @@ class Model:
     def module_path_list(self) -> List:
         return self._module_path_list
 
-    def reload_functions(self, mod):
-        ...
+    def reload_functions(self, mod): ...
 
     def get_ui_buttons_functions(self, mod: str) -> Dict[str, Callable]:
         return find_ui_button_functions(mod)
@@ -29,7 +28,9 @@ class Model:
     def get_ui_recurring_functions(self, mod: str) -> Dict[str, Callable]:
         return find_ui_recurring_functions(mod)
 
-    def get_ui_modules(self, module_path_list: List = None) -> Dict[str, Tuple[str, Path]]:
+    def get_ui_modules(
+        self, module_path_list: List = None
+    ) -> Dict[str, Tuple[str, Path]]:
         module_path_list: List = module_path_list or self._module_path_list
         response = {}
         for module_path in module_path_list:
@@ -40,7 +41,9 @@ class Model:
                     response[name] = (display_name, path)
         return response
 
-    def get_ui_subpackages(self, module_path_list: List = None) -> Dict[str, Tuple[str, Path]]:
+    def get_ui_subpackages(
+        self, module_path_list: List = None
+    ) -> Dict[str, Tuple[str, Path]]:
         module_path_list: List = module_path_list or self._module_path_list
         response = {}
         for module_path in module_path_list:
@@ -50,7 +53,7 @@ class Model:
                 # If the module contains a variable UI_TAB_HIDE that is a Callable (function),
                 # execute the function to determine if the module shall be included or not.
 
-                hide_tab = getattr(mod, 'UI_TAB_HIDE', None)
+                hide_tab = getattr(mod, "UI_TAB_HIDE", None)
                 if isinstance(hide_tab, Callable) and hide_tab():
                     continue
 

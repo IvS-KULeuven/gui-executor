@@ -65,8 +65,9 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(500, self.run_script)
 
     def run_script(self):
-
-        loader = importlib.machinery.SourceFileLoader(self.script.stem, str(self.script))
+        loader = importlib.machinery.SourceFileLoader(
+            self.script.stem, str(self.script)
+        )
         spec = importlib.util.spec_from_loader(self.script.stem, loader)
         script = importlib.util.module_from_spec(spec)
         loader.exec_module(script)
@@ -81,7 +82,6 @@ class MainWindow(QMainWindow):
             renderables = [response] if is_renderable(response) else []
 
         if figures:
-
             hbox = QHBoxLayout()
             hbox.setContentsMargins(0, 0, 0, 0)
 
@@ -104,7 +104,6 @@ class MainWindow(QMainWindow):
             self.figures_layout.addWidget(widget)
 
         if renderables:
-
             hbox = QHBoxLayout()
             hbox.setContentsMargins(0, 0, 0, 0)
 
@@ -117,8 +116,8 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='script-app')
-    parser.add_argument('--script', help='location of the Python script to execute')
+    parser = argparse.ArgumentParser(prog="script-app")
+    parser.add_argument("--script", help="location of the Python script to execute")
 
     args = parser.parse_args()
 

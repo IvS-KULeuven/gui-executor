@@ -8,7 +8,6 @@ HERE = Path(__file__).parent.resolve()
 
 
 def test_print_sys_path_as_script():
-
     config = load_config(HERE / "data/snippets.yaml")
 
     cmd = config.get_command_for_snippet("print sys.path script")
@@ -25,7 +24,6 @@ def test_print_sys_path_as_script():
 
 
 def test_print_sys_path_as_snippet():
-
     config = load_config(HERE / "data/snippets.yaml")
 
     cmd = config.get_command_for_snippet("print sys.path code")
@@ -42,7 +40,6 @@ def test_print_sys_path_as_snippet():
 
 
 def test_running_the_same_kernel():
-
     config = load_config(HERE / "data/snippets.yaml")
 
     cmd1 = config.get_command_for_snippet("first-script")
@@ -53,4 +50,4 @@ def test_running_the_same_kernel():
     cmd1.execute(kernel=kernel)
     cmd2.execute(kernel=kernel)
 
-    assert cmd2.get_output() == '42'
+    assert cmd2.get_output() == "42"

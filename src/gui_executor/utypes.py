@@ -13,6 +13,7 @@ The user types provided by this module are:
   * VariableName: a variable from the REPL which shall be passed into the task
 
 """
+
 from __future__ import annotations
 
 import inspect
@@ -63,7 +64,6 @@ class UQWidget(QWidget):
         raise NotImplementedError
 
     def _cast_arg(self, field: QLineEdit | QCheckBox, literal: str | Callable):
-
         if literal is bool:
             return field.checkState() == Qt.Checked
 
@@ -88,6 +88,7 @@ class Callback(TypeObject):
          default: the function/object to call that determines the default value(s)
          name: the string to be displayed in the arguments panel. This is usually the type of the argument.
     """
+
     def __init__(self, func: Callable, default: Callable = None, name: str = None):
         super().__init__(name=name)
         self.func = func
@@ -108,7 +109,7 @@ class CallbackWidget(UQWidget):
         self.func_rc = func()
 
         if isinstance(self.func_rc, (list, tuple)):
-            self.widget:QComboBox = combo_box_from_list(self.func_rc)
+            self.widget: QComboBox = combo_box_from_list(self.func_rc)
             if default_func is not None:
                 self.widget.setCurrentText(str(default_func()))
         elif inspect.isclass(self.func_rc) and issubclass(self.func_rc, Enum):
@@ -160,7 +161,9 @@ class VariableNameWidget(UQWidget):
         self.value = value
 
         layout = QHBoxLayout()
-        layout.addWidget(QLabel(f"The variable '{value}' shall be known in the kernel."))
+        layout.addWidget(
+            QLabel(f"The variable '{value}' shall be known in the kernel.")
+        )
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)
@@ -178,7 +181,13 @@ class FixedList(TypeObject):
         defaults: defaults for each of the values in the list
         name: the string to be used in the arguments panel to display the type or a description
     """
-    def __init__(self, literals: List[Union[str, Callable]], defaults: List = None, name: str = None):
+
+    def __init__(
+        self,
+        literals: List[Union[str, Callable]],
+        defaults: List = None,
+        name: str = None,
+    ):
         super().__init__(name=name or "List")
         self._literals = literals
         self._defaults = defaults or []
@@ -211,8 +220,7 @@ class FixedListWidget(UQWidget):
 
     def get_value(self) -> List:
         return [
-            self._cast_arg(f, t)
-            for f, (t, d) in zip(self.fields, self._type_object)
+            self._cast_arg(f, t) for f, (t, d) in zip(self.fields, self._type_object)
         ]
 
     def _row(self, expand_default: bool = False) -> Tuple[QWidget, List]:
@@ -259,7 +267,12 @@ class ListList(TypeObject):
         name: the string to be used in the arguments panel to display the type or a description
     """
 
-    def __init__(self, literals: List[Union[str, Callable]], defaults: List = None, name: str = None):
+    def __init__(
+        self,
+        literals: List[Union[str, Callable]],
+        defaults: List = None,
+        name: str = None,
+    ):
         super().__init__(name=name or "list of lists")
         self._literals = literals
         self._defaults = defaults or []
@@ -282,7 +295,7 @@ class ListListWidget(UQWidget):
         self._rows: List[List] = []
         self._rows_layout = QVBoxLayout()
 
-        row, fields = self._row('+', expand_default=True)
+        row, fields = self._row("+", expand_default=True)
 
         self._rows_layout.addWidget(row)
         self._rows_layout.setContentsMargins(0, 0, 0, 0)
@@ -293,10 +306,8 @@ class ListListWidget(UQWidget):
 
     def get_value(self) -> List[List]:
         return [
-            [
-                self._cast_arg(f, t)
-                for f, (t, d) in zip(field, self._type_object)
-            ] for field in self._rows
+            [self._cast_arg(f, t) for f, (t, d) in zip(field, self._type_object)]
+            for field in self._rows
         ]
 
     def _row(self, row_button: str, expand_default: bool = False):
@@ -326,10 +337,10 @@ class ListListWidget(UQWidget):
             hbox.addWidget(field)
             hbox.addWidget(type_hint)
 
-        if row_button == '+':
+        if row_button == "+":
             button = IconLabel(icon_path=HERE / "icons/add.svg")
-            button.mousePressEvent = partial(self._add_row, 'x')
-        elif row_button == 'x':
+            button.mousePressEvent = partial(self._add_row, "x")
+        elif row_button == "x":
             button = IconLabel(icon_path=HERE / "icons/delete.svg")
             button.mousePressEvent = partial(self._delete_row, widget, fields)
         else:

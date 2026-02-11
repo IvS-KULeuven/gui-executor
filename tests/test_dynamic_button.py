@@ -7,7 +7,6 @@ UI_MODULE_DISPLAY_NAME = "Dynamic Button"
 
 
 def test_constructor():
-
     @exec_ui()
     def func(x):
         return x

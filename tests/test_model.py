@@ -7,7 +7,6 @@ HERE = Path(__file__).parent.resolve()
 
 
 def test_get_ui_modules():
-
     with sys_path(HERE):
         model = Model("tasks")
 
@@ -17,7 +16,6 @@ def test_get_ui_modules():
 
 
 def test_get_ui_subpackages():
-
     module_path = "tasks"
 
     with sys_path(HERE):

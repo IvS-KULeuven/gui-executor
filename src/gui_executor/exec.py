@@ -32,11 +32,11 @@ argument as a Path. The GUI can make the distinction as follows, based on the an
 
 """
 
-FileName = TypeVar('FileName', bound=Path)
+FileName = TypeVar("FileName", bound=Path)
 """A FileName type is the name of a file including the extension, but not it's full path."""
-FilePath = TypeVar('FilePath', bound=Path)
+FilePath = TypeVar("FilePath", bound=Path)
 """A FilePath is the absolute or relative path for a file, including filename and extension."""
-Directory = TypeVar('Directory', bound=Path)
+Directory = TypeVar("Directory", bound=Path)
 "A Directory is the location where the file resides."
 
 
@@ -61,6 +61,7 @@ class StatusType(IntEnum):
     NORMAL = 2
     """Use the """
 
+
 class Argument:
     def __init__(self, name: str, kind: int, annotation: Any, default: Any):
         self.name = name
@@ -70,8 +71,8 @@ class Argument:
 
 
 def exec_recurring_task(
-        kind: Kind = Kind.RECURRING,
-        status_type: StatusType = None,
+    kind: Kind = Kind.RECURRING,
+    status_type: StatusType = None,
 ):
     def decorator(func):
         @wraps(func)
@@ -90,17 +91,17 @@ def exec_recurring_task(
 
 
 def exec_ui(
-        kind: Kind = Kind.BUTTON,
-        description: str = None,
-        display_name: str = None,
-        input_request: Tuple[str, ...] = None,
-        use_kernel: bool = False,
-        use_gui_app: bool = False,
-        use_script_app: bool = False,
-        icons: Tuple[str | Path, ...] = None,
-        immediate_run: bool = False,
-        allow_kernel_interrupt: bool = False,
-        capture_response: str | tuple[str, ...] = "response",
+    kind: Kind = Kind.BUTTON,
+    description: str = None,
+    display_name: str = None,
+    input_request: Tuple[str, ...] = None,
+    use_kernel: bool = False,
+    use_gui_app: bool = False,
+    use_script_app: bool = False,
+    icons: Tuple[str | Path, ...] = None,
+    immediate_run: bool = False,
+    allow_kernel_interrupt: bool = False,
+    capture_response: str | tuple[str, ...] = "response",
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
@@ -123,6 +124,7 @@ def exec_ui(
     Returns:
         The wrapper function object.
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -130,6 +132,7 @@ def exec_ui(
             response = func(*args, **kwargs)
             # or here
             return response
+
         wrapper.__ui_kind__ = kind
         wrapper.__ui_description__ = description
         wrapper.__ui_display_name__ = display_name
@@ -140,7 +143,11 @@ def exec_ui(
         wrapper.__ui_immediate_run__ = immediate_run
         wrapper.__ui_icons__ = icons
         wrapper.__ui_allow_kernel_interrupt__ = allow_kernel_interrupt
-        wrapper.__ui_capture_response__ = capture_response if isinstance(capture_response, str) else ", ".join(capture_response)
+        wrapper.__ui_capture_response__ = (
+            capture_response
+            if isinstance(capture_response, str)
+            else ", ".join(capture_response)
+        )
         if use_script_app:
             wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
         elif use_kernel:
@@ -167,10 +174,7 @@ def find_ui_button_functions(module_path: str) -> Dict[str, Callable]:
     Args:
         module_path: string containing a fully qualified module name
     """
-    return find_ui_functions(
-        module_path,
-        lambda x: x.__ui_kind__ & Kind.BUTTON
-    )
+    return find_ui_functions(module_path, lambda x: x.__ui_kind__ & Kind.BUTTON)
 
 
 def find_ui_recurring_functions(module_path: str) -> Dict[str, Callable]:
@@ -182,13 +186,12 @@ def find_ui_recurring_functions(module_path: str) -> Dict[str, Callable]:
     Args:
         module_path: string containing a fully qualified module name
     """
-    return find_ui_functions(
-        module_path,
-        lambda x: x.__ui_kind__ & Kind.RECURRING
-    )
+    return find_ui_functions(module_path, lambda x: x.__ui_kind__ & Kind.RECURRING)
 
 
-def find_ui_functions(module_path: str, predicate: Callable = None) -> Dict[str, Callable]:
+def find_ui_functions(
+    module_path: str, predicate: Callable = None
+) -> Dict[str, Callable]:
     """
     Returns a dictionary with function names as keys and the callable function as their value.
     The predicate is a function that returns True or False depending on some required conditions
@@ -204,7 +207,9 @@ def find_ui_functions(module_path: str, predicate: Callable = None) -> Dict[str,
     return {
         name: member
         for name, member in inspect.getmembers(mod)
-        if inspect.isfunction(member) and hasattr(member, "__ui_kind__") and predicate(member)
+        if inspect.isfunction(member)
+        and hasattr(member, "__ui_kind__")
+        and predicate(member)
     }
 
 
@@ -221,7 +226,11 @@ def find_subpackages(module_path: str) -> Dict[str, Path]:
     """
     location = get_module_location(module_path)
 
-    return {item.name: item for item in location.iterdir() if item.is_dir() and (item / "__init__.py").exists()}
+    return {
+        item.name: item
+        for item in location.iterdir()
+        if item.is_dir() and (item / "__init__.py").exists()
+    }
 
 
 def find_modules(module_path: str) -> Dict[str, Any]:
@@ -246,7 +255,6 @@ def find_modules(module_path: str) -> Dict[str, Any]:
 
 
 def get_module_location(module_path: str) -> Path:
-
     mod = importlib.import_module(module_path)
 
     if hasattr(mod, "__path__") and getattr(mod, "__file__", None) is None:
@@ -304,7 +312,7 @@ def get_arguments(func: Callable) -> Dict[str, Argument]:
             k,
             int(v.kind),
             None if v.annotation == inspect.Parameter.empty else v.annotation,
-            None if v.default == inspect.Parameter.empty else v.default
+            None if v.default == inspect.Parameter.empty else v.default,
         )
         for k, v in pars.items()
     }
