@@ -6,7 +6,6 @@ UI_MODULE_DISPLAY_NAME = "Console Output"
 
 @exec_ui(display_name="Returns output")
 def generates_a_lot_of_return(n_paragraphs: int = 10):
-
     from lorem_text import lorem
 
     out1 = lorem.paragraphs(n_paragraphs)
@@ -17,7 +16,6 @@ def generates_a_lot_of_return(n_paragraphs: int = 10):
 
 @exec_ui(display_name="Prints output")
 def generates_a_lot_of_output(n_paragraphs: int = 10):
-
     from lorem_text import lorem
 
     print(lorem.paragraphs(n_paragraphs), flush=True)

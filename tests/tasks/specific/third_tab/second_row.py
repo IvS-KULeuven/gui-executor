@@ -17,5 +17,6 @@ print_this = copy_func(print_this, UI_MODULE_DISPLAY_NAME)
 @exec_ui()
 def sleep(seconds: float = 20):
     import time
+
     print(f"Sleeping for {seconds:3.1f}s... ")
     time.sleep(seconds)

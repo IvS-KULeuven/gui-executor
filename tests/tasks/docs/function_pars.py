@@ -16,20 +16,28 @@ def capture_image(camera, exposure_time, aperture, filename, location):
 
 @exec_task()
 def capture_image_with_type_hints(
-        camera: str, exposure_time: float, aperture: int,
-        filename: str, location: str = "~/data/images"
+    camera: str,
+    exposure_time: float,
+    aperture: int,
+    filename: str,
+    location: str = "~/data/images",
 ):
     ...  # here the actual capturing of the image is done
-    image = f"Captured image from camera '{camera}' with {exposure_time=} and {aperture=}."
+    image = (
+        f"Captured image from camera '{camera}' with {exposure_time=} and {aperture=}."
+    )
     ...  # here any further processing of the image can be done
 
     return image
 
 
-@exec_task(capture_response='new_image')
+@exec_task(capture_response="new_image")
 def capture_image_file_type_hints(
-        camera: str, exposure_time: float, aperture: int,
-        filename: FileName, location: Directory = Path("~/data/images")
+    camera: str,
+    exposure_time: float,
+    aperture: int,
+    filename: FileName,
+    location: Directory = Path("~/data/images"),
 ):
     ...  # here the actual capturing of the image is done
 
@@ -42,6 +50,7 @@ def capture_image_file_type_hints(
 
     return image
 
+
 class CameraName(IntEnum):
     FRONT_DOOR = 1
     BACK_DOOR = 2
@@ -50,10 +59,14 @@ class CameraName(IntEnum):
     BIRD_HOUSE_1 = 5
     BIRD_HOUSE_2 = 6
 
-@exec_task(capture_response='new_image')
+
+@exec_task(capture_response="new_image")
 def capture_image_camera_name(
-        camera: CameraName, exposure_time: float, aperture: int,
-        filename: FileName, location: Directory = Path("~/data/images")
+    camera: CameraName,
+    exposure_time: float,
+    aperture: int,
+    filename: FileName,
+    location: Directory = Path("~/data/images"),
 ):
     ...  # here the actual capturing of the image is done
 
@@ -69,9 +82,9 @@ def capture_image_camera_name(
 
 @exec_task()
 def save_observation(
-        coordinates: FixedList([float, float], name="lat, long"),
-        time: str,
-        bird_name: str,
+    coordinates: FixedList([float, float], name="lat, long"),
+    time: str,
+    bird_name: str,
 ):
     """
     Saves the observation into the database.

@@ -9,7 +9,7 @@ from gui_executor.utils import write_id
 
 UI_MODULE_DISPLAY_NAME = "01 - Recurring Tasks"
 
-ID_FILE = Path('~').expanduser() / "id.txt"
+ID_FILE = Path("~").expanduser() / "id.txt"
 
 
 class HexapodID(str, Enum):

@@ -12,9 +12,9 @@ def select_folder(location: Path):
 
 @exec_ui(display_name="Open File")
 def open_file(
-        filename: FileName = "README.md",
-        filepath: FilePath = None,
-        location: Directory = Path("/Users/rik/Documents/PyCharmProjects/gui-executor/"),
+    filename: FileName = "README.md",
+    filepath: FilePath = None,
+    location: Directory = Path("/Users/rik/Documents/PyCharmProjects/gui-executor/"),
 ):
     print(f"{filename = }, {type(filename) = }")
     print(f"{filepath = }, {type(filepath) = }")

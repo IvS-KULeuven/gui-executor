@@ -15,7 +15,6 @@ def parse_arguments():
 
 
 def main():
-
     args = parse_arguments()
 
     duration = args.duration or 10  # wait 10s by default
@@ -23,10 +22,10 @@ def main():
     # Make sure the output is flushed properly, otherwise the asynchronous execution will
     # not be able to get the intermediate output.
 
-    print(f"Starting a sleep({duration})", end='', flush=True)
+    print(f"Starting a sleep({duration})", end="", flush=True)
     for _ in range(duration):
         time.sleep(1.0)
-        print(".", end='', flush=True)
+        print(".", end="", flush=True)
     print()
     print("Finished sleeping.")
 

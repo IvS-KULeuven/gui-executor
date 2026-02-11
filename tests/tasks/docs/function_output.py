@@ -4,6 +4,7 @@ from gui_executor.exec import exec_task, FileName, Directory
 
 HERE = Path(__file__).parent.resolve()
 
+
 @exec_task()
 def print_bird_count(camera: str = "backyard", date: str = "today"):
     """
@@ -39,7 +40,6 @@ def print_bird_count(camera: str = "backyard", date: str = "today"):
 
 @exec_task()
 def preview_image(camera: str = "bird_house"):
-
     from IPython.display import Image, display
 
     image = Image(filename=HERE / f"{camera}.png")

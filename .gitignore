@@ -2,11 +2,9 @@
 /dist/
 /requirements-*.txt
 /src/gui_executor.egg-info/
-/.idea/inspectionProfiles/profiles_settings.xml
-/.idea/.gitignore
-/.idea/git_toolbox_prj.xml
-/.idea/gui-executor.iml
-/.idea/jupyter-settings.xml
-/.idea/misc.xml
-/.idea/modules.xml
-/.idea/vcs.xml
+/.idea/
+/yakka/
+
+.DS_Store
+__pycache__
+*.pyc

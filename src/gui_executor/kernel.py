@@ -3,15 +3,15 @@ import textwrap
 
 import jupyter_client.kernelspec
 import rich
-from executor import ExternalCommand
-from executor import ExternalCommandFailed
-from jupyter_client import KernelClient
+from executor import ExternalCommand, ExternalCommandFailed
 from jupyter_client.manager import KernelManager
 from rich import print
 from rich.console import Console
 
+from gui_executor.utils import decode_traceback
+
 LOGGER = logging.getLogger("gui-executor.kernel")
-DEBUG = False
+VERBOSE_DEBUG = False
 
 
 class KernelError(Exception):
@@ -19,10 +19,18 @@ class KernelError(Exception):
 
 
 def find_running_kernels():
-    import psutil, datetime
-    all_python = [proc for proc in psutil.process_iter() if "python" in proc.name().lower()]
-    kernel_processes = [y for y in all_python for z in y.cmdline() if 'ipykernel' in z]
-    datetime.datetime.fromtimestamp(kernel_processes[0].create_time()).strftime("%Y-%m-%d %H:%M:%S")
+    import datetime
+
+    import psutil
+
+    all_python = [
+        proc for proc in psutil.process_iter() if "python" in proc.name().lower()
+    ]
+    kernel_processes = [y for y in all_python for z in y.cmdline() if "ipykernel" in z]
+    datetime.datetime.fromtimestamp(kernel_processes[0].create_time()).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
 
 # TODO:
 #    * Create a separate kernel and client class
@@ -39,8 +47,8 @@ def find_running_kernels():
 #      https://ipython.readthedocs.io/en/stable/development/wrapperkernels.html
 #      https://github.com/ipython/ipykernel
 
-class MyKernel:
 
+class MyKernel:
     def __init__(self, name: str = "python3", startup_timeout: int = 60):
         self._kernel = KernelManager(kernel_name=name)
         self._kernel.start_kernel()
@@ -56,8 +64,8 @@ class MyKernel:
     def interrupt_kernel(self):
         self._kernel.interrupt_kernel()
 
-    def get_client(self) -> KernelClient:
-        return self._kernel.client()
+    # def get_client(self) -> KernelClient:
+    #     return self._kernel.client()
 
     @staticmethod
     def get_kernel_specs():
@@ -78,15 +86,14 @@ class MyKernel:
 
     @staticmethod
     def _decode_io_msg_content(content: dict) -> str:
-
-        if 'data' in content:  # Indicates completed operation
-            return content['data']['text/plain']
-        elif 'name' in content and content['name'] == "stdout":  # indicates output
-            return content['text']
-        elif 'traceback' in content:  # Indicates an error
-            return decode_traceback(content['traceback'])
+        if "data" in content:  # Indicates completed operation
+            return content["data"]["text/plain"]
+        elif "name" in content and content["name"] == "stdout":  # indicates output
+            return content["text"]
+        elif "traceback" in content:  # Indicates an error
+            return decode_traceback(content["traceback"])
         else:
-            return ''
+            return ""
 
 
 def do_test_my_kernel(name: str = "python3"):
@@ -111,13 +118,13 @@ def do_test_my_kernel(name: str = "python3"):
             print(c)        
             """),
         'print(f"{a=}, {b=}, {c=}")',
-        '1/0',  # should return a ZeroDivisionError
+        "1/0",  # should return a ZeroDivisionError
         'import sys; print(f"{sys.path = }")',
-        'import pandas as pd',
+        "import pandas as pd",
         'df = pd.DataFrame(dict(A=[1,2,3], B=["one", "two", "three"]))',
-        'df',
-        'df.describe()',
-        '!pip list -v'
+        "df",
+        "df.describe()",
+        "!pip list -v",
     ]
 
     console = Console(width=240)
@@ -132,24 +139,30 @@ def do_test_my_kernel(name: str = "python3"):
             info = client.get_kernel_info()
 
 
-def start_qtconsole(kernel: MyKernel,
-                    buffer_size: int = 5000,
-                    console_height: int = 42, console_width: int = 128,
-                    console_font: str = "Courier New",
-                    verbosity: int = 0):
+def start_qtconsole(
+    kernel: MyKernel,
+    buffer_size: int = 5000,
+    console_height: int = 42,
+    console_width: int = 128,
+    console_font: str = "Courier New",
+    verbosity: int = 0,
+):
     connection_file = kernel.get_connection_file()
-    cmd_line = (f"jupyter qtconsole --ConsoleWidget.buffer_size={buffer_size} "
-                f"--ConsoleWidget.console_height={console_height} "
-                f"--ConsoleWidget.console_width={console_width} "
-                f"--ConsoleWidget.font_family='{console_font}' "
-                f"--existing {connection_file} --log-level=INFO")
+    cmd_line = (
+        f"jupyter qtconsole --ConsoleWidget.buffer_size={buffer_size} "
+        f"--ConsoleWidget.console_height={console_height} "
+        f"--ConsoleWidget.console_width={console_width} "
+        f"--ConsoleWidget.font_family='{console_font}' "
+        f"--existing {connection_file} --log-level=INFO"
+    )
 
     if verbosity:
         print("Starting Jupyter Qt Console...")
         print(f"{cmd_line = }")
 
     cmd = ExternalCommand(
-        f"{cmd_line}", capture=True, capture_stderr=True, asynchronous=True)
+        f"{cmd_line}", capture=True, capture_stderr=True, asynchronous=True
+    )
     try:
         cmd.start()
     except ExternalCommandFailed as exc:
@@ -159,7 +172,6 @@ def start_qtconsole(kernel: MyKernel,
 
 
 if __name__ == "__main__":
-
     logging.basicConfig(level=logging.DEBUG)
 
     # kernel_name = "python3"

@@ -1,6 +1,7 @@
 """
 This module provides functionality to read the YAML configuration files and work with its content.
 """
+
 from __future__ import annotations
 
 import os
@@ -20,7 +21,7 @@ def load_config(filename: Path | str) -> ExecutorConfiguration:
     """Load the YAML config file from the given filename."""
     filename = Path(filename).expanduser().resolve()
 
-    with filename.open(mode='r') as fd:
+    with filename.open(mode="r") as fd:
         config = yaml.safe_load(fd)
 
     config = ExecutorConfiguration(config, filename)
@@ -37,6 +38,7 @@ class ExecutorConfiguration:
     """
     This class provides easy access to the content of the Executor Configuration files.
     """
+
     def __init__(self, config: dict, filename: Path):
         """
         Args:
@@ -59,7 +61,9 @@ class ExecutorConfiguration:
             A ConfigError when a problem is encountered.
         """
         if "Python Path" not in self._config:
-            raise ConfigError(f"No 'Python Path' in the configuration file at {self._filename}")
+            raise ConfigError(
+                f"No 'Python Path' in the configuration file at {self._filename}"
+            )
 
     def get_script_names(self) -> List[str]:
         """
@@ -104,8 +108,8 @@ class ExecutorConfiguration:
         try:
             python_path = self._config["Python Path"]
             orig_python_path = os.environ.get("PYTHONPATH", "")
-            prepend = ':'.join(python_path.get("prepend", ""))
-            append = ':'.join(python_path.get("append", ""))
+            prepend = ":".join(python_path.get("prepend", ""))
+            append = ":".join(python_path.get("append", ""))
             python_path = f"{prepend}:{orig_python_path}:{append}"
         except KeyError:
             python_path = ""

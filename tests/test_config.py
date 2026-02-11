@@ -14,7 +14,6 @@ def sample_config():
 
 
 def test_load_config(sample_config):
-
     assert "Python Path" in sample_config
     assert "Startup" in sample_config
 
@@ -35,22 +34,18 @@ def test_load_config(sample_config):
 
 
 def test_get_script_names(sample_config):
-
     assert "script 01" in sample_config.get_script_names()
 
 
 def test_get_app_names(sample_config):
-
     assert "app 01" in sample_config.get_app_names()
 
 
 def test_get_snippet_names(sample_config):
-
     assert "snippet 01" in sample_config.get_snippet_names()
 
 
 def test_get_absolute_path(sample_config):
-
     # get_absolute_path uses the location of the config file is the anchor point for relative paths.
 
     assert sample_config.get_absolute_path(Path("~")) == Path(os.environ.get("HOME"))

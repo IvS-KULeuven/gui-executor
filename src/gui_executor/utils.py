@@ -88,11 +88,15 @@ def expand_path(path: Path | str) -> Path:
 def get_file_path(path: str | Path, name: str) -> Path:
     full_path = expand_path(path)
     if not full_path.exists():
-        raise ValueError(f"The path '{full_path}' was expanded into '{path}' which doesn't exist.")
+        raise ValueError(
+            f"The path '{full_path}' was expanded into '{path}' which doesn't exist."
+        )
 
     filepath = full_path / name
     if not filepath.exists():
-        raise ValueError(f"The generated filepath '{filepath}' doesn't exit for command script {name}")
+        raise ValueError(
+            f"The generated filepath '{filepath}' doesn't exit for command script {name}"
+        )
 
     return filepath
 
@@ -117,7 +121,13 @@ def copy_func(func, module_display_name=None, function_display_name=None):
     """
     # Based on https://stackoverflow.com/a/71848622/4609203
 
-    new_func = types.FunctionType(func.__code__, func.__globals__, func.__name__, func.__defaults__, func.__closure__)
+    new_func = types.FunctionType(
+        func.__code__,
+        func.__globals__,
+        func.__name__,
+        func.__defaults__,
+        func.__closure__,
+    )
 
     new_func.__wrapped__ = func.__wrapped__
 
@@ -146,8 +156,12 @@ def remove_ansi_escape(line):
     """
     Returns a new line where all ANSI escape sequences are removed.
     """
-    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
-    return ansi_escape.sub('', line)
+    ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
+    return ansi_escape.sub("", line)
+
+
+def decode_traceback(traceback: str) -> str:
+    return remove_ansi_escape("\n".join(traceback))
 
 
 def get_required_args(code: List | str) -> List[Tuple[str, str | None]]:
@@ -161,29 +175,32 @@ def get_required_args(code: List | str) -> List[Tuple[str, str | None]]:
 
     """
     if isinstance(code, str):
-        code = code.split('\n')
+        code = code.split("\n")
 
     required_args = []
     for line in code:
         if matches := re.findall(r"<<([:\w]+)>>", line):
             print(f"{matches = }")
             for match in matches:
-                name, expected_type = match.split(':') if ':' in match else (match, None)
+                name, expected_type = (
+                    match.split(":") if ":" in match else (match, None)
+                )
                 required_args.append((name, expected_type))
 
     return required_args
 
 
 def replace_required_args(code: List | str, args: List) -> List | str:
-
-    code_lines = code.split('\n') if isinstance(code, str) else code
+    code_lines = code.split("\n") if isinstance(code, str) else code
 
     new_code_lines = []
     for line in code_lines:
         if matches := re.findall(r"<<([:\w]+)>>", line):
             for match in matches:
                 print(f"{match = }")
-                name, expected_type = match.split(':') if ':' in match else (match, None)
+                name, expected_type = (
+                    match.split(":") if ":" in match else (match, None)
+                )
                 line = line.replace(f"<<{match}>>", f"****")
         new_code_lines.append(line)
     return new_code_lines
@@ -262,9 +279,10 @@ def stringify_imports(args, kwargs):
 
 def stringify_var_name_checks(args, kwargs):
     from gui_executor.utypes import var_name
+
     return "\n".join(
-        f'if \'{arg}\' not in locals(): '
-        f'print("[red]ERROR: Variable name \'{arg}\' is not known in the kernel.[/]"); error = True'
+        f"if '{arg}' not in locals(): "
+        f"print(\"[red]ERROR: Variable name '{arg}' is not known in the kernel.[/]\"); error = True"
         for arg in (*args, *kwargs.values())
         if isinstance(arg, var_name)
     )
@@ -287,20 +305,23 @@ def extract_var_name_args_and_kwargs(ui_args: dict):
     args = [
         v.annotation.get_value()
         for k, v in ui_args.items()
-        if isinstance(v.annotation, VariableName) and v.kind == ArgumentKind.POSITIONAL_ONLY
+        if isinstance(v.annotation, VariableName)
+        and v.kind == ArgumentKind.POSITIONAL_ONLY
     ]
 
     kwargs = {
         k: v.annotation.get_value()
         for k, v in ui_args.items()
-        if isinstance(v.annotation, VariableName) and v.kind in (ArgumentKind.POSITIONAL_OR_KEYWORD, ArgumentKind.KEYWORD_ONLY)
+        if isinstance(v.annotation, VariableName)
+        and v.kind in (ArgumentKind.POSITIONAL_OR_KEYWORD, ArgumentKind.KEYWORD_ONLY)
     }
 
     return args, kwargs
 
 
-def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: bool = True):
-
+def create_code_snippet(
+    func: Callable, args: List, kwargs: Dict, call_func: bool = True
+):
     # Check if one of the args/kwargs is an Enum
     #   * import the proper Enum class
     #   *
@@ -318,13 +339,13 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
             {stringify_var_name_checks(args, kwargs)}
             
             def main():
-                response = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})  # [3405691582]
+                response = {func.__name__}({stringify_args(args)}{", " if args else ""}{stringify_kwargs(kwargs)})  # [3405691582]
                 if response is not None:
                     print(response)
                 return response
             
             if not error:
-                {f"{func.__ui_capture_response__} = main()" if call_func else 'pass'}
+                {f"{func.__ui_capture_response__} = main()" if call_func else "pass"}
         """
     )
 
@@ -332,10 +353,11 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
 
 
 def create_code_snippet_renderable(func: Callable, args: List, kwargs: Dict):
-
     snippet = f"{func.__ui_capture_response__} = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})"
 
-    return Panel(Syntax(snippet, "python", theme='default', word_wrap=True), box=box.HORIZONTALS)
+    return Panel(
+        Syntax(snippet, "python", theme="default", word_wrap=True), box=box.HORIZONTALS
+    )
 
 
 def select_directory(directory: str = None) -> str:
@@ -350,11 +372,10 @@ def select_directory(directory: str = None) -> str:
 
     filenames = dialog.selectedFiles() if dialog.exec() else None
 
-    return filenames[0] if filenames is not None else ''
+    return filenames[0] if filenames is not None else ""
 
 
 def select_file(filename: str = None, full_path: bool = True) -> str:
-
     dialog = QFileDialog()
     dialog.setDirectory(filename)
     dialog.setOption(QFileDialog.ReadOnly, True)
@@ -364,7 +385,7 @@ def select_file(filename: str = None, full_path: bool = True) -> str:
 
     filenames = dialog.selectedFiles() if dialog.exec() else None
 
-    return filenames[0] if filenames is not None else ''
+    return filenames[0] if filenames is not None else ""
 
 
 def combo_box_from_enum(enumeration: Enum) -> QComboBox:
@@ -381,9 +402,8 @@ def combo_box_from_list(values: List) -> QComboBox:
 
 def is_renderable(check_object: Any) -> bool:
     """Check if an object may be rendered by Rich, but ignore plain strings."""
-    return (
-        hasattr(check_object, "__rich__")
-        or hasattr(check_object, "__rich_console__")
+    return hasattr(check_object, "__rich__") or hasattr(
+        check_object, "__rich_console__"
     )
 
 
@@ -437,8 +457,10 @@ class Timer(object):
         # Overwrite self.end() so that it always returns the fixed end time
         self.end = self._end
 
-        logging.log(self.log_level,
-                   f"{self.name}: {self.end() - self.start:0.{self.precision}f} seconds")
+        logging.log(
+            self.log_level,
+            f"{self.name}: {self.end() - self.start:0.{self.precision}f} seconds",
+        )
         return False
 
     def __call__(self):
@@ -446,8 +468,10 @@ class Timer(object):
 
     def log_elapsed(self):
         """Sends the elapsed time info to the default logger."""
-        logging.log(self.log_level,
-                   f"{self.name}: {self.end() - self.start:0.{self.precision}f} seconds elapsed")
+        logging.log(
+            self.log_level,
+            f"{self.name}: {self.end() - self.start:0.{self.precision}f} seconds elapsed",
+        )
 
     def _end(self):
         return self._total_elapsed
@@ -459,16 +483,18 @@ bytes_types = (bytes, bytearray)  # Types acceptable as binary data
 def _bytes_from_decode_data(s):
     if isinstance(s, str):
         try:
-            return s.encode('ascii')
+            return s.encode("ascii")
         except UnicodeEncodeError:
-            raise ValueError('string argument should contain only ASCII characters')
+            raise ValueError("string argument should contain only ASCII characters")
     if isinstance(s, bytes_types):
         return s
     try:
         return memoryview(s).tobytes()
     except TypeError:
-        raise TypeError("argument should be a bytes-like object or ASCII "
-                        "string, not %r" % s.__class__.__name__) from None
+        raise TypeError(
+            "argument should be a bytes-like object or ASCII string, not %r"
+            % s.__class__.__name__
+        ) from None
 
 
 def b64decode(s, altchars=None, validate=False):
@@ -490,9 +516,9 @@ def b64decode(s, altchars=None, validate=False):
     if altchars is not None:
         altchars = _bytes_from_decode_data(altchars)
         assert len(altchars) == 2, repr(altchars)
-        s = s.translate(bytes.maketrans(altchars, b'+/'))
-    if validate and not re.fullmatch(b'[A-Za-z0-9+/]*={0,2}', s):
-        raise binascii.Error('Non-base64 digit found')
+        s = s.translate(bytes.maketrans(altchars, b"+/"))
+    if validate and not re.fullmatch(b"[A-Za-z0-9+/]*={0,2}", s):
+        raise binascii.Error("Non-base64 digit found")
     return binascii.a2b_base64(s)
 
 
@@ -506,7 +532,12 @@ def print_system_info():
     rich.print("sys.path = ", sys.path)
 
 
-def format_datetime(dt: str | datetime.datetime = None, fmt: str = None, width: int = 6, precision: int = 3):
+def format_datetime(
+    dt: str | datetime.datetime = None,
+    fmt: str = None,
+    width: int = 6,
+    precision: int = 3,
+):
     """Format a datetime as YYYY-mm-ddTHH:MM:SS.μs+0000.
 
     If the given argument is not timezone aware, the last part, i.e. `+0000` will not be there.
@@ -567,7 +598,7 @@ def format_datetime(dt: str | datetime.datetime = None, fmt: str = None, width: 
         width = min(width, precision)
         timestamp = (
             f"{dt.strftime('%Y-%m-%dT%H:%M')}:"
-            f"{dt.second:02d}.{dt.microsecond//10**(6-precision):0{width}d}{dt.strftime('%z')}"
+            f"{dt.second:02d}.{dt.microsecond // 10 ** (6 - precision):0{width}d}{dt.strftime('%z')}"
         )
 
     return timestamp
@@ -582,7 +613,7 @@ def write_id(id_: str, file_path: Path):
         id_: the identifier to save
         file_path: the file to which the identifier shall be saved
     """
-    with file_path.open('w') as fd:
+    with file_path.open("w") as fd:
         fd.write(f"{id_}")
 
 
@@ -598,11 +629,11 @@ def read_id(file_path: Path) -> str:
         The identifier that is read from the file or '' if file doesn't exist.
     """
     try:
-        with file_path.open('r') as fd:
+        with file_path.open("r") as fd:
             id_ = fd.read().strip()
     except FileNotFoundError:
-        id_ = ''
-    return id_ or ''
+        id_ = ""
+    return id_ or ""
 
 
 def timer(*, precision: int = 4):
@@ -624,4 +655,5 @@ def timer(*, precision: int = 4):
             return value
 
         return wrapper_timer
+
     return actual_decorator

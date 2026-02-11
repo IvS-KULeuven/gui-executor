@@ -6,8 +6,7 @@ from gui_executor.utils import select_directory
 
 
 def test_select_directory():
-
-    app = QApplication(['-platform', 'offscreen'])
+    app = QApplication(["-platform", "offscreen"])
 
     widget = QWidget()
     widget.show()

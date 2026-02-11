@@ -3,6 +3,7 @@ This script will raise a ValueError if the --value argument is greater than 10.
 
 The purpose of this script is to test the behaviour of the command execution when an exception is raised.
 """
+
 import argparse
 import time
 
@@ -21,7 +22,6 @@ def parse_arguments():
 
 
 def main():
-
     args = parse_arguments()
 
     time.sleep(2.0)

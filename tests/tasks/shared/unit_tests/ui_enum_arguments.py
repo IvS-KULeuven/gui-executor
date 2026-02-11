@@ -49,7 +49,6 @@ def value_of(digit: Digit = Digit.FIVE):
 
 @exec_ui()
 def select_operating_mode(mode: OperatingMode):
-
     print(f"{mode.name} = {mode.value} \[{mode=}]")
 
 
@@ -61,7 +60,6 @@ class HexapodID(Enum):
 
 @exec_ui()
 def select_hexapod(hexapod: HexapodID):
-
     print(f"{hexapod.name=}, {hexapod.value=}")
 
     return hexapod

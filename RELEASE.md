@@ -8,8 +8,8 @@
 * Push the bumped version
 * Upload to PyPI
   ```
-  $ pipx run build
-  $ pipx run twine upload dist/gui_executor-x.y.z*
+  $ uv build
+  $ uv publish --token $UV_PUBLISH_TOKEN dist/gui_executor-x.y.z*
   $ git tag x.y.z
   ```
 * Create a pull request and merge the pull request
