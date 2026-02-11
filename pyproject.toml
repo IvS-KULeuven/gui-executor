@@ -1,32 +1,29 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "gui-executor"
 description = "Execute Python code in an automatically generated GUI App."
-dynamic = ["version", "readme"]
-requires-python = ">=3.8"
+version = "0.21.2"
+requires-python = ">=3.10"
 license = {text = "MIT"}
+readme = {"file" = "README.md", "content-type" = "text/markdown"}
 keywords = ["GUI", "execute", "task"]
 authors = [
     {name = "Rik Huygen", email = "rik.huygen@kuleuven.be"},
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.10",
     "Environment :: X11 Applications :: Qt",
     "License :: OSI Approved :: MIT License",
     "Topic :: Utilities",
 ]
 
 dependencies = [
-    "rich >= 13",
+    "rich >= 14",
     "executor",
     "PyYAML",
     "matplotlib",
     "distro",
-#    "PyQt5 >= 5.15",
+    "PyQt5 >= 5.15",
     "ipython >= 8",
     "ipykernel == 6.15.1",
     "jupyter-client == 6.1.12",
@@ -42,16 +39,29 @@ test = ["faker", "lorem-text"]
 [project.gui-scripts]
 gui-executor = "gui_executor.__main__:main"
 
-[tool.setuptools.dynamic]
-version = {attr = "gui_executor.__version__.__version__"}
-readme = {file = ["README.md"]}
-
 [project.urls]
 documentation = "https://ivs-kuleuven.github.io/gui-executor/"
 repository = "https://github.com/IvS-KULeuven/gui-executor"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/tests",
+    "/docs",
+    "/examples", 
+    "pytest.ini",
+    ".gitignore",
+    "RELEASE.md",
+    "TODO.md",
+]
 
-[tool.setuptools.package-data]
-gui_executor = ["icons"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/gui_executor"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
