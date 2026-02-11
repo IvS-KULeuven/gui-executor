@@ -17,6 +17,9 @@ from .view import View
 
 HERE = Path(__file__).parent.resolve()
 
+# Prevent the debugging messages from pydevd from appearing when the Jupyter kernel is started.
+os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
+
 # EXAMPLE:
 #   Use a function like this in your package '__init__' file and add it to the entry_points in the setup.py.
 #   This function will load functions that are decorated with '@exec_ui' or '@exec_task' from all modules in
@@ -36,20 +39,40 @@ HERE = Path(__file__).parent.resolve()
 
 
 def main():
-
-    parser = argparse.ArgumentParser(prog='gui-executor')
-    parser.add_argument('--version', "-V", action="store_true", help='print the gui-executor version number and exit')
-    parser.add_argument('--verbose', "-v", action="count",
-                        help="print verbose information, increased verbosity level with multiple occurrences")
-    parser.add_argument('--cmd-log', help='location of the command log files')
-    parser.add_argument('--module-path', action="append", help='module path of the Python modules and scripts')
-    parser.add_argument('--kernel-name',
-                        help="the kernel that will be started by default, python3 if not given")
-    parser.add_argument('--config', help='a YAML file that configures the executor')
-    parser.add_argument('--logo', help='path to logo PNG or SVG file')
-    parser.add_argument('--app-name', help='the name of the GUI app, will go in the window title')
-    parser.add_argument('--debug', '-d', action="store_true", help="set debugging mode")
-    parser.add_argument('--single', action="store_true", help='the UI can be started only once (instead of multiple times)')
+    parser = argparse.ArgumentParser(prog="gui-executor")
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="store_true",
+        help="print the gui-executor version number and exit",
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="count",
+        help="print verbose information, increased verbosity level with multiple occurrences",
+    )
+    parser.add_argument("--cmd-log", help="location of the command log files")
+    parser.add_argument(
+        "--module-path",
+        action="append",
+        help="module path of the Python modules and scripts",
+    )
+    parser.add_argument(
+        "--kernel-name",
+        help="the kernel that will be started by default, python3 if not given",
+    )
+    parser.add_argument("--config", help="a YAML file that configures the executor")
+    parser.add_argument("--logo", help="path to logo PNG or SVG file")
+    parser.add_argument(
+        "--app-name", help="the name of the GUI app, will go in the window title"
+    )
+    parser.add_argument("--debug", "-d", action="store_true", help="set debugging mode")
+    parser.add_argument(
+        "--single",
+        action="store_true",
+        help="the UI can be started only once (instead of multiple times)",
+    )
 
     args = parser.parse_args()
 
@@ -59,26 +82,34 @@ def main():
     module_path_list = args.module_path
 
     single = 1 if args.single is None else args.single
-    lock_file = QLockFile(str(Path(f"~/{args.app_name or 'GUI executor'}.app.lock").expanduser())) if single else None
+    lock_file = (
+        QLockFile(
+            str(Path(f"~/{args.app_name or 'GUI executor'}.app.lock").expanduser())
+        )
+        if single
+        else None
+    )
 
     if args.version:
         from .__version__ import __version__ as version
+
         print(f"gui-executor {version=}")
         if verbosity:
             print_system_info()
         sys.exit(0)
 
-    log = logging.getLogger('gui-executor')
+    log = logging.getLogger("gui-executor")
     log.setLevel(1 if args.debug else logging.WARNING)  # to send all records to cutelog
-    host = os.environ.get("CUTELOG_HOST", '127.0.0.1')
+    host = os.environ.get("CUTELOG_HOST", "127.0.0.1")
     socket_handler = SocketHandler(host, 19996)  # default listening address
     log.addHandler(socket_handler)
 
     if args.debug:
         from gui_executor import view, client, kernel
-        view.DEBUG = True
-        client.DEBUG = True
-        kernel.DEBUG = True
+
+        view.VERBOSE_DEBUG = True
+        client.VERBOSE_DEBUG = True
+        kernel.VERBOSE_DEBUG = True
         # Add the log messages to stdout for debugging purposes
         log.addHandler(logging.StreamHandler(sys.stdout))
 
@@ -97,17 +128,18 @@ def main():
         parser.print_help()
         return
 
-    if sys.platform.startswith('darwin'):
+    if sys.platform.startswith("darwin"):
         # Set app name, if PyObjC is installed
         # Python 3: pip3 install pyobjc-framework-Cocoa
         with contextlib.suppress(ImportError):
             from Foundation import NSBundle
+
             if bundle := NSBundle.mainBundle():
                 if (
                     app_info := bundle.localizedInfoDictionary()
                     or bundle.infoDictionary()
                 ):
-                    app_info['CFBundleName'] = app_name
+                    app_info["CFBundleName"] = app_name
 
     app = QApplication([])
     app.setWindowIcon(QIcon(args.logo or str(HERE / "icons/tasks.svg")))
@@ -116,12 +148,15 @@ def main():
     #   - the UI is allowed to be opened multiple times
     #   - the UI is not allowed to be started multiple times, but it is the first instance
 
-    if not single or lock_file.tryLock(100):
-
+    if not single or (lock_file and lock_file.tryLock(100)):
         model = Model(module_path_list)
-        view = View(model,
-                    app_name=app_name,
-                    cmd_log=args.cmd_log, verbosity=verbosity, kernel_name=kernel_name)
+        view = View(
+            model,
+            app_name=app_name,
+            cmd_log=args.cmd_log,
+            verbosity=verbosity,
+            kernel_name=kernel_name,
+        )
 
         view.show()
 
@@ -133,7 +168,9 @@ def main():
         error_message = QMessageBox()
         error_message.setIcon(QMessageBox.Warning)
         error_message.setWindowTitle("Error")
-        error_message.setText(f"The {args.app_name or 'GUI executor'} application is already running!")
+        error_message.setText(
+            f"The {args.app_name or 'GUI executor'} application is already running!"
+        )
         error_message.setStandardButtons(QMessageBox.Ok)
 
         return error_message.exec()
