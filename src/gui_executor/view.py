@@ -40,6 +40,7 @@ from PyQt5.QtCore import QUrl
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
+from PyQt5 import QtGui
 from PyQt5.QtGui import QCloseEvent
 from PyQt5.QtGui import QContextMenuEvent
 from PyQt5.QtGui import QCursor
@@ -85,6 +86,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.syntax import Syntax
 from rich.text import Text
+from rich.theme import Theme
 
 from . import RUNNABLE_APP
 from . import RUNNABLE_KERNEL
@@ -117,8 +119,8 @@ from .utypes import TypeObject
 from .utypes import UQWidget
 
 HERE = Path(__file__).parent.resolve()
-DEBUG = False
-LOGGER = logging.getLogger('gui-executor.view')
+VERBOSE_DEBUG = False
+LOGGER = logging.getLogger("gui-executor.view")
 
 
 class VLine(QFrame):
@@ -155,6 +157,7 @@ class RecurringTaskSignals(QObject):
             object data returned from processing, anything
 
     """
+
     result = pyqtSignal(object)
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
@@ -231,7 +234,8 @@ class FunctionRunnable(QRunnable):
         self.signals.data.emit("-" * 20)
         self.signals.data.emit(
             f"Running function {self._func.__name__}({stringify_args(self._args)}{', ' if self._args else ''}"
-            f"{stringify_kwargs(self._kwargs)})...")
+            f"{stringify_kwargs(self._kwargs)})..."
+        )
         try:
             with capture() as out:
                 response = self._func(*self._args, **self._kwargs)
@@ -268,13 +272,23 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
         super().__init__(func, args, kwargs, input_queue)
 
     def run(self):
-        tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        tmp.write(create_code_snippet(self._func, self._args, self._kwargs, call_func=True))
+        tmp = tempfile.NamedTemporaryFile(mode="w", delete=False)
+        tmp.write(
+            create_code_snippet(self._func, self._args, self._kwargs, call_func=True)
+        )
         tmp.close()
 
-        self.signals.data.emit(f"----- Starting ExternalCommand running {self.func_name}")
+        self.signals.data.emit(
+            f"----- Starting ExternalCommand running {self.func_name}"
+        )
 
-        options = dict(capture=True, capture_stderr=True, asynchronous=True, buffered=False, input=True)
+        options = dict(
+            capture=True,
+            capture_stderr=True,
+            asynchronous=True,
+            buffered=False,
+            input=True,
+        )
         try:
             # We could actually just use SubProcess here to with the correct settings
             with ExternalCommand(f"{sys.executable} {tmp.name}", **options) as cmd:
@@ -290,15 +304,21 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
                     line_err = self.read_async(cmd.stderr)
 
                     if line_out:
-                        self.signals.data.emit(line := line_out.decode(cmd.encoding).rstrip())
+                        self.signals.data.emit(
+                            line := line_out.decode(cmd.encoding).rstrip()
+                        )
                         # print(f"{line = }")
                         # Try to detect when the process is requesting input.
                         # TODO: request input from user through QLineEdit field...
-                        if self._check_for_input and any(pattern in line for pattern in self._input_patterns):
+                        if self._check_for_input and any(
+                            pattern in line for pattern in self._input_patterns
+                        ):
                             response = self.handle_input_request(line_out.decode())
-                            cmd.subprocess.stdin.write(bytes(f'{response}\n'.encode()))
+                            cmd.subprocess.stdin.write(bytes(f"{response}\n".encode()))
                     if line_err:
-                        self.signals.data.emit(line := line_err.decode(cmd.encoding).rstrip())
+                        self.signals.data.emit(
+                            line := line_err.decode(cmd.encoding).rstrip()
+                        )
 
                     if cmd.subprocess.poll() is not None:
                         break
@@ -324,7 +344,11 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
             else:
                 self.signals.finished.emit(self, self._func.__name__, True)
         else:
-            self.signals.error.emit(RuntimeError(f"Command {self._func.__name__} should have been finished!"))
+            self.signals.error.emit(
+                RuntimeError(
+                    f"Command {self._func.__name__} should have been finished!"
+                )
+            )
 
     @staticmethod
     def make_async(fd):
@@ -340,11 +364,18 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
             if exc.errno != errno.EAGAIN:
                 raise exc
             else:
-                return b''
+                return b""
 
 
 class FunctionRunnableKernel(FunctionRunnable):
-    def __init__(self, kernel: MyKernel, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
+    def __init__(
+        self,
+        kernel: MyKernel,
+        func: Callable,
+        args: List,
+        kwargs: Dict,
+        input_queue: Queue,
+    ):
         super().__init__(func, args, kwargs, input_queue)
         self.kernel: MyKernel = kernel
         self.startup_timeout = 60  # seconds
@@ -355,7 +386,6 @@ class FunctionRunnableKernel(FunctionRunnable):
         return self.running
 
     def run(self):
-
         self.running = True
 
         self.signals.data.emit(f"----- Running script '{self.func_name}' in kernel")
@@ -363,7 +393,9 @@ class FunctionRunnableKernel(FunctionRunnable):
         snippet = create_code_snippet(self._func, self._args, self._kwargs)
 
         self.signals.data.emit("The code snippet:")
-        self.signals.data.emit(create_code_snippet_renderable(self._func, self._args, self._kwargs))
+        self.signals.data.emit(
+            create_code_snippet_renderable(self._func, self._args, self._kwargs)
+        )
         self.signals.data.emit("")
 
         client = MyClient(self.kernel, startup_timeout=self.startup_timeout)
@@ -375,75 +407,92 @@ class FunctionRunnableKernel(FunctionRunnable):
 
         msg_id = client.execute(snippet, allow_stdin=True)
 
-        DEBUG and LOGGER.debug(f"{id(client)}: {msg_id = }")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"{id(client)}: {msg_id = }")
 
         while True:
             try:
                 io_msg = client.get_iopub_msg(msg_id, timeout=1.0)
 
-                if io_msg['parent_header']['msg_id'] != msg_id:
-                    DEBUG and LOGGER.debug(f"{id(client)}: Skipping {io_msg = }")
+                if io_msg["parent_header"]["msg_id"] != msg_id:
+                    if VERBOSE_DEBUG:
+                        LOGGER.debug(f"{id(client)}: Skipping {io_msg = }")
                     continue
 
-                io_msg_type = io_msg['msg_type']
-                io_msg_content = io_msg['content']
+                io_msg_type = io_msg["msg_type"]
+                io_msg_content = io_msg["content"]
 
-                DEBUG and LOGGER.debug(f"{id(client)}: {io_msg = }")
+                if VERBOSE_DEBUG:
+                    LOGGER.debug(f"{id(client)}: {io_msg = }")
 
-                if io_msg_type == 'stream':
-                    if 'text' in io_msg_content:
-                        text = io_msg_content['text'].rstrip()
+                if io_msg_type == "stream":
+                    if "text" in io_msg_content:
+                        text = io_msg_content["text"].rstrip()
                         self.signals.data.emit(text)
-                elif io_msg_type == 'status':
-                    if io_msg_content['execution_state'] == 'idle':
+                elif io_msg_type == "status":
+                    if io_msg_content["execution_state"] == "idle":
                         # self.signals.data.emit("Execution State is Idle, terminating...")
-                        DEBUG and LOGGER.debug(f"{id(client)}: Execution State is Idle, terminating...")
+                        if VERBOSE_DEBUG:
+                            LOGGER.debug(
+                                f"{id(client)}: Execution State is Idle, terminating..."
+                            )
                         self.collect_response_payload(client, msg_id, timeout=1.0)
                         break
-                    elif io_msg_content['execution_state'] == 'busy':
+                    elif io_msg_content["execution_state"] == "busy":
                         # self.signals.data.emit("Execution State is busy...")
-                        DEBUG and LOGGER.debug(f"{id(client)}: Execution State is busy...")
+                        if VERBOSE_DEBUG:
+                            LOGGER.debug(f"{id(client)}: Execution State is busy...")
                         continue
-                    elif io_msg_content['execution_state'] == 'starting':
+                    elif io_msg_content["execution_state"] == "starting":
                         # self.signals.data.emit("Execution State is starting...")
-                        DEBUG and LOGGER.debug(f"{id(client)}: Execution State is starting...")
+                        if VERBOSE_DEBUG:
+                            LOGGER.debug(
+                                f"{id(client)}: Execution State is starting..."
+                            )
                         continue
-                elif io_msg_type == 'display_data':
-                    if 'data' in io_msg_content:
-                        DEBUG and LOGGER.debug(f"{id(client)}: display data of type {io_msg_content['data'].keys()}")
-                        if 'text/html' in io_msg_content['data']:
-                            text = io_msg_content['data']['text/html'].rstrip()
+                elif io_msg_type == "display_data":
+                    if "data" in io_msg_content:
+                        if VERBOSE_DEBUG:
+                            LOGGER.debug(
+                                f"{id(client)}: display data of type {io_msg_content['data'].keys()}"
+                            )
+                        if "text/html" in io_msg_content["data"]:
+                            text = io_msg_content["data"]["text/html"].rstrip()
                             self.signals.html.emit(text)
-                        elif 'image/png' in io_msg_content['data']:
-                            data = io_msg_content['data']['image/png']
+                        elif "image/png" in io_msg_content["data"]:
+                            data = io_msg_content["data"]["image/png"]
                             self.signals.png.emit(data)
-                        elif 'text/plain' in io_msg_content['data']:
-                            text = io_msg_content['data']['text/plain'].rstrip()
+                        elif "text/plain" in io_msg_content["data"]:
+                            text = io_msg_content["data"]["text/plain"].rstrip()
                             self.signals.data.emit(text)
-                elif io_msg_type == 'execute_input':
+                elif io_msg_type == "execute_input":
                     ...  # ignore this message type
                     #     self.signals.data.emit("The code snippet:")
                     #     source_code = io_msg_content['code']
                     #     syntax = Syntax(source_code, "python", theme='default')
                     #     self.signals.data.emit(syntax)
-                elif io_msg_type == 'error':
-                    if 'traceback' in io_msg_content:
-                        traceback = io_msg_content['traceback']
-                        self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
+                elif io_msg_type == "error":
+                    if "traceback" in io_msg_content:
+                        traceback = io_msg_content["traceback"]
+                        self.signals.data.emit(Text.from_ansi("\n".join(traceback)))
                 else:
-                    self.signals.error.emit(RuntimeError(f"Unknown io_msg_type: {io_msg_type}"))
+                    self.signals.error.emit(
+                        RuntimeError(f"Unknown io_msg_type: {io_msg_type}")
+                    )
 
             except queue.Empty:
-                DEBUG and LOGGER.debug(f"{id(client)}: Catching on empty queue -----------")
+                if VERBOSE_DEBUG:
+                    LOGGER.debug(f"{id(client)}: Catching on empty queue -----------")
                 # We fall through here when no output is received from the kernel. This can mean that the kernel
                 # is waiting for input and therefore this is a good opportunity to check for stdin messages.
                 with contextlib.suppress(queue.Empty):
                     in_msg = client.get_stdin_msg(timeout=0.1)
 
-                    DEBUG and LOGGER.debug(f"{id(client)}: {in_msg = }")
+                    if VERBOSE_DEBUG:
+                        LOGGER.debug(f"{id(client)}: {in_msg = }")
 
-                    if in_msg['msg_type'] == 'input_request':
-                        prompt = in_msg['content']['prompt']
+                    if in_msg["msg_type"] == "input_request":
+                        prompt = in_msg["content"]["prompt"]
                         response = self.handle_input_request(prompt)
                         client.input(response)
             except Exception as exc:
@@ -466,7 +515,9 @@ class FunctionRunnableKernel(FunctionRunnable):
             A string that will be sent to the kernel as a reply.
         """
         if prompt:
-            if self._check_for_input and all(pattern not in prompt for pattern in self._input_patterns):
+            if self._check_for_input and all(
+                pattern not in prompt for pattern in self._input_patterns
+            ):
                 self.signals.data.emit(
                     textwrap.dedent(
                         f"""\
@@ -498,30 +549,35 @@ class FunctionRunnableKernel(FunctionRunnable):
                     """
                 )
             )
-            return ''
+            return ""
 
     def collect_response_payload(self, client, msg_id, timeout: float):
         try:
             shell_msg = client.get_shell_msg(msg_id, timeout=timeout)
         except queue.Empty:
-            DEBUG and LOGGER.debug(f"{id(client)}: No shell message available for {timeout}s....")
+            if VERBOSE_DEBUG:
+                LOGGER.debug(
+                    f"{id(client)}: No shell message available for {timeout}s...."
+                )
             self.signals.data.emit(
-                "[red]No result received from kernel, this might happen when kernel is interrupted.[/]")
+                "[red]No result received from kernel, this might happen when kernel is interrupted.[/]"
+            )
             return
 
         msg_type = shell_msg["msg_type"]
         msg_content = shell_msg["content"]
 
-        DEBUG and LOGGER.debug(f"{id(client)}: {shell_msg = }")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"{id(client)}: {shell_msg = }")
 
         if msg_type == "execute_reply":
-            status = msg_content['status']
-            if status == 'error' and 'traceback' in msg_content:
+            status = msg_content["status"]
+            if status == "error" and "traceback" in msg_content:
                 # We are not sending this traceback anymore to the Console output
                 # as it was already handled in the context of the io_pub_msg.
                 self.signals.data.emit(f"{status = }")
-                traceback = msg_content['traceback']
-                self.signals.data.emit(Text.from_ansi('\n'.join(traceback)))
+                traceback = msg_content["traceback"]
+                self.signals.data.emit(Text.from_ansi("\n".join(traceback)))
 
 
 class FunctionRunnableQProcess(FunctionRunnable):
@@ -531,8 +587,10 @@ class FunctionRunnableQProcess(FunctionRunnable):
         self._process = None
 
     def run(self):
-        tmp = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        tmp.write(create_code_snippet(self._func, self._args, self._kwargs, call_func=False))
+        tmp = tempfile.NamedTemporaryFile(mode="w", delete=False)
+        tmp.write(
+            create_code_snippet(self._func, self._args, self._kwargs, call_func=False)
+        )
         tmp.close()
 
         self.signals.data.emit("----- Starting QProcess running script_app")
@@ -544,7 +602,10 @@ class FunctionRunnableQProcess(FunctionRunnable):
             # use this if you want to monitor the Process progress
             # self._process.stateChanged.connect(self.handle_state)
             self._process.finished.connect(self.process_finished)
-            self._process.start(f"{sys.executable}", [f"{HERE/'script_app.py'}", "--script", f"{tmp.name}"])
+            self._process.start(
+                f"{sys.executable}",
+                [f"{HERE / 'script_app.py'}", "--script", f"{tmp.name}"],
+            )
 
             # waitForFinished() has a 30s timeout by default. Use -1 to disable the timeout, otherwise the result
             # will be a: QProcess: Destroyed while process ("...venv/bin/python") is still running. .. after 30 seconds.
@@ -562,9 +623,11 @@ class FunctionRunnableQProcess(FunctionRunnable):
         stdout = bytes(data).decode("utf8")
         self.signals.data.emit(stdout)
 
-        if self._check_for_input and any(pattern in stdout for pattern in self._input_patterns):
+        if self._check_for_input and any(
+            pattern in stdout for pattern in self._input_patterns
+        ):
             response = self.handle_input_request(stdout)
-            self._process.write(bytes(f'{response}\n'.encode()))
+            self._process.write(bytes(f"{response}\n".encode()))
 
     def handle_stderr(self):
         data = self._process.readAllStandardError()
@@ -573,9 +636,9 @@ class FunctionRunnableQProcess(FunctionRunnable):
 
     def handle_state(self, state):
         states = {
-            QProcess.NotRunning: 'Not running',
-            QProcess.Starting: 'Starting',
-            QProcess.Running: 'Running',
+            QProcess.NotRunning: "Not running",
+            QProcess.Starting: "Starting",
+            QProcess.Running: "Running",
         }
         state_name = states[state]
         self.signals.data.emit(f"State changed: {state_name}")
@@ -603,26 +666,30 @@ class ConsoleOutput(QTextEdit):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.__contextMenu)
 
+        # p = self.viewport().palette()
+        # p.setColor(self.viewport().backgroundRole(), QtGui.QColor(245, 245, 245))
+        # self.viewport().setPalette(p)
+
     @pyqtSlot(str)
     def append(self, text):
+        import builtins
 
-        # import builtins
-        # builtins.print(f"{text = }")
+        if VERBOSE_DEBUG:
+            builtins.print(f"{text = }")
 
-        console = Console(record=True, width=240)
-
-        with console.capture() as cap:
-            console.print(text)
-
-        # builtins.print(f"{cap.get() = }")
+        theme = Theme({"info": "bold cyan", "warning": "magenta", "danger": "bold red"})
+        console = Console(
+            record=True, file=open(os.devnull, "wt"), width=240, theme=theme
+        )  # color_system="truecolor"
+        console.print(text)
 
         exported_html = console.export_html(
             inline_styles=True,
-            # code_format="<pre style=\"font-family:'Courier New',Menlo,'DejaVu Sans Mono'\">\n{code}\n</pre>",
-            # code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}</pre>",
-            # code_format="<code><pre style=\"font-family:Menlo,\'DejaVu Sans Mono\',consolas,\'Courier New\',monospace\">{code}\n</pre>\n</code>\n",
             code_format="<pre>{code}</pre>",
         )
+
+        if VERBOSE_DEBUG:
+            builtins.print(f"{exported_html = }")
 
         self.append_html(exported_html)
 
@@ -631,7 +698,8 @@ class ConsoleOutput(QTextEdit):
         from IPython.display import display
         from PIL import Image as PILImage
 
-        DEBUG and LOGGER.debug(f"append_image({data})")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"append_image({data})")
 
         if isinstance(data, IPythonImage):
             display(data)
@@ -640,11 +708,8 @@ class ConsoleOutput(QTextEdit):
         else:
             LOGGER.error("append_image: Unknown data type.")
 
-
-
     @pyqtSlot(str)
     def append_html(self, text):
-
         # import builtins
         # builtins.print(f"{text = }")
 
@@ -665,14 +730,19 @@ class ConsoleOutput(QTextEdit):
 
     def _addCustomMenuItems(self, menu):
         menu.addSeparator()
-        menu.addAction(u'Clear', self.clear)
+        menu.addAction("Clear", self.clear)
 
 
 class SourceCodeWindow(QWidget):
     def __init__(self, func: Callable):
         super().__init__()
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0,)
+        layout.setContentsMargins(
+            0,
+            0,
+            0,
+            0,
+        )
         try:
             source_code_filename = func.__wrapped__.__code__.co_filename
             source_line = func.__wrapped__.__code__.co_firstlineno
@@ -684,17 +754,17 @@ class SourceCodeWindow(QWidget):
         text_edit = QTextEdit()
 
         console = Console(record=True, width=1200)
-        syntax = Syntax(source_code, "python", theme='default', line_numbers=True)
+        syntax = Syntax(source_code, "python", theme="default", line_numbers=True)
 
         with console.capture():
             console.print(syntax)
 
         exported_html = console.export_html(
             inline_styles=True,
-            code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}\n</pre>"
+            code_format="<pre style=\"font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">{code}\n</pre>",
         )
 
-        text_edit.setFontFamily('Courier')
+        text_edit.setFontFamily("Courier")
         text_edit.insertHtml(exported_html)
 
         document = text_edit.document()
@@ -710,15 +780,18 @@ class SourceCodeWindow(QWidget):
 
 
 class DynamicButton(QWidget):
-
     icon_size = QSize(30, 30)
     horizontal_spacing = 2
 
-    def __init__(self, label: str, func: Callable,
-                 icon_path: Path | str = None,
-                 icon_selected_path: Path | str = None,
-                 final_stretch=True,
-                 icon_size: QSize = icon_size):
+    def __init__(
+        self,
+        label: str,
+        func: Callable,
+        icon_path: Path | str = None,
+        icon_selected_path: Path | str = None,
+        final_stretch=True,
+        icon_size: QSize = icon_size,
+    ):
         super().__init__()
         self.source_code_window = None
         self._function = func
@@ -733,10 +806,17 @@ class DynamicButton(QWidget):
             self.icon_selected_path = self._function.__ui_icons__[1]
         except (AttributeError, IndexError, TypeError, ValueError):
             self.icon_path = str(icon_path or HERE / "icons/script-function.svg")
-            self.icon_selected_path = str(icon_selected_path or HERE / "icons/script-function-selected.svg")
+            self.icon_selected_path = str(
+                icon_selected_path or HERE / "icons/script-function-selected.svg"
+            )
 
-        if not Path(self.icon_path).exists() or not Path(self.icon_selected_path).exists():
-            raise ValueError(f"Invalid path given for icons for function '{self._function.__name__}'")
+        if (
+            not Path(self.icon_path).exists()
+            or not Path(self.icon_selected_path).exists()
+        ):
+            raise ValueError(
+                f"Invalid path given for icons for function '{self._function.__name__}'"
+            )
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -746,15 +826,17 @@ class DynamicButton(QWidget):
         label_text = QLabel(self.function_display_name)
         if self._function.__ui_immediate_run__:
             # This style will draw a 2 pixel horizontal line under the label
-            label_text.setStyleSheet(textwrap.dedent(
-                """\
+            label_text.setStyleSheet(
+                textwrap.dedent(
+                    """\
                     padding: 0px; 
                     border-bottom-width: 0px;  /* set to 1 or 2 if you need a bottom line */
                     border-bottom-style: solid; 
                     border-bottom-color: blue;
                     border-radius: 0px;
                     color: cornflowerblue;
-                """)
+                """
+                )
             )
 
         layout.addWidget(self.label_icon)
@@ -809,7 +891,9 @@ class DynamicButton(QWidget):
 
     @property
     def function_display_name(self) -> str:
-        name = self._function.__ui_display_name__ or self.label or self._function.__name__
+        name = (
+            self._function.__ui_display_name__ or self.label or self._function.__name__
+        )
 
         # The following line will put the display_name within triangles: ▶︎ name ◀︎
         # when the immediate_run flag is True
@@ -825,14 +909,15 @@ class DynamicButton(QWidget):
         return self.function.__ui_immediate_run__
 
     def __repr__(self):
-        return f"DynamicButton(\"{self.label}\", {self.function})"
+        return f'DynamicButton("{self.label}", {self.function})'
 
 
 class TextInputField(QLineEdit):
     def __init__(self, name: str, default: Any, placeholder_text: str = None):
         super().__init__()
         self._name = name
-        DEBUG and LOGGER.debug(f"{default = }, {type(default)=}")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"{default = }, {type(default)=}")
         self._default = None if default is None else str(default)
         self._placeholder_text = placeholder_text
         self.setObjectName(name)
@@ -848,7 +933,11 @@ class TextInputField(QLineEdit):
 
         # Use the copy icon to set the default value in the text field
 
-        icon = QApplication.instance().style().standardIcon(QtWidgets.QStyle.SP_TitleBarNormalButton)
+        icon = (
+            QApplication.instance()
+            .style()
+            .standardIcon(QtWidgets.QStyle.SP_TitleBarNormalButton)
+        )
         action = self.addAction(icon, self.TrailingPosition)
         action.triggered.connect(self.set_default)
         action.setToolTip("Set the default value.")
@@ -860,7 +949,7 @@ class TextInputField(QLineEdit):
 
     def _addCustomMenuItems(self, menu):
         menu.addSeparator()
-        menu.addAction(u'Set default', self.set_default)
+        menu.addAction("Set default", self.set_default)
 
     def set_default(self):
         self.setText(self._default)
@@ -882,8 +971,9 @@ class ArgumentsPanel(QScrollArea):
 
         widget = QWidget()
 
-        widget.setStyleSheet(textwrap.dedent(
-            """
+        widget.setStyleSheet(
+            textwrap.dedent(
+                """
                 QGroupBox {
                     font-size: 16px;
                     font-weight: light;
@@ -897,7 +987,8 @@ class ArgumentsPanel(QScrollArea):
                     /* padding-top: 5px; */
                     /* padding-bottom: 0px */
                 }
-            """)
+            """
+            )
         )
         widget.setContentsMargins(0, 5, 0, 0)
 
@@ -917,7 +1008,10 @@ class ArgumentsPanel(QScrollArea):
         grid = QGridLayout()
 
         for idx, (name, arg) in enumerate(ui_args.items()):
-            DEBUG and LOGGER.debug(f"{idx=}, {name=}, {arg=}, {arg.annotation = }, {type(arg.annotation) = }")
+            if VERBOSE_DEBUG:
+                LOGGER.debug(
+                    f"{idx=}, {name=}, {arg=}, {arg.annotation = }, {type(arg.annotation) = }"
+                )
             is_optional_arg = False
             optional_arg = None
             if arg.annotation is bool:
@@ -930,24 +1024,32 @@ class ArgumentsPanel(QScrollArea):
                 if arg.default is not None:
                     input_field.setCurrentText(arg.default.name)
             else:
-                input_field: TextInputField = TextInputField(name=name, default=arg.default)
+                input_field: TextInputField = TextInputField(
+                    name=name, default=arg.default
+                )
                 if arg.annotation is None:
                     input_field.setToolTip("No type has been specified..")
                 else:
                     is_optional_arg, optional_arg = is_optional(arg.annotation)
                     try:
-                        input_field.setToolTip(f"The expected type is {arg.annotation.__name__}.")
+                        input_field.setToolTip(
+                            f"The expected type is {arg.annotation.__name__}."
+                        )
                     except AttributeError:
-                        input_field.setToolTip(f"The expected type is {str(arg.annotation)}.")
+                        input_field.setToolTip(
+                            f"The expected type is {str(arg.annotation)}."
+                        )
                 if arg.annotation is int:
                     input_field.setValidator(QIntValidator())
                 elif arg.annotation is float:
                     input_field.setValidator(QDoubleValidator())
                 elif is_optional_arg:
-                    if optional_arg == 'int':
+                    if optional_arg == "int":
                         reg_exp = QRegExp(r"^(\d+|None)$", Qt.CaseSensitive)
-                    elif optional_arg == 'float':
-                        reg_exp = QRegExp(r"^(-?\d+(\.\d+)?([eE][-+]?\d+)?|None)$", Qt.CaseSensitive)
+                    elif optional_arg == "float":
+                        reg_exp = QRegExp(
+                            r"^(-?\d+(\.\d+)?([eE][-+]?\d+)?|None)$", Qt.CaseSensitive
+                        )
                     else:
                         reg_exp = QRegExp(r".*")
                     reg_ex_validator = QRegExpValidator(reg_exp, input_field)
@@ -955,32 +1057,54 @@ class ArgumentsPanel(QScrollArea):
 
             if arg.kind == ArgumentKind.POSITIONAL_ONLY:
                 self._args_fields[name] = input_field
-            elif arg.kind in [ArgumentKind.POSITIONAL_OR_KEYWORD, ArgumentKind.KEYWORD_ONLY]:
+            elif arg.kind in [
+                ArgumentKind.POSITIONAL_OR_KEYWORD,
+                ArgumentKind.KEYWORD_ONLY,
+            ]:
                 self._kwargs_fields[name] = input_field
             else:
-                print("ERROR: Only POSITIONAL_ONLY, POSITIONAL_OR_KEYWORD, and KEYWORD_ONLY arguments are supported!")
+                print(
+                    "ERROR: Only POSITIONAL_ONLY, POSITIONAL_OR_KEYWORD, and KEYWORD_ONLY arguments are supported!"
+                )
 
             label = QLabel(name)
             try:
-                type_hint = QLabel(f"[{arg.annotation.__name__}]" if arg.annotation is not None else None)
+                type_hint = QLabel(
+                    f"[{arg.annotation.__name__}]"
+                    if arg.annotation is not None
+                    else None
+                )
             except AttributeError:
                 if is_optional_arg:
                     type_hint = QLabel(f"[{optional_arg} | None]")
                 else:
-                    DEBUG and LOGGER.debug(f"Could not determine type hint from {arg.annotation}")
+                    if VERBOSE_DEBUG:
+                        LOGGER.debug(
+                            f"Could not determine type hint from {arg.annotation}"
+                        )
                     type_hint = QLabel(f"[unknown]")
 
             type_hint.setStyleSheet("color: gray")
 
             if arg.annotation is Directory:
-                folder_button = IconLabel(icon_path=HERE / "icons/folder.svg", size=QSize(20, 20))
+                folder_button = IconLabel(
+                    icon_path=HERE / "icons/folder.svg", size=QSize(20, 20)
+                )
                 folder_button.mousePressEvent = partial(self.select_folder, input_field)
             elif arg.annotation is FileName:
-                folder_button = IconLabel(icon_path=HERE / "icons/filename.svg", size=QSize(20, 20))
-                folder_button.mousePressEvent = partial(self.select_file, input_field, full_path=False)
+                folder_button = IconLabel(
+                    icon_path=HERE / "icons/filename.svg", size=QSize(20, 20)
+                )
+                folder_button.mousePressEvent = partial(
+                    self.select_file, input_field, full_path=False
+                )
             elif arg.annotation in (Path, FilePath):
-                folder_button = IconLabel(icon_path=HERE / "icons/filepath.svg", size=QSize(20, 20))
-                folder_button.mousePressEvent = partial(self.select_file, input_field, full_path=True)
+                folder_button = IconLabel(
+                    icon_path=HERE / "icons/filepath.svg", size=QSize(20, 20)
+                )
+                folder_button.mousePressEvent = partial(
+                    self.select_file, input_field, full_path=True
+                )
             else:
                 folder_button = None
 
@@ -999,7 +1123,11 @@ class ArgumentsPanel(QScrollArea):
                 grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignVCenter)
 
         vbox.addLayout(grid)
-        vbox.addWidget(QLabel(f"Return value(s) will be captured in, and overwrite, <code>'{self.function.__ui_capture_response__}'</code>."))
+        vbox.addWidget(
+            QLabel(
+                f"Return value(s) will be captured in, and overwrite, <code>'{self.function.__ui_capture_response__}'</code>."
+            )
+        )
 
         hbox = QHBoxLayout()
         button_group = QButtonGroup()
@@ -1043,14 +1171,12 @@ class ArgumentsPanel(QScrollArea):
 
     @staticmethod
     def select_folder(input_field: QLineEdit, *args):
-
         input_dir = input_field.displayText() or input_field.placeholderText()
         if dir_name := select_directory(directory=input_dir):
             input_field.setText(dir_name)
 
     @staticmethod
     def select_file(input_field: QLineEdit, *args, full_path: bool = True):
-
         input_file = input_field.displayText() or input_field.placeholderText()
         if filename := select_file(filename=input_file):
             filename = filename if full_path else Path(filename).name
@@ -1066,8 +1192,7 @@ class ArgumentsPanel(QScrollArea):
     @property
     def args(self):
         return [
-            self._cast_arg(name, field)
-            for name, field in self._args_fields.items()
+            self._cast_arg(name, field) for name, field in self._args_fields.items()
         ]
 
     @property
@@ -1102,10 +1227,9 @@ class ArgumentsPanel(QScrollArea):
         elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
             return arg.annotation[field.currentText()]
         else:
-
             if not (value := field.displayText() or field.placeholderText()):
                 return None
-            if value == 'None':
+            if value == "None":
                 return None
 
             try:
@@ -1114,12 +1238,14 @@ class ArgumentsPanel(QScrollArea):
                 elif arg.annotation in (Path, Directory, FileName, FilePath):
                     return Path(value)
                 elif is_optional_arg:
-                    if optional_arg == 'int':
+                    if optional_arg == "int":
                         return int(value)
-                    elif optional_arg == 'float':
+                    elif optional_arg == "float":
                         return float(value)
                     else:
-                        raise ValueError(f"Optional type not implemented for {optional_arg}")
+                        raise ValueError(
+                            f"Optional type not implemented for {optional_arg}"
+                        )
                 return arg.annotation(value)
             except (ValueError, TypeError, SyntaxError):
                 return value
@@ -1134,8 +1260,9 @@ class FunctionButtonsPanel(QScrollArea):
 
         widget = QWidget()
 
-        widget.setStyleSheet(textwrap.dedent(
-            """
+        widget.setStyleSheet(
+            textwrap.dedent(
+                """
                 QGroupBox {
                     font-size: 16px;
                     font-weight: light;
@@ -1149,7 +1276,8 @@ class FunctionButtonsPanel(QScrollArea):
                     /* padding-top: 5px; */
                     /* padding-bottom: 0px */
                 }
-            """)
+            """
+            )
         )
 
         self.n_cols = 4  # This must be a setting or configuration option
@@ -1160,7 +1288,7 @@ class FunctionButtonsPanel(QScrollArea):
         self.modules: Dict[str, QGridLayout] = {}
         self.buttons: Dict[str, int] = {}
         self.module_layout = QVBoxLayout()
-        self.module_layout.setSpacing(10 if distro.id().lower() == 'ubuntu' else 25)
+        self.module_layout.setSpacing(10 if distro.id().lower() == "ubuntu" else 25)
         self.module_layout.addStretch(1)
 
         widget.setLayout(self.module_layout)
@@ -1178,7 +1306,7 @@ class FunctionButtonsPanel(QScrollArea):
             gbox.setLayout(grid)
             gbox.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
             # self.module_layout.addWidget(gbox)
-            self.module_layout.insertWidget(self.module_layout.count()-1, gbox)
+            self.module_layout.insertWidget(self.module_layout.count() - 1, gbox)
             self.modules[module_name] = grid
             self.buttons[module_name] = 0
 
@@ -1218,7 +1346,14 @@ class KernelPanel(QWidget):
 
 
 class View(QMainWindow):
-    def __init__(self, model: Model, app_name: str = None, cmd_log: str = None, verbosity: int = 0, kernel_name: str = "python3"):
+    def __init__(
+        self,
+        model: Model,
+        app_name: str = None,
+        cmd_log: str = None,
+        verbosity: int = 0,
+        kernel_name: str = "python3",
+    ):
         super().__init__()
 
         self._model = model
@@ -1273,7 +1408,9 @@ class View(QMainWindow):
         # and set the policy such that it can still expand from this minimum size. This will be used
         # when we use adjustSize after replacing the arguments panel.
 
-        self.app_frame.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
+        self.app_frame.setSizePolicy(
+            QSizePolicy.MinimumExpanding, QSizePolicy.Expanding
+        )
 
         vbox = QVBoxLayout()
 
@@ -1322,7 +1459,11 @@ class View(QMainWindow):
 
         # Add a button to the toolbar to restart the kernel
 
-        kernel_button = QAction(QIcon(str(HERE / "icons/reload-kernel.svg")), "Restart the Jupyter kernel", self)
+        kernel_button = QAction(
+            QIcon(str(HERE / "icons/reload-kernel.svg")),
+            "Restart the Jupyter kernel",
+            self,
+        )
         kernel_button.setStatusTip("Restart the Jupyter kernel")
         kernel_button.triggered.connect(partial(self.start_kernel, False))
         kernel_button.setCheckable(False)
@@ -1330,7 +1471,9 @@ class View(QMainWindow):
 
         # Add a button to the toolbar to start the qtconsole
 
-        qtconsole_button = QAction(QIcon(str(HERE / "icons/command.svg")), "Start Python Console", self)
+        qtconsole_button = QAction(
+            QIcon(str(HERE / "icons/command.svg")), "Start Python Console", self
+        )
         qtconsole_button.setStatusTip("Start the QT Console")
         qtconsole_button.triggered.connect(self.start_qt_console)
         qtconsole_button.setCheckable(False)
@@ -1338,7 +1481,11 @@ class View(QMainWindow):
 
         # Add a button to the toolbar to interrupt the kernel
 
-        interrupt_button = QAction(QIcon(str(HERE / "icons/traffic-light-red.svg")), "Interrupt the Jupyter Kernel", self)
+        interrupt_button = QAction(
+            QIcon(str(HERE / "icons/traffic-light-red.svg")),
+            "Interrupt the Jupyter Kernel",
+            self,
+        )
         interrupt_button.setStatusTip("Interrupt the Jupyter Kernel")
         interrupt_button.triggered.connect(self.interrupt_kernel)
         interrupt_button.setCheckable(False)
@@ -1359,8 +1506,8 @@ class View(QMainWindow):
         menu_bar = self.menuBar()
         menu_bar.setNativeMenuBar(True)
 
-        file_menu = menu_bar.addMenu('File')
-        help_menu = menu_bar.addMenu('Help')
+        file_menu = menu_bar.addMenu("File")
+        help_menu = menu_bar.addMenu("Help")
 
         reload_action = QAction(self)
         reload_action.setText("Reload tasks...")
@@ -1368,7 +1515,9 @@ class View(QMainWindow):
 
         open_url_action = QAction(self)
         open_url_action.setText("Developer Manual...")
-        open_url_action.triggered.connect(partial(self.open_url, "https://ivs-kuleuven.github.io/gui-executor/"))
+        open_url_action.triggered.connect(
+            partial(self.open_url, "https://ivs-kuleuven.github.io/gui-executor/")
+        )
 
         file_menu.addAction(reload_action)
         help_menu.addAction(open_url_action)
@@ -1376,15 +1525,14 @@ class View(QMainWindow):
     def open_url(self, url: str):
         url = QUrl(url)
         if not QDesktopServices.openUrl(url):
-            QMessageBox.warning(self, 'Open Url', f'Could not open url {url.url()}')
+            QMessageBox.warning(self, "Open Url", f"Could not open url {url.url()}")
 
     def reload_tasks(self):
         QMessageBox.warning(
-            self, 'Reloading tasks', 'Sorry, this option is not yet implemented.'
+            self, "Reloading tasks", "Sorry, this option is not yet implemented."
         )
 
     def closeEvent(self, event: QCloseEvent) -> None:
-
         question = QMessageBox()
         question.setIcon(QMessageBox.Warning)
         question.setWindowTitle("Closing GUI and Kernel?")
@@ -1392,8 +1540,12 @@ class View(QMainWindow):
         cancel_button = question.addButton("Cancel", QMessageBox.NoRole)
         cancel_button.setDefault(True)
         cancel_button.setAutoDefault(True)
-        question.setText("You are about to close the Task GUI and kill the running kernel.")
-        question.setInformativeText("This will permanently delete all data in the Jupyter kernel.")
+        question.setText(
+            "You are about to close the Task GUI and kill the running kernel."
+        )
+        question.setInformativeText(
+            "This will permanently delete all data in the Jupyter kernel."
+        )
 
         question.exec()
         button_pressed = question.clickedButton()
@@ -1407,14 +1559,16 @@ class View(QMainWindow):
 
         event.accept()
 
-        print("Waiting for recurring tasks to end.", end='', flush=True)
+        print("Waiting for recurring tasks to end.", end="", flush=True)
         while not self.threadpool.waitForDone(100):
-            print(".", end='', flush=True)
+            print(".", end="", flush=True)
         print(flush=True)
 
     def start_recurring_task(self, task: Callable):
         # Pass the function to execute
-        worker = RecurringTask(task)  # Any other args, kwargs are passed to the run function
+        worker = RecurringTask(
+            task
+        )  # Any other args, kwargs are passed to the run function
         worker.signals.result.connect(partial(self.update_status, task))
         worker.signals.finished.connect(self.end_recurring_task)
 
@@ -1435,7 +1589,6 @@ class View(QMainWindow):
             self._status_bar_fixed_widget.setText(msg)
 
     def start_kernel(self, force: bool = False) -> MyKernel:
-
         # Starting the kernel will need a proper PYTHONPATH for importing the packages
 
         if force or self._kernel is None:
@@ -1443,15 +1596,15 @@ class View(QMainWindow):
         else:
             button = QMessageBox.question(
                 self,
-                "Restart Jupyter kernel", "A kernel is running, should a new kernel be started?"
+                "Restart Jupyter kernel",
+                "A kernel is running, should a new kernel be started?",
             )
             if button == QMessageBox.Yes:
-                self._console_panel.append('-' * 50)
+                self._console_panel.append("-" * 50)
                 self._start_new_kernel()
         return self._kernel
 
     def _start_new_kernel(self):
-
         if self._kernel is not None:
             self._kernel.shutdown()
 
@@ -1461,29 +1614,32 @@ class View(QMainWindow):
         self._console_panel.append(f"New kernel '{name}' started...")
 
         with MyClient(self._kernel) as client:
-
             info = client.get_kernel_info()
-            if 'banner' in info:
-                self._console_panel.append(info['banner'])
+            if "banner" in info:
+                self._console_panel.append(info["banner"])
 
             # make sure the user doesn't by accident quit the kernel
             client.run_snippet("del quit, exit")
 
             # but allow the user to get out without quiting the kernel
-            client.run_snippet(textwrap.dedent(
-                """\
+            client.run_snippet(
+                textwrap.dedent(
+                    """\
                 def quit(keep_kernel=True): 
                     import IPython as ip
                     ip = ip.get_ipython()
                     ip.keepkernel_on_exit = keep_kernel
                     ip.ask_exit()
                 """
-            ))
+                )
+            )
 
             # If there is a startup script, run it now
             try:
                 startup = os.environ["PYTHONSTARTUP"]
-                self._console_panel.append(f"Loading Python startup file from {startup}.")
+                self._console_panel.append(
+                    f"Loading Python startup file from {startup}."
+                )
                 client.run_snippet(
                     textwrap.dedent("""\
                         import os
@@ -1496,15 +1652,17 @@ class View(QMainWindow):
                             raise Warning("Couldn't load startup script, PYTHONSTARTUP not defined.")
                         except Exception as exc:
                             print(f"ERROR: loading startup script: {exc=}")
-                        """
-                    )
+                        """)
                 )
             except KeyError:
-                self._console_panel.append("Couldn't load startup script, PYTHONSTARTUP not defined.")
+                self._console_panel.append(
+                    "Couldn't load startup script, PYTHONSTARTUP not defined."
+                )
 
             if self.cmd_log:
                 self._console_panel.append(
-                    f"Loading [blue]gui_executor.transforms[/] extension...log file in '{self.cmd_log}'")
+                    f"Loading [blue]gui_executor.transforms[/] extension...log file in '{self.cmd_log}'"
+                )
                 client.run_snippet(
                     textwrap.dedent(
                         f"""\
@@ -1524,15 +1682,19 @@ class View(QMainWindow):
             )
         # self._gui_apps.clear()
 
-
     def start_qt_console(self):
         if self._qt_console is not None and self._qt_console.is_running:
-            dialog = QMessageBox.information(self, "Qt Console", "There is already a Qt Console running.")
+            dialog = QMessageBox.information(
+                self, "Qt Console", "There is already a Qt Console running."
+            )
         else:
-            self._qt_console = start_qtconsole(self._kernel or self.start_kernel(), verbosity=self.verbosity)
+            self._qt_console = start_qtconsole(
+                self._kernel or self.start_kernel(), verbosity=self.verbosity
+            )
 
-    def run_function(self, func: Callable, args: List, kwargs: Dict, runnable_type: int):
-
+    def run_function(
+        self, func: Callable, args: List, kwargs: Dict, runnable_type: int
+    ):
         # TODO:
         #  * disable run button (should be activate again in function_complete?)
 
@@ -1553,7 +1715,10 @@ class View(QMainWindow):
         worker.signals.error.connect(self.function_error)
         worker.signals.input.connect(self.input_request)
 
-        DEBUG and self._console_panel.append(f"[blue]Added '{worker.func_name}' to list of runnable threads.[/blue]")
+        if VERBOSE_DEBUG:
+            self._console_panel.append(
+                f"[blue]Added '{worker.func_name}' to list of runnable threads.[/blue]"
+            )
         self._gui_apps.append(worker)
 
     def run_function_in_kernel(self, func: Callable, args: List, kwargs: Dict):
@@ -1580,7 +1745,7 @@ class View(QMainWindow):
             # If the module contains a variable UI_TAB_HIDE that is a Callable (function),
             # execute the function to determine if the module shall be included or not.
 
-            hide_tab = getattr(mod, 'UI_TAB_HIDE', None)
+            hide_tab = getattr(mod, "UI_TAB_HIDE", None)
             if isinstance(hide_tab, Callable) and hide_tab():
                 continue
 
@@ -1593,23 +1758,35 @@ class View(QMainWindow):
 
             # Create a Panel for each sub-package
 
-            if subpackages := self._model.get_ui_subpackages(module_path_list=[module_path]):
+            if subpackages := self._model.get_ui_subpackages(
+                module_path_list=[module_path]
+            ):
                 if tab_order is None:
                     # Here we sort in display_name
-                    sorted_subpackages = sorted(subpackages.items(), key=lambda x: x[1][0])
+                    sorted_subpackages = sorted(
+                        subpackages.items(), key=lambda x: x[1][0]
+                    )
                 else:
                     # sorted_subpackages = sorted(subpackages.items(), key=lambda x: tab_order.index(x[0]))
                     # This way seems to be faster: see https://stackoverflow.com/a/21773891/4609203
-                    sorted_subpackages = [(name, subpackages[name]) for name in tab_order if name in subpackages]
+                    sorted_subpackages = [
+                        (name, subpackages[name])
+                        for name in tab_order
+                        if name in subpackages
+                    ]
 
                 for name, (display_name, _) in sorted_subpackages:
                     panel = FunctionButtonsPanel()
-                    self.add_buttons_to_panel(panel, module_path=f"{module_path}.{name}")
+                    self.add_buttons_to_panel(
+                        panel, module_path=f"{module_path}.{name}"
+                    )
                     buttons_panels[display_name] = panel
 
         return buttons_panels
 
-    def add_buttons_to_panel(self, panel: FunctionButtonsPanel, module_path: str = None) -> int:
+    def add_buttons_to_panel(
+        self, panel: FunctionButtonsPanel, module_path: str = None
+    ) -> int:
         """
 
         Args:
@@ -1634,10 +1811,14 @@ class View(QMainWindow):
                 # in the module file, because we want the functions to be sorted in the order they appear
                 # in the source code file and not alphabetically.
 
-                for name, func in sorted(funcs.items(), key=lambda x: x[1].__ui_lineno__):
+                for name, func in sorted(
+                    funcs.items(), key=lambda x: x[1].__ui_lineno__
+                ):
                     # print(f"{func.__name__} -> {func.__ui_lineno__ = }")
                     button = DynamicButton(func.__name__, func)
-                    button.mousePressEvent = partial(self.the_button_was_pressed, button, panel)
+                    button.mousePressEvent = partial(
+                        self.the_button_was_pressed, button, panel
+                    )
                     # button.mouseDoubleClickEvent = self.the_button_was_double_clicked
 
                     panel.add_button(button)
@@ -1645,7 +1826,10 @@ class View(QMainWindow):
 
                 recurring_funcs = self._model.get_ui_recurring_functions(mod)
 
-                for name, func in sorted(recurring_funcs.items(), key=lambda x: x[1].__wrapped__.__code__.co_firstlineno):
+                for name, func in sorted(
+                    recurring_funcs.items(),
+                    key=lambda x: x[1].__wrapped__.__code__.co_firstlineno,
+                ):
                     self.add_recurring_function(func)
 
             except ModuleNotFoundError as exc:
@@ -1658,10 +1842,14 @@ class View(QMainWindow):
         self._recurring_tasks.append(func)
 
     def the_button_was_double_clicked(self, *args, **kwargs):
-        DEBUG and LOGGER.debug(f"The button was double clicked {args=}, {kwargs=}.")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"The button was double clicked {args=}, {kwargs=}.")
 
     def the_button_was_pressed(self, button: DynamicButton, panel, *args, **kwargs):
-        DEBUG and LOGGER.debug(f"The button was pressed {button=}, {panel=}, {args=}, {kwargs=}.")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(
+                f"The button was pressed {button=}, {panel=}, {args=}, {kwargs=}."
+            )
 
         if button.immediate_run():
             if button.function.__ui_allow_kernel_interrupt__:
@@ -1669,7 +1857,9 @@ class View(QMainWindow):
 
             ui_args = get_arguments(button.function)
             args, kwargs = extract_var_name_args_and_kwargs(ui_args)
-            self.run_function(button.function, args, kwargs, button.function.__ui_runnable__)
+            self.run_function(
+                button.function, args, kwargs, button.function.__ui_runnable__
+            )
 
             # Remove any existing arguments panel from a previous button
 
@@ -1694,7 +1884,10 @@ class View(QMainWindow):
         args_panel = ArgumentsPanel(button, ui_args)
         args_panel.run_button.clicked.connect(
             lambda checked: self.run_function(
-                args_panel.function, args_panel.args, args_panel.kwargs, args_panel.runnable
+                args_panel.function,
+                args_panel.args,
+                args_panel.kwargs,
+                args_panel.runnable,
             )
         )
         args_panel.close_button.clicked.connect(self.close_args_panel)
@@ -1743,16 +1936,17 @@ class View(QMainWindow):
 
     @pyqtSlot(str)
     def function_output_png(self, data: str):
-        DEBUG and LOGGER.debug(f"function_output_png('{data[:80]}')")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"function_output_png('{data[:80]}')")
         image = QImage()
-        if not image.loadFromData(b64decode(data), 'PNG'):
+        if not image.loadFromData(b64decode(data), "PNG"):
             LOGGER.error("Could not convert image/png to QImage")
 
         width = 800
         self.png_widget = QFrame()  # QWidget()
-        self.png_widget.setMinimumSize(width, int(width/16*9))
+        self.png_widget.setMinimumSize(width, int(width / 16 * 9))
         pixmap = QPixmap()
-        if not pixmap.loadFromData(b64decode(data), 'PNG'):
+        if not pixmap.loadFromData(b64decode(data), "PNG"):
             LOGGER.error("Could not convert image/png data to QPixmap")
             pixmap.fromImage(image)
         label = QLabel()
@@ -1773,10 +1967,14 @@ class View(QMainWindow):
 
         try:
             self._gui_apps.remove(runnable)
-            DEBUG and self._console_panel.append(
-                f"[green]Removed '{runnable.func_name}' from list of runnable threads.[/green]")
+            if VERBOSE_DEBUG:
+                self._console_panel.append(
+                    f"[green]Removed '{runnable.func_name}' from list of runnable threads.[/green]"
+                )
         except ValueError:
-            self._console_panel.append(f"[red]Couldn't find '{runnable.func_name}' on list of runnable threads..[/red]")
+            self._console_panel.append(
+                f"[red]Couldn't find '{runnable.func_name}' on list of runnable threads..[/red]"
+            )
 
     @pyqtSlot(Exception)
     def function_error(self, msg: Exception):
