@@ -20,5 +20,5 @@ You can find the documentation at https://ivs-kuleuven.github.io/gui-executor/.
 ## Running the Tests
 
 ```
-$ PYTHONPATH=~/Documents/PyCharmProjects/gui-executor/tests gui-executor --module-path tasks.shared --module-path tasks.specific --debug
+$ PYTHONPATH=~/github/gui-executor/tests gui-executor --module-path tasks.shared --module-path tasks.specific --debug
 ```
