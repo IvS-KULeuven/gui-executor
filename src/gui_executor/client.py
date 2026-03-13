@@ -13,9 +13,7 @@ VERBOSE_DEBUG = False
 
 
 class MyClient:
-    def __init__(
-        self, kernel: MyKernel, startup_timeout: float = 60.0, timeout: float = 1.0
-    ):
+    def __init__(self, kernel: MyKernel, startup_timeout: float = 60.0, timeout: float = 1.0):
         self._timeout = timeout
         """The timeout used when communicating with the kernel."""
 
@@ -71,9 +69,7 @@ class MyClient:
                 pass
 
             if time.time() - start > timeout:
-                raise TimeoutError(
-                    "Kernel did not become ready within the specified timeout."
-                )
+                raise TimeoutError("Kernel did not become ready within the specified timeout.")
             time.sleep(0.1)
 
     def stop_channels(self):
@@ -154,9 +150,7 @@ class MyClient:
                     if io_msg_content["execution_state"] == "idle":
                         # self.signals.data.emit("Execution State is Idle, terminating...")
                         if VERBOSE_DEBUG:
-                            LOGGER.debug(
-                                f"{id(self)}: Execution State is Idle, terminating..."
-                            )
+                            LOGGER.debug(f"{id(self)}: Execution State is Idle, terminating...")
                         break
                 elif io_msg_type == "stream":
                     if "text" in io_msg_content:
@@ -171,9 +165,10 @@ class MyClient:
                 elif io_msg_type == "execute_result":
                     ...  # ignore this message type
                 else:
-                    raise RuntimeError(f"Unknown io_msg_type: {io_msg_type}")
+                    LOGGER.warning(f"{id(self)}: Unknown io_msg_type: {io_msg_type}")
             except queue.Empty:
-                ...
+                LOGGER.warning(f"{id(self)}: IOPub timed out waiting for idle — exiting loop")
+                break
 
         if VERBOSE_DEBUG:
             LOGGER.debug(f"{id(self)}: {output = }")
