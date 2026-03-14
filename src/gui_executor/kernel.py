@@ -112,7 +112,7 @@ def do_test_my_kernel(name: str = "python3"):
             a = 42
             b = 73
             c = a + b
-            print(c)        
+            print(c)
             """),
         'print(f"{a=}, {b=}, {c=}")',
         "1/0",  # should return a ZeroDivisionError
@@ -167,9 +167,6 @@ def start_qtconsole(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-
-    # kernel_name = "python3"
-    kernel_name = "plato-common-egse"
+    kernel_name = "python3"
 
     do_test_my_kernel(name=kernel_name)

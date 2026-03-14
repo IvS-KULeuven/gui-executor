@@ -8,8 +8,6 @@ from jupyter_client import KernelClient
 from gui_executor.kernel import MyKernel
 from gui_executor.utils import bool_env, decode_traceback
 
-logging.basicConfig(level=logging.DEBUG)
-
 LOGGER = logging.getLogger("gui-executor.client")
 
 VERBOSE_DEBUG = bool_env("VERBOSE_DEBUG")
