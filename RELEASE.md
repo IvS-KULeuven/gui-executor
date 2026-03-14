@@ -8,9 +8,10 @@
 * Push the bumped version
 * Upload to PyPI
   ```
+  $ rm -r dist
   $ uv build
-  $ uv publish --token $UV_PUBLISH_TOKEN dist/gui_executor-x.y.z*
-  $ git tag x.y.z
+  $ uv publish --token $UV_PUBLISH_TOKEN
+  $ git tag v#.#.#
   ```
 * Create a pull request and merge the pull request
 * Push the tags to upstream
