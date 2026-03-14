@@ -13,6 +13,7 @@ from executor import ExternalCommand
 from executor import ExternalCommandFailed
 
 from gui_executor.kernel import MyKernel
+from gui_executor.client import MyClient
 from gui_executor.utils import expand_path
 from gui_executor.utils import get_file_path
 
@@ -60,9 +61,7 @@ class Command:
         for arg_name, arg_text in self._args:
             if m := re.search(r"<<([:\w]+)>>", arg_text):
                 match = m[1]
-                name, expected_type = (
-                    match.split(":") if ":" in match else (match, None)
-                )
+                name, expected_type = match.split(":") if ":" in match else (match, None)
                 required_args.append((name, expected_type))
         return required_args
 
@@ -81,9 +80,7 @@ class Command:
         for arg_name, arg_text in self._args:
             if m := re.search(r"<<([:\w]+)>>", arg_text):
                 x, *_ = m[1].split(":")
-                arg_value = (
-                    kwargs[x] if x in kwargs else input(f"Enter a value for {x}: ")
-                )
+                arg_value = kwargs[x] if x in kwargs else input(f"Enter a value for {x}: ")
             elif arg_text == "None":
                 arg_value = ""
             else:
@@ -112,9 +109,7 @@ class ScriptCommand(Command):
         category: str = None,
         args: List[str] = None,
     ):
-        super().__init__(
-            name, path=path, python_path=python_path, category=category, args=args
-        )
+        super().__init__(name, path=path, python_path=python_path, category=category, args=args)
         self._script_name = script_name
         self._cmd: ExternalCommand | None = None
         self._env = env
@@ -126,14 +121,10 @@ class ScriptCommand(Command):
         config: ExecutorConfiguration
 
         if "Scripts" not in config:
-            raise ConfigError(
-                f"No scripts defined in the configuration '{config.name}'"
-            )
+            raise ConfigError(f"No scripts defined in the configuration '{config.name}'")
 
         if name not in config.get_script_names():
-            raise ConfigError(
-                f"No script definition found for '{name}' in the configuration '{config.name}'."
-            )
+            raise ConfigError(f"No script definition found for '{name}' in the configuration '{config.name}'.")
 
         python_path = config.get_python_path()
         env = config.get_environment()
@@ -190,15 +181,11 @@ class ScriptCommand(Command):
     def get_command_line(self) -> str:
         path = expand_path(self._path)
         if not path.exists():
-            raise CommandError(
-                f"The path '{self._path}' was expanded into '{path}' which doesn't exist."
-            )
+            raise CommandError(f"The path '{self._path}' was expanded into '{path}' which doesn't exist.")
 
         filepath = path / self._script_name
         if not filepath.exists():
-            raise CommandError(
-                f"The generated filepath '{filepath}' doesn't exit for command script {self._name}"
-            )
+            raise CommandError(f"The generated filepath '{filepath}' doesn't exit for command script {self._name}")
 
         return f"{sys.executable} {filepath} {self._parsed_args}"
 
@@ -219,14 +206,10 @@ class SnippetCommand(Command):
         config: ExecutorConfiguration
 
         if "Snippets" not in config:
-            raise ConfigError(
-                f"No code snippets defined in the configuration '{config.name}'"
-            )
+            raise ConfigError(f"No code snippets defined in the configuration '{config.name}'")
 
         if name not in config.get_snippet_names():
-            raise ConfigError(
-                f"No code snippet definition found for '{name}' in the configuration '{config.name}'."
-            )
+            raise ConfigError(f"No code snippet definition found for '{name}' in the configuration '{config.name}'.")
 
         python_path = config.get_python_path()
         env = config.get_environment()
@@ -255,9 +238,7 @@ class SnippetCommand(Command):
             args=args,
         )
 
-    def execute(
-        self, capture: bool = True, asynchronous: bool = False, kernel=None
-    ) -> None:
+    def execute(self, capture: bool = True, asynchronous: bool = False, kernel=None) -> None:
         saved_env = None
 
         if self._env:
@@ -265,9 +246,10 @@ class SnippetCommand(Command):
             os.environ.update(self._env)
 
         kernel = kernel or MyKernel()
+        client = MyClient(kernel)
         code = "\n".join(self._code)  # TODO: optionally might run each line separately?
-        self._output = kernel.run_snippet(code)
-        self._error = kernel.get_error()
+        self._output = client.run_snippet(code)
+        self._error = client.get_error()
 
         if saved_env is not None:
             os.environ = saved_env
