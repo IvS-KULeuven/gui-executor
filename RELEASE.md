@@ -4,7 +4,7 @@
 * Document your changes in ~/docs/gui-executor.adoc
 * Run `asciidoctor -r asciidoctor-tabs -o index.html gui-executor.adoc`
 * Push doc changes to origin
-* Bump the version in `__version__.py` 
+* Bump the version in `__version__.py`  and `pyproject.toml`
 * Push the bumped version
 * Upload to PyPI
   ```
