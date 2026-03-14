@@ -6,10 +6,13 @@ from typing import List
 from jupyter_client import KernelClient
 
 from gui_executor.kernel import MyKernel
-from gui_executor.utils import decode_traceback
+from gui_executor.utils import bool_env, decode_traceback
+
+logging.basicConfig(level=logging.DEBUG)
 
 LOGGER = logging.getLogger("gui-executor.client")
-VERBOSE_DEBUG = False
+
+VERBOSE_DEBUG = bool_env("VERBOSE_DEBUG")
 
 
 class MyClient:
@@ -23,6 +26,9 @@ class MyClient:
         self._error = None
 
         self._client: KernelClient = kernel._kernel.client()
+
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"{id(self)}: Created client [{type(self)}] for kernel [{type(kernel)}].")
 
     def connect(self):
         if VERBOSE_DEBUG:
@@ -45,6 +51,7 @@ class MyClient:
         self._client.start_channels()
         try:
             self.wait_for_ready(timeout=self._startup_timeout)
+            LOGGER.info("Client channels ready.")
         except RuntimeError:
             self._client.stop_channels()
             raise
@@ -57,20 +64,19 @@ class MyClient:
 
     def wait_for_ready(self, timeout: float = 60.0):
         """Wait for kernel to be ready."""
-        self._client.kernel_info()
+        msg_id = self._client.kernel_info()
 
         start = time.time()
         while True:
             try:
-                msg = self._client.get_shell_msg(timeout=1)
-                if msg["msg_type"] == "kernel_info_reply":
+                msg = self._client.get_shell_msg(timeout=1.0)
+                if msg["msg_type"] == "kernel_info_reply" and msg["parent_header"].get("msg_id") == msg_id:
                     return True
-            except Exception:
+            except queue.Empty:
                 pass
 
             if time.time() - start > timeout:
                 raise TimeoutError("Kernel did not become ready within the specified timeout.")
-            time.sleep(0.1)
 
     def stop_channels(self):
         self._client.stop_channels()
@@ -163,6 +169,8 @@ class MyClient:
                 elif io_msg_type == "error":
                     ...  # ignore this message type
                 elif io_msg_type == "execute_result":
+                    ...  # ignore this message type
+                elif io_msg_type == "iopub_welcome":
                     ...  # ignore this message type
                 else:
                     LOGGER.warning(f"{id(self)}: Unknown io_msg_type: {io_msg_type}")

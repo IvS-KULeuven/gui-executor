@@ -64,9 +64,7 @@ def main():
     )
     parser.add_argument("--config", help="a YAML file that configures the executor")
     parser.add_argument("--logo", help="path to logo PNG or SVG file")
-    parser.add_argument(
-        "--app-name", help="the name of the GUI app, will go in the window title"
-    )
+    parser.add_argument("--app-name", help="the name of the GUI app, will go in the window title")
     parser.add_argument("--debug", "-d", action="store_true", help="set debugging mode")
     parser.add_argument(
         "--single",
@@ -82,13 +80,7 @@ def main():
     module_path_list = args.module_path
 
     single = 1 if args.single is None else args.single
-    lock_file = (
-        QLockFile(
-            str(Path(f"~/{args.app_name or 'GUI executor'}.app.lock").expanduser())
-        )
-        if single
-        else None
-    )
+    lock_file = QLockFile(str(Path(f"~/{args.app_name or 'GUI executor'}.app.lock").expanduser())) if single else None
 
     if args.version:
         from .__version__ import __version__ as version
@@ -107,9 +99,10 @@ def main():
     if args.debug:
         from gui_executor import view, client, kernel
 
-        view.VERBOSE_DEBUG = True
-        client.VERBOSE_DEBUG = True
-        kernel.VERBOSE_DEBUG = True
+        # We now use the VERBOSE_DEBUG env variable to control the debug logging in the view, client and kernel modules.
+        # view.VERBOSE_DEBUG = True
+        # client.VERBOSE_DEBUG = True
+        # kernel.VERBOSE_DEBUG = True
         # Add the log messages to stdout for debugging purposes
         log.addHandler(logging.StreamHandler(sys.stdout))
 
@@ -135,10 +128,7 @@ def main():
             from Foundation import NSBundle
 
             if bundle := NSBundle.mainBundle():
-                if (
-                    app_info := bundle.localizedInfoDictionary()
-                    or bundle.infoDictionary()
-                ):
+                if app_info := bundle.localizedInfoDictionary() or bundle.infoDictionary():
                     app_info["CFBundleName"] = app_name
 
     app = QApplication([])
@@ -168,13 +158,12 @@ def main():
         error_message = QMessageBox()
         error_message.setIcon(QMessageBox.Warning)
         error_message.setWindowTitle("Error")
-        error_message.setText(
-            f"The {args.app_name or 'GUI executor'} application is already running!"
-        )
+        error_message.setText(f"The {args.app_name or 'GUI executor'} application is already running!")
         error_message.setStandardButtons(QMessageBox.Ok)
 
         return error_message.exec()
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     sys.exit(main())

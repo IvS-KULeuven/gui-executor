@@ -1,7 +1,7 @@
 [project]
 name = "gui-executor"
 description = "Execute Python code in an automatically generated GUI App."
-version = "0.21.3"
+version = "0.22.0"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 readme = {"file" = "README.md", "content-type" = "text/markdown"}
@@ -24,13 +24,20 @@ dependencies = [
     "matplotlib",
     "distro",
     "PyQt5 >= 5.15",
-    "ipython >= 8",
-    "ipykernel == 6.15.1",
-    "jupyter-client == 6.1.12",
-#    "jupyter-console == 6.4.2",
-    "jupyter-core == 4.11.1",
-    "qtconsole == 5.4.3",
 
+    "ipython >= 8",
+
+    "ipykernel",
+    "jupyter-client",
+    "jupyter-console",
+    "jupyter-core",
+    "qtconsole",
+
+#    "ipykernel == 6.15.1",
+#    "jupyter-client == 6.1.12",
+#    "jupyter-console == 6.4.2",
+#    "jupyter-core == 4.11.1",
+#    "qtconsole == 5.4.3",
 ]
 
 [project.optional-dependencies]
@@ -42,6 +49,9 @@ gui-executor = "gui_executor.__main__:main"
 [project.urls]
 documentation = "https://ivs-kuleuven.github.io/gui-executor/"
 repository = "https://github.com/IvS-KULeuven/gui-executor"
+
+[tool.ruff]
+line-length = 120
 
 [tool.hatch.build.targets.sdist]
 exclude = [

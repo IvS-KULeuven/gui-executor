@@ -32,6 +32,15 @@ from rich.text import Text
 from rich.tree import Tree
 
 
+def bool_env(var_name: str, default: bool = False) -> bool:
+    """Return True if the environment variable is set to 1, true, yes, or on. All case-insensitive."""
+
+    if value := os.getenv(var_name):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+
+    return default
+
+
 def replace_environment_variable(input_string: str) -> str:
     """Returns the `input_string` with all occurrences of ENV['var'] expanded.
 
@@ -88,15 +97,11 @@ def expand_path(path: Path | str) -> Path:
 def get_file_path(path: str | Path, name: str) -> Path:
     full_path = expand_path(path)
     if not full_path.exists():
-        raise ValueError(
-            f"The path '{full_path}' was expanded into '{path}' which doesn't exist."
-        )
+        raise ValueError(f"The path '{full_path}' was expanded into '{path}' which doesn't exist.")
 
     filepath = full_path / name
     if not filepath.exists():
-        raise ValueError(
-            f"The generated filepath '{filepath}' doesn't exit for command script {name}"
-        )
+        raise ValueError(f"The generated filepath '{filepath}' doesn't exit for command script {name}")
 
     return filepath
 
@@ -182,9 +187,7 @@ def get_required_args(code: List | str) -> List[Tuple[str, str | None]]:
         if matches := re.findall(r"<<([:\w]+)>>", line):
             print(f"{matches = }")
             for match in matches:
-                name, expected_type = (
-                    match.split(":") if ":" in match else (match, None)
-                )
+                name, expected_type = match.split(":") if ":" in match else (match, None)
                 required_args.append((name, expected_type))
 
     return required_args
@@ -198,9 +201,7 @@ def replace_required_args(code: List | str, args: List) -> List | str:
         if matches := re.findall(r"<<([:\w]+)>>", line):
             for match in matches:
                 print(f"{match = }")
-                name, expected_type = (
-                    match.split(":") if ":" in match else (match, None)
-                )
+                name, expected_type = match.split(":") if ":" in match else (match, None)
                 line = line.replace(f"<<{match}>>", f"****")
         new_code_lines.append(line)
     return new_code_lines
@@ -305,8 +306,7 @@ def extract_var_name_args_and_kwargs(ui_args: dict):
     args = [
         v.annotation.get_value()
         for k, v in ui_args.items()
-        if isinstance(v.annotation, VariableName)
-        and v.kind == ArgumentKind.POSITIONAL_ONLY
+        if isinstance(v.annotation, VariableName) and v.kind == ArgumentKind.POSITIONAL_ONLY
     ]
 
     kwargs = {
@@ -319,9 +319,7 @@ def extract_var_name_args_and_kwargs(ui_args: dict):
     return args, kwargs
 
 
-def create_code_snippet(
-    func: Callable, args: List, kwargs: Dict, call_func: bool = True
-):
+def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: bool = True):
     # Check if one of the args/kwargs is an Enum
     #   * import the proper Enum class
     #   *
@@ -355,9 +353,7 @@ def create_code_snippet(
 def create_code_snippet_renderable(func: Callable, args: List, kwargs: Dict):
     snippet = f"{func.__ui_capture_response__} = {func.__name__}({stringify_args(args)}{', ' if args else ''}{stringify_kwargs(kwargs)})"
 
-    return Panel(
-        Syntax(snippet, "python", theme="default", word_wrap=True), box=box.HORIZONTALS
-    )
+    return Panel(Syntax(snippet, "python", theme="default", word_wrap=True), box=box.HORIZONTALS)
 
 
 def select_directory(directory: str = None) -> str:
@@ -402,9 +398,7 @@ def combo_box_from_list(values: List) -> QComboBox:
 
 def is_renderable(check_object: Any) -> bool:
     """Check if an object may be rendered by Rich, but ignore plain strings."""
-    return hasattr(check_object, "__rich__") or hasattr(
-        check_object, "__rich_console__"
-    )
+    return hasattr(check_object, "__rich__") or hasattr(check_object, "__rich_console__")
 
 
 class Timer(object):
@@ -492,8 +486,7 @@ def _bytes_from_decode_data(s):
         return memoryview(s).tobytes()
     except TypeError:
         raise TypeError(
-            "argument should be a bytes-like object or ASCII string, not %r"
-            % s.__class__.__name__
+            "argument should be a bytes-like object or ASCII string, not %r" % s.__class__.__name__
         ) from None
 
 

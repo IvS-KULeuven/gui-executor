@@ -8,10 +8,11 @@ from jupyter_client.manager import KernelManager
 from rich import print
 from rich.console import Console
 
-from gui_executor.utils import decode_traceback
+from gui_executor.utils import bool_env, decode_traceback
 
 LOGGER = logging.getLogger("gui-executor.kernel")
-VERBOSE_DEBUG = False
+
+VERBOSE_DEBUG = bool_env("VERBOSE_DEBUG")
 
 
 class KernelError(Exception):
@@ -23,13 +24,9 @@ def find_running_kernels():
 
     import psutil
 
-    all_python = [
-        proc for proc in psutil.process_iter() if "python" in proc.name().lower()
-    ]
+    all_python = [proc for proc in psutil.process_iter() if "python" in proc.name().lower()]
     kernel_processes = [y for y in all_python for z in y.cmdline() if "ipykernel" in z]
-    datetime.datetime.fromtimestamp(kernel_processes[0].create_time()).strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
+    datetime.datetime.fromtimestamp(kernel_processes[0].create_time()).strftime("%Y-%m-%d %H:%M:%S")
 
 
 # TODO:
@@ -160,9 +157,7 @@ def start_qtconsole(
         print("Starting Jupyter Qt Console...")
         print(f"{cmd_line = }")
 
-    cmd = ExternalCommand(
-        f"{cmd_line}", capture=True, capture_stderr=True, asynchronous=True
-    )
+    cmd = ExternalCommand(f"{cmd_line}", capture=True, capture_stderr=True, asynchronous=True)
     try:
         cmd.start()
     except ExternalCommandFailed as exc:

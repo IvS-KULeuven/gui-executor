@@ -8,16 +8,27 @@ Run this script as (the trailing x is to prevent pytest from picking up this fil
 """
 
 import contextlib
+import os
 import queue
 import textwrap
 import time
 
 from rich.console import Console
+from gui_executor.client import MyClient
 from gui_executor.kernel import MyKernel
+
+# Prevent the debugging messages from pydevd from appearing when the Jupyter kernel is started.
+os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
 
 console = Console(width=240)
 
 kernel = MyKernel()
+
+while not kernel.is_alive():
+    time.sleep(0.1)
+
+client = MyClient(kernel)
+client.connect()
 
 snippet = textwrap.dedent(
     """
@@ -25,7 +36,7 @@ snippet = textwrap.dedent(
 
     print("starting...", flush=True)
     
-    time.sleep(5.0)
+    time.sleep(0.5)
     
     for idx in range(5):
         time.sleep(1.0)
@@ -45,17 +56,20 @@ snippet = textwrap.dedent(
 """
 )
 
-msg_id = kernel.get_client().execute(snippet, allow_stdin=True)
+# console.log(client.get_kernel_info())
 
-io_msg = kernel.get_client().get_iopub_msg(timeout=1.0)
+msg_id = client.execute(snippet, allow_stdin=True)
+
+io_msg = client.get_iopub_msg(timeout=2.0)
 console.log(io_msg)
 
 io_msg_content = io_msg["content"]  # execution_state should be 'busy'
 
 while True:
     # with contextlib.suppress(queue.Empty):
+
     try:
-        io_msg = kernel.get_client().get_iopub_msg(timeout=1.0)
+        io_msg = client.get_iopub_msg(timeout=1.0)
         console.log(io_msg)
 
         io_msg_content = io_msg["content"]
@@ -71,7 +85,7 @@ while True:
 
     except queue.Empty:
         with contextlib.suppress(queue.Empty):
-            in_msg = kernel.get_client().get_stdin_msg(timeout=0.1)
+            in_msg = client.get_stdin_msg(timeout=0.1)
             console.log(in_msg)
 
             if in_msg["msg_type"] == "input_request":
@@ -80,11 +94,12 @@ while True:
                 if "Continue?" in in_msg_content["prompt"]:
                     console.log("[red]We got an input request, sending 'Y'.[/red]")
                     time.sleep(5.0)
-                    kernel.get_client().input("y")
+                    client.input("y")
 
-msg = kernel.get_client().get_shell_msg(msg_id)
+msg = client.get_shell_msg(msg_id)
 console.log("Returned shell message:")
 console.log(msg)
+client.disconnect()
 
-msg_id = kernel.get_client().shutdown()
+msg_id = kernel.shutdown()
 del kernel
