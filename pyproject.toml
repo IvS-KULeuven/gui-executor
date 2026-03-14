@@ -24,20 +24,20 @@ dependencies = [
     "matplotlib",
     "distro",
     "PyQt5 >= 5.15",
-    
+
     "ipython >= 8",
 
-#    "ipykernel",
-#    "jupyter-client",
-#    "jupyter-console",
-#    "jupyter-core",
-#    "qtconsole",
+    "ipykernel",
+    "jupyter-client",
+    "jupyter-console",
+    "jupyter-core",
+    "qtconsole",
 
-    "ipykernel == 6.15.1",
-    "jupyter-client == 6.1.12",
-    "jupyter-console == 6.4.2",
-    "jupyter-core == 4.11.1",
-    "qtconsole == 5.4.3",
+#    "ipykernel == 6.15.1",
+#    "jupyter-client == 6.1.12",
+#    "jupyter-console == 6.4.2",
+#    "jupyter-core == 4.11.1",
+#    "qtconsole == 5.4.3",
 ]
 
 [project.optional-dependencies]
