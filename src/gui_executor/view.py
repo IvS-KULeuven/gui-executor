@@ -115,6 +115,8 @@ from .utils import select_file
 from .utils import stringify_args
 from .utils import stringify_kwargs
 from .utypes import Callback
+from .utypes import DropdownList
+from .utypes import ListList
 from .utypes import TypeObject
 from .utypes import UQWidget
 
@@ -1044,12 +1046,23 @@ class ArgumentsPanel(QScrollArea):
             # Stretch the middle column of the grid. That is needed when there is only one argument and it's a bool
             # i.e. a CheckBox. If we do not stretch, the checkbox will be centered.
             grid.setColumnStretch(1, 1)
-            grid.addWidget(label, idx, 0, alignment=Qt.AlignVCenter)
-            grid.addWidget(input_field, idx, 1, alignment=Qt.AlignVCenter)
-            if folder_button is not None:
-                grid.addWidget(folder_button, idx, 2)
-            else:
-                grid.addWidget(type_hint, idx, 2, alignment=Qt.AlignVCenter)
+
+            # For expanding user types, anchor everything to the top so growth happens downward.
+            # For regular one-line widgets, keep vertical centering for nicer row balance.
+            is_expanding_utype = isinstance(arg.annotation, (ListList, DropdownList))
+            row_alignment = Qt.AlignTop if is_expanding_utype else Qt.AlignVCenter
+
+            label_widget: QWidget = label
+            right_widget: QWidget = folder_button if folder_button is not None else type_hint
+
+            if is_expanding_utype:
+                first_row_height = self._first_input_row_height(input_field)
+                label_widget = self._center_in_first_row(label, first_row_height)
+                right_widget = self._center_in_first_row(right_widget, first_row_height)
+
+            grid.addWidget(label_widget, idx, 0, alignment=row_alignment)
+            grid.addWidget(input_field, idx, 1, alignment=row_alignment)
+            grid.addWidget(right_widget, idx, 2, alignment=row_alignment)
 
         vbox.addLayout(grid)
         vbox.addWidget(
@@ -1097,6 +1110,29 @@ class ArgumentsPanel(QScrollArea):
         self.setWidget(widget)
 
         # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
+
+    @staticmethod
+    def _first_input_row_height(widget: QWidget) -> int:
+        if isinstance(widget, UQWidget):
+            if row_height := widget.get_first_row_height():
+                return row_height
+
+        for child in widget.findChildren(QWidget):
+            if isinstance(child, (QComboBox, QLineEdit, QCheckBox)):
+                return child.sizeHint().height()
+
+        return QComboBox().sizeHint().height()
+
+    @staticmethod
+    def _center_in_first_row(widget: QWidget, row_height: int) -> QWidget:
+        wrapper = QWidget()
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(widget, alignment=Qt.AlignVCenter)
+        wrapper.setFixedHeight(row_height)
+        wrapper.setLayout(layout)
+        return wrapper
 
     @staticmethod
     def select_folder(input_field: QLineEdit, *args):
@@ -1147,6 +1183,7 @@ class ArgumentsPanel(QScrollArea):
         if arg.annotation is bool:
             return field.checkState() == Qt.Checked
         elif isinstance(arg.annotation, TypeObject):
+            LOGGER.debug(f"{type(field)=}, {field.get_value()=}")
             return field.get_value()
         elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
             return arg.annotation[field.currentText()]
@@ -1782,12 +1819,15 @@ class View(QMainWindow):
 
         ui_args = get_arguments(button.function)
 
+        LOGGER.debug(f"UI arguments for '{button.function.__name__}': {ui_args}")
+        LOGGER.debug(f"Extracted args: {extract_var_name_args_and_kwargs(ui_args)}")
+
         args_panel = ArgumentsPanel(button, ui_args)
         args_panel.run_button.clicked.connect(
             lambda checked: self.run_function(
                 args_panel.function,
-                args_panel.args,
-                args_panel.kwargs,
+                getattr(args_panel, "args", []),
+                getattr(args_panel, "kwargs", {}),
                 args_panel.runnable,
             )
         )

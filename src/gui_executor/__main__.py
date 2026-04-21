@@ -74,6 +74,8 @@ def main():
 
     args = parser.parse_args()
 
+    # logging.basicConfig(level=logging.DEBUG)
+
     verbosity = 0 if args.verbose is None else args.verbose
     kernel_name = args.kernel_name or "python3"
     app_name = args.app_name or "GUI Executor"
