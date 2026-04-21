@@ -1,6 +1,6 @@
 import rich
 
-from gui_executor.utypes import FixedList
+from gui_executor.utypes import DropdownList, FixedList
 from gui_executor.utypes import ListList
 from gui_executor.exec import exec_ui
 
@@ -34,9 +34,7 @@ def tuple_list_argument(
 
 @exec_ui()
 def list_of_lists_with_bool(
-    x_list: ListList(
-        [int, bool, float, str, str], [123, True, 0.13, "CSL", "CSL EM Final"]
-    ),
+    x_list: ListList([int, bool, float, str, str], [123, True, 0.13, "CSL", "CSL EM Final"]),
 ):
     rich.print("x_list = ", x_list)
     return x_list
@@ -78,3 +76,21 @@ def list_to_array(angles: list):
     thetas, phis = angles[:, 0], angles[:, 1]
 
     print(f"{thetas = }, {phis= }")
+
+
+@exec_ui(display_name="List of drop-down menus")
+def list_of_dropdowns(x_list: DropdownList(["Option 1", "Option 2", "Option 3"], name="Pick an option")):
+    rich.print("x_list = ", x_list)
+    return x_list
+
+
+@exec_ui(display_name="List of drop-down menus with defaults")
+def list_of_dropdowns_defaults(
+    x_list: DropdownList(
+        ["Option 1", "Option 2", "Option 3", "Option 4", "Option 5"],
+        defaults=["Option 2", "Option 3"],
+        name="Pick an option",
+    ),
+):
+    rich.print("x_list = ", x_list)
+    return x_list

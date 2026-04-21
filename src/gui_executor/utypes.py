@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import inspect
 import itertools
+import logging
 from enum import Enum
 from functools import partial
 from pathlib import Path
@@ -43,9 +44,11 @@ from .utils import combo_box_from_list
 
 HERE = Path(__file__).parent.resolve()
 
+LOGGER = logging.getLogger("gui-executor.utypes")
+
 
 class TypeObject:
-    def __init__(self, name: str = None):
+    def __init__(self, name: str | None = None):
         self.name = name
 
     @property
@@ -63,9 +66,15 @@ class UQWidget(QWidget):
     def get_value(self):
         raise NotImplementedError
 
-    def _cast_arg(self, field: QLineEdit | QCheckBox, literal: str | Callable):
+    def get_first_row_height(self) -> int | None:
+        return None
+
+    def _cast_arg(self, field: QLineEdit | QCheckBox | QComboBox, literal: str | Callable | None):
         if literal is bool:
             return field.checkState() == Qt.Checked
+
+        if isinstance(field, QComboBox):
+            return field.currentText()
 
         if not (value := field.displayText() or field.placeholderText()):
             return None
@@ -166,9 +175,7 @@ class VariableNameWidget(UQWidget):
         self.value = value
 
         layout = QHBoxLayout()
-        layout.addWidget(
-            QLabel(f"The variable '{value}' shall be known in the kernel.")
-        )
+        layout.addWidget(QLabel(f"The variable '{value}' shall be known in the kernel."))
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)
@@ -224,9 +231,7 @@ class FixedListWidget(UQWidget):
         self.setLayout(row_layout)
 
     def get_value(self) -> List:
-        return [
-            self._cast_arg(f, t) for f, (t, d) in zip(self.fields, self._type_object)
-        ]
+        return [self._cast_arg(f, t) for f, (t, d) in zip(self.fields, self._type_object)]
 
     def _row(self, expand_default: bool = False) -> Tuple[QWidget, List]:
         widget = QWidget()
@@ -299,8 +304,11 @@ class ListListWidget(UQWidget):
         self._type_object = type_object
         self._rows: List[List] = []
         self._rows_layout = QVBoxLayout()
+        self._rows_layout.setSpacing(5)
+        self._first_row_widget: QWidget | None = None
 
         row, fields = self._row("+", expand_default=True)
+        self._first_row_widget = row
 
         self._rows_layout.addWidget(row)
         self._rows_layout.setContentsMargins(0, 0, 0, 0)
@@ -310,15 +318,18 @@ class ListListWidget(UQWidget):
         self.setLayout(self._rows_layout)
 
     def get_value(self) -> List[List]:
-        return [
-            [self._cast_arg(f, t) for f, (t, d) in zip(field, self._type_object)]
-            for field in self._rows
-        ]
+        return [[self._cast_arg(f, t) for f, (t, d) in zip(field, self._type_object)] for field in self._rows]
+
+    def get_first_row_height(self) -> int | None:
+        if self._first_row_widget is None:
+            return None
+        return self._first_row_widget.sizeHint().height()
 
     def _row(self, row_button: str, expand_default: bool = False):
         widget = QWidget()
 
         hbox = QHBoxLayout()
+        hbox.setSpacing(5)
 
         fields = []
         for x, y in self._type_object:
@@ -365,3 +376,128 @@ class ListListWidget(UQWidget):
     def _delete_row(self, widget: QWidget, fields: List, *args):
         self._rows_layout.removeWidget(widget)
         self._rows.remove(fields)
+
+
+class DropdownList(TypeObject):
+    """
+    A user type for a list of drop-down menus. The outer list is extendable, rows can be added with a '+' button and removed with a 'x' button.
+
+    Each entry in the list is a separate row with a drop-down menu. The options for the drop-down menu are given by the literals argument,
+    and the default selected option is given by the defaults argument. There is always at least one row, if defaults are provided, there are
+    as many rows are defaults, otherwise there is one row with no default selected.
+
+    Args:
+        literals: the options for the drop-down menu
+        defaults: the default selected option for each row
+        name: the string to be used in the arguments panel to display the type or a description
+    """
+
+    def __init__(
+        self,
+        literals: List[str],  # entries in the dropdown menu
+        defaults: List | None = None,
+        name: str | None = None,
+    ):
+        super().__init__(name=name or "DropdownList")
+        self._literals = literals
+        self._defaults = defaults or []
+
+    def __repr__(self):
+        return f"DropdownList({self._literals} = {self._defaults})"
+
+    def get_literals(self):
+        return self._literals
+
+    def get_defaults(self):
+        return self._defaults
+
+    def get_widget(self):
+        return DropdownListWidget(self)
+
+
+class DropdownListWidget(UQWidget):
+    """
+    A widget for the DropdownList user type. It consists of a vertical layout with rows, each row has a drop-down menu and a delete button.
+    There is also an add button at the bottom to add new rows. The options for the drop-down menu are given by the literals argument of the
+    DropdownList type, and the default selected option is given by the defaults argument of the DropdownList type.
+
+    There is always at least one row, if defaults are provided, there are as many rows are defaults, otherwise there is one row with no default selected.
+
+    """
+
+    def __init__(self, type_object: DropdownList):
+        super().__init__()
+
+        self._type_object = type_object
+        self._rows: List = []
+        self._rows_layout = QVBoxLayout()
+        self._rows_layout.setSpacing(0)
+        self._number_of_rows = 0
+        self._first_row_widget: QWidget | None = None
+        self._expand_defaults = True if type_object.get_defaults() else False
+
+        row, fields = self._row(0, "+", expand_default=self._expand_defaults)
+        self._first_row_widget = row
+
+        self._rows_layout.addWidget(row)
+        self._rows_layout.setContentsMargins(0, 0, 0, 0)
+
+        self._rows.append(fields)
+
+        self.setLayout(self._rows_layout)
+
+    def get_value(self) -> List:
+        return [field.currentText() for field in self._rows]
+
+    def get_first_row_height(self) -> int | None:
+        if self._first_row_widget is None:
+            return None
+        return self._first_row_widget.sizeHint().height() - 5
+
+    def _row(self, row_index: int, row_button: str, expand_default: bool = False):
+        """
+        Create a row with a drop-down menu and a delete button.
+        Args:
+            row_index: the index of the row, used to determine the default value for the drop-down menu
+            row_button: the type of button to add to the row, either '+' for add or 'x' for delete
+            expand_default: whether to use the defaults provided in the type object for the placeholder text of the drop-down menu
+        Returns:
+            A tuple of the row widget and the fields in the row.
+        """
+        widget = QWidget()
+        hbox = QHBoxLayout()
+        hbox.setSpacing(0)
+
+        field = QComboBox()
+        field.addItems(self._type_object.get_literals())
+        if expand_default and self._type_object.get_defaults() and row_index < len(self._type_object.get_defaults()):
+            field.setCurrentText(str(self._type_object.get_defaults()[row_index]))
+
+        if row_button == "+":
+            button = IconLabel(icon_path=HERE / "icons/add.svg")
+            button.mousePressEvent = partial(self._add_row, "x")
+        elif row_button == "x":
+            button = IconLabel(icon_path=HERE / "icons/delete.svg")
+            button.mousePressEvent = partial(self._delete_row, widget, field)
+        else:
+            raise ValueError(f"Unknown row_button '{row_button}', use '+' or 'x'")
+
+        hbox.addWidget(field)
+        hbox.addWidget(button)
+        hbox.setContentsMargins(0, 0, 0, 0)
+        widget.setLayout(hbox)
+
+        return widget, field
+
+    def _add_row(self, button_type: str, *args):
+        self._number_of_rows += 1
+        row, field = self._row(self._number_of_rows, button_type, expand_default=self._expand_defaults)
+        self._rows_layout.addWidget(row)
+        self._rows.append(field)
+
+    def _delete_row(self, widget: QWidget, field: QComboBox, *args):
+        self._number_of_rows -= 1
+        self._rows_layout.removeWidget(widget)
+        widget.deleteLater()
+        if field in self._rows:
+            self._rows.remove(field)
