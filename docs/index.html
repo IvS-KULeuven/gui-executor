@@ -1502,7 +1502,101 @@ def choose_filters(
 <div class="sect3">
 <h4 id="_the_call_back_function">The call back function</h4>
 <div class="paragraph">
-<p>TBW</p>
+<p>Use <code>Callback</code> when the available values (or the default value) for an argument can only be determined at runtime, i.e. when the user selects a task and the Arguments Panel is constructed.</p>
+</div>
+<div class="paragraph">
+<p>The callback function is evaluated when the widget is created. Depending on the callback return type, the GUI creates a matching input widget:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>bool</code> &#8594; checkbox</p>
+</li>
+<li>
+<p><code>list</code> or <code>tuple</code> &#8594; dropdown menu (combo box)</p>
+</li>
+<li>
+<p><code>Enum</code> class &#8594; dropdown menu (combo box)</p>
+</li>
+<li>
+<p>any other value &#8594; text field with that value as placeholder</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can optionally pass a <code>default</code> callback to select a default value for list/Enum based dropdowns.</p>
+</div>
+<div id="_tabs_11" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
+<ul>
+<li id="_tabs_11_code_snippet" class="tab">
+<p>Code snippet</p>
+</li>
+<li id="_tabs_11_arguments_panel" class="tab">
+<p>Arguments Panel</p>
+</li>
+<li id="_tabs_11_alternative_callback_return_values" class="tab">
+<p>Alternative callback return values</p>
+</li>
+</ul>
+</div>
+<div id="_tabs_11_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_11_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight nowrap"><code data-lang="python">from enum import IntEnum
+
+from gui_executor.exec import exec_ui
+from gui_executor.utypes import Callback
+
+
+class Digit(IntEnum):
+    ZERO = 0
+    ONE = 1
+    TWO = 2
+    THREE = 3
+
+
+def available_digits():
+    return Digit
+
+
+def default_digit():
+    return Digit.TWO
+
+
+@exec_ui()
+def select_digit(digit: Callback(available_digits, name="digit", default=default_digit)):
+    """Select a digit from values determined at runtime."""
+    print(f"{digit = }")</code></pre>
+</div>
+</div>
+</div>
+<div id="_tabs_11_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_11_arguments_panel">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/select-digit.png" alt="select digit" width="80%">
+</div>
+</div>
+</div>
+<div id="_tabs_11_alternative_callback_return_values--panel" class="tabpanel" aria-labelledby="_tabs_11_alternative_callback_return_values">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight nowrap"><code data-lang="python">@exec_ui()
+def select_mode(mode: Callback(lambda: ["full", "fast"], name="mode")):
+    print(f"{mode = }")
+
+
+@exec_ui()
+def use_calibration(enabled: Callback(lambda: True, name="calibration")):
+    print(f"{enabled = }")</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>This type is useful when options come from the current environment, from hardware state, or from data produced earlier in the same session.</p>
 </div>
 </div>
 <div class="sect3">
@@ -1513,25 +1607,25 @@ def choose_filters(
 <div class="paragraph">
 <p>The code below illustrates how this works. The task argument is 'model' which is the variable that is used in your task. The variable name that is taken from the kernel is <code>ldo_model</code>. This latter name shall be defined in the kernel, either manually, or as a return from a previously executed task. If the variable is not defined in the kernel, an error message will be printed.</p>
 </div>
-<div id="_tabs_11" class="openblock tabs is-loading">
+<div id="_tabs_12" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_11_code_snippet" class="tab">
+<li id="_tabs_12_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_11_variables_panel" class="tab">
+<li id="_tabs_12_variables_panel" class="tab">
 <p>Variables Panel</p>
 </li>
-<li id="_tabs_11_output_panel" class="tab">
+<li id="_tabs_12_output_panel" class="tab">
 <p>Output Panel</p>
 </li>
-<li id="_tabs_11_error" class="tab">
+<li id="_tabs_12_error" class="tab">
 <p>Error</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_11_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_11_code_snippet">
+<div id="_tabs_12_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_12_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
@@ -1552,21 +1646,21 @@ def process_model(name: str = "LDO -&gt; CSL", model: VariableName("ldo_model") 
 </div>
 </div>
 </div>
-<div id="_tabs_11_variables_panel--panel" class="tabpanel" aria-labelledby="_tabs_11_variables_panel">
+<div id="_tabs_12_variables_panel--panel" class="tabpanel" aria-labelledby="_tabs_12_variables_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_panel.png" alt="variable name panel" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_11_output_panel--panel" class="tabpanel" aria-labelledby="_tabs_11_output_panel">
+<div id="_tabs_12_output_panel--panel" class="tabpanel" aria-labelledby="_tabs_12_output_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_output.png" alt="variable name output" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_11_error--panel" class="tabpanel" aria-labelledby="_tabs_11_error">
+<div id="_tabs_12_error--panel" class="tabpanel" aria-labelledby="_tabs_12_error">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_error.png" alt="variable name error" width="80%">
@@ -1603,22 +1697,22 @@ Since variable name arguments are transparently filled with the variable name th
 <div class="paragraph">
 <p>The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter <code>capture_response</code> which can be a string or a tuple of strings. See an example below. The task <code>generate_model</code> returns three values of which we only need the 'model' and the 'hexhw'. In the <code>capture_response</code> you see that the second unused return value is captured in the <code>_</code> and therefore ignored. If you need to ignore more return values, the <code>*_</code> is a valid choice.</p>
 </div>
-<div id="_tabs_12" class="openblock tabs is-loading">
+<div id="_tabs_13" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_12_code_snippet" class="tab">
+<li id="_tabs_13_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_12_gui" class="tab">
+<li id="_tabs_13_gui" class="tab">
 <p>GUI</p>
 </li>
-<li id="_tabs_12_console" class="tab">
+<li id="_tabs_13_console" class="tab">
 <p>Console</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_12_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_12_code_snippet">
+<div id="_tabs_13_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_13_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
@@ -1638,14 +1732,14 @@ def generate_model(name: str = "LDO -&gt; CSL"):
 </div>
 </div>
 </div>
-<div id="_tabs_12_gui--panel" class="tabpanel" aria-labelledby="_tabs_12_gui">
+<div id="_tabs_13_gui--panel" class="tabpanel" aria-labelledby="_tabs_13_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response.png" alt="capture response" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_12_console--panel" class="tabpanel" aria-labelledby="_tabs_12_console">
+<div id="_tabs_13_console--panel" class="tabpanel" aria-labelledby="_tabs_13_console">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response-console.png" alt="capture response console" width="80%">
@@ -1911,19 +2005,19 @@ response = raise_an_exception(value=0.0)
 <div class="paragraph">
 <p>Apart from tasks that print status information in the output console, there are sometimes specific items that you want to keep track of without the need to execute a task for this. In the project for which this application was developed, we needed to know about two identifiers at all time, i.e. the identifier for the configuration of our equipment (we call it the Setup) and the identifier of the currently running test (we call it the obsid). So, we developed a function which will repeatedly request these identifiers from the microservice that controls the configuration and display them in the status bar at the bottom of the Task GUI. The code snippet below defines a function <code>show_setup_and_obs_id()</code> which is decorated with <code>@exec_recurring_task</code>. The decorator takes a parameter <code>status_type</code> which can be 'NORMAL' or 'PERMANENT'. When <code>status_type</code> is NORMAL the message will be printed on the left side of the status bar, when <code>status_type</code> is PERMANENT the message will be printed on the right side of the statusbar. The example below is specific for our project, in your case, you will want to put different things in the status bar. The GUI in the TAB shows the output of the function.</p>
 </div>
-<div id="_tabs_13" class="openblock tabs is-loading">
+<div id="_tabs_14" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_13_code_snippet" class="tab">
+<li id="_tabs_14_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_13_csl_operator_gui" class="tab">
+<li id="_tabs_14_csl_operator_gui" class="tab">
 <p>CSL Operator GUI</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_13_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_13_code_snippet">
+<div id="_tabs_14_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_14_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_recurring_task
@@ -1948,7 +2042,7 @@ def show_setup_and_obs_id():
 </div>
 </div>
 </div>
-<div id="_tabs_13_csl_operator_gui--panel" class="tabpanel" aria-labelledby="_tabs_13_csl_operator_gui">
+<div id="_tabs_14_csl_operator_gui--panel" class="tabpanel" aria-labelledby="_tabs_14_csl_operator_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/statusbar-01.png" alt="statusbar 01" width="80%">
@@ -1990,7 +2084,7 @@ def show_setup_and_obs_id():
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-21 12:03:43 +0200
+Last updated 2026-04-21 12:46:48 +0200
 </div>
 </div>
 <script>
