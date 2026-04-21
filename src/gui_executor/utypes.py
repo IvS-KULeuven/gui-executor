@@ -444,6 +444,16 @@ class DropdownListWidget(UQWidget):
 
         self._rows.append(fields)
 
+        # When defaults are given, initialize one row per default value.
+        # The first row keeps the add button; extra rows get a delete button.
+        defaults = self._type_object.get_defaults()
+        if defaults and len(defaults) > 1:
+            for row_index in range(1, len(defaults)):
+                row, field = self._row(row_index, "x", expand_default=True)
+                self._rows_layout.addWidget(row)
+                self._rows.append(field)
+            self._number_of_rows = len(defaults) - 1
+
         self.setLayout(self._rows_layout)
 
     def get_value(self) -> List:
