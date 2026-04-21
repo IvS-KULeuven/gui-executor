@@ -65,6 +65,7 @@ def main():
     parser.add_argument("--config", help="a YAML file that configures the executor")
     parser.add_argument("--logo", help="path to logo PNG or SVG file")
     parser.add_argument("--app-name", help="the name of the GUI app, will go in the window title")
+    parser.add_argument("--save-console-output", help="path to autosave the Console Output as plain text")
     parser.add_argument("--debug", "-d", action="store_true", help="set debugging mode")
     parser.add_argument(
         "--single",
@@ -146,6 +147,7 @@ def main():
             model,
             app_name=app_name,
             cmd_log=args.cmd_log,
+            save_output_file=args.save_console_output,
             verbosity=verbosity,
             kernel_name=kernel_name,
         )
