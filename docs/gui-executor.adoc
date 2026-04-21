@@ -561,6 +561,10 @@ def save_targets(
     return targets
 ----
 
+Arguments Panel::
++
+image::images/save-targets.png[width=80%,align=center]
+
 Resulting argument value::
 +
 ----
@@ -600,6 +604,10 @@ def choose_filters(
     print(f"{filters = }")
     return filters
 ----
+
+Arguments Panel::
++
+image::images/choose-filters.png[width=80%,align=center]
 
 Resulting argument value::
 +
