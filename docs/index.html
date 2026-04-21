@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.23">
+<meta name="generator" content="Asciidoctor 2.0.20">
 <title>A Task Executor GUI</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
@@ -140,7 +140,7 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #content::before{content:none}
 #header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
 #header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
-#header>h1:only-child{border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
 #header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:flex;flex-flow:row wrap}
 #header .details span:first-child{margin-left:-.125em}
 #header .details span.email a{color:rgba(0,0,0,.85)}
@@ -162,7 +162,6 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #toctitle{color:#7a2518;font-size:1.2em}
 @media screen and (min-width:768px){#toctitle{font-size:1.375em}
 body.toc2{padding-left:15em;padding-right:0}
-body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
 #toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
 #toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
 #toc.toc2>ul{font-size:.9em;margin-bottom:0}
@@ -328,7 +327,7 @@ a.image{text-decoration:none;display:inline-block}
 a.image object{pointer-events:none}
 sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
 sup.footnote a,sup.footnoteref a{text-decoration:none}
-sup.footnote a:active,sup.footnoteref a:active,#footnotes .footnote a:first-of-type:active{text-decoration:underline}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
 #footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
 #footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
 #footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
@@ -432,120 +431,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 #footer{background:none}
 #footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
 @media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
-</style>
-<style>
-pre.rouge table td { padding: 5px; }
-pre.rouge table pre { margin: 0; }
-pre.rouge, pre.rouge .w {
-  color: #24292f;
-  background-color: #f6f8fa;
-}
-pre.rouge .k, pre.rouge .kd, pre.rouge .kn, pre.rouge .kp, pre.rouge .kr, pre.rouge .kt, pre.rouge .kv {
-  color: #cf222e;
-}
-pre.rouge .gr {
-  color: #f6f8fa;
-}
-pre.rouge .gd {
-  color: #82071e;
-  background-color: #ffebe9;
-}
-pre.rouge .nb {
-  color: #953800;
-}
-pre.rouge .nc {
-  color: #953800;
-}
-pre.rouge .no {
-  color: #953800;
-}
-pre.rouge .nn {
-  color: #953800;
-}
-pre.rouge .sr {
-  color: #116329;
-}
-pre.rouge .na {
-  color: #116329;
-}
-pre.rouge .nt {
-  color: #116329;
-}
-pre.rouge .gi {
-  color: #116329;
-  background-color: #dafbe1;
-}
-pre.rouge .kc {
-  color: #0550ae;
-}
-pre.rouge .l, pre.rouge .ld, pre.rouge .m, pre.rouge .mb, pre.rouge .mf, pre.rouge .mh, pre.rouge .mi, pre.rouge .il, pre.rouge .mo, pre.rouge .mx {
-  color: #0550ae;
-}
-pre.rouge .sb {
-  color: #0550ae;
-}
-pre.rouge .bp {
-  color: #0550ae;
-}
-pre.rouge .ne {
-  color: #0550ae;
-}
-pre.rouge .nl {
-  color: #0550ae;
-}
-pre.rouge .py {
-  color: #0550ae;
-}
-pre.rouge .nv, pre.rouge .vc, pre.rouge .vg, pre.rouge .vi, pre.rouge .vm {
-  color: #0550ae;
-}
-pre.rouge .o, pre.rouge .ow {
-  color: #0550ae;
-}
-pre.rouge .gh {
-  color: #0550ae;
-  font-weight: bold;
-}
-pre.rouge .gu {
-  color: #0550ae;
-  font-weight: bold;
-}
-pre.rouge .s, pre.rouge .sa, pre.rouge .sc, pre.rouge .dl, pre.rouge .sd, pre.rouge .s2, pre.rouge .se, pre.rouge .sh, pre.rouge .sx, pre.rouge .s1, pre.rouge .ss {
-  color: #0a3069;
-}
-pre.rouge .nd {
-  color: #8250df;
-}
-pre.rouge .nf, pre.rouge .fm {
-  color: #8250df;
-}
-pre.rouge .err {
-  color: #f6f8fa;
-  background-color: #82071e;
-}
-pre.rouge .c, pre.rouge .ch, pre.rouge .cd, pre.rouge .cm, pre.rouge .cp, pre.rouge .cpf, pre.rouge .c1, pre.rouge .cs {
-  color: #6e7781;
-}
-pre.rouge .gl {
-  color: #6e7781;
-}
-pre.rouge .gt {
-  color: #6e7781;
-}
-pre.rouge .ni {
-  color: #24292f;
-}
-pre.rouge .si {
-  color: #24292f;
-}
-pre.rouge .ge {
-  color: #24292f;
-  font-style: italic;
-}
-pre.rouge .gs {
-  color: #24292f;
-  font-weight: bold;
-}
 </style>
 <style>
 /*! Asciidoctor Tabs | Copyright (c) 2018-present Dan Allen | MIT License */
@@ -857,11 +742,11 @@ options:
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
 
-<span class="nd">@exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <b class="conum">(1)</b>
-<span class="k">def</span> <span class="nf">hello_world</span><span class="p">():</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Hello, World!</span><span class="sh">"</span><span class="p">)</span></code></pre>
+@exec_task(immediate_run=True)  <b class="conum">(1)</b>
+def hello_world():
+    print("Hello, World!")</code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -923,18 +808,18 @@ Hello, World! <b class="conum">(3)</b>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
 
-<span class="o"><strong></span><span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Hello Tasks</span><span class="sh">"</span><span class="o"></strong></span>  <b class="conum">(1)</b>
+<strong>UI_MODULE_DISPLAY_NAME = "Hello Tasks"</strong>  <b class="conum">(1)</b>
 
-<span class="nd">@exec_task</span><span class="p">(</span><span class="n">immediate_run</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">hello_world</span><span class="p">():</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Hello, World!</span><span class="sh">"</span><span class="p">)</span>
+@exec_task(immediate_run=True)
+def hello_world():
+    print("Hello, World!")
 
-<span class="o"><strong></span><span class="nd">@exec_task</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Hello...</span><span class="sh">"</span><span class="p">)</span>  <b class="conum">(2)</b>
-<span class="k">def</span> <span class="nf">hello_you</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">John</span><span class="sh">"</span><span class="p">):</span>  <b class="conum">(3)</b>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Hello, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">!</span><span class="sh">"</span><span class="p">)</span>
-<span class="o"></strong></span></code></pre>
+<strong>@exec_task(display_name="Hello...")  <b class="conum">(2)</b>
+def hello_you(name: str = "John"):  <b class="conum">(3)</b>
+    print(f"Hello, {name}!")
+</strong></code></pre>
 </div>
 </div>
 <div class="olist arabic">
@@ -1029,14 +914,14 @@ Hello, World! <b class="conum">(3)</b>
 <div id="_tabs_1_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_1_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
 
-<span class="nd">@exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">capture_image</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">,</span> <span class="n">aperture</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
-    <span class="bp">...</span>
-    <span class="n">image</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Captured image not shown for privacy reasons...</span><span class="sh">"</span>
+@exec_task()
+def capture_image(camera, exposure_time, aperture, filename, location):
+    ...
+    image = "Captured image not shown for privacy reasons..."
 
-    <span class="k">return</span> <span class="n">image</span></code></pre>
+    return image</code></pre>
 </div>
 </div>
 </div>
@@ -1073,18 +958,18 @@ Hello, World! <b class="conum">(3)</b>
 <div id="_tabs_2_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_2_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
 
-<span class="nd">@exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">capture_image</span><span class="p">(</span>
-    <span class="n">camera</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">~/data/images</span><span class="sh">"</span>
-<span class="p">):</span>
-    <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
-</span>    <span class="n">image</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Captured image from camera </span><span class="sh">'</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="sh">'</span><span class="s"> with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">.</span><span class="sh">"</span>
-    <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
-</span>
-    <span class="k">return</span> <span class="n">image</span></code></pre>
+@exec_task()
+def capture_image(
+    camera: str, exposure_time: float, aperture: int,
+    filename: str, location: str = "~/data/images"
+):
+    ...  # here the actual capturing of the image is done
+    image = f"Captured image from camera '{camera}' with {exposure_time=} and {aperture=}."
+    ...  # here any further processing of the image can be done
+
+    return image</code></pre>
 </div>
 </div>
 </div>
@@ -1124,24 +1009,24 @@ Hello, World! <b class="conum">(3)</b>
 <div id="_tabs_3_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_3_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span><span class="p">,</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">Directory</span>
+<pre class="rouge highlight"><code data-lang="python">from pathlib import Path
+from gui_executor.exec import exec_task, FileName, Directory
 
-<span class="nd">@exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="sh">'</span><span class="s">new_image</span><span class="sh">'</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">capture_image_file_type_hints</span><span class="p">(</span>
-        <span class="n">camera</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">filename</span><span class="p">:</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Directory</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="sh">"</span><span class="s">~/data/images</span><span class="sh">"</span><span class="p">)</span>
-<span class="p">):</span>
-    <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
-</span>
-    <span class="n">image</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">Captured image from camera </span><span class="sh">'</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="sh">'</span><span class="s"> with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">saving it as </span><span class="si">{</span><span class="n">filename</span><span class="o">=</span><span class="si">}</span><span class="s"> at </span><span class="si">{</span><span class="n">location</span><span class="o">=</span><span class="si">}</span><span class="s">.</span><span class="sh">"</span>
-    <span class="p">)</span>
+@exec_task(capture_response='new_image')
+def capture_image_file_type_hints(
+        camera: str, exposure_time: float, aperture: int,
+        filename: FileName, location: Directory = Path("~/data/images")
+):
+    ...  # here the actual capturing of the image is done
 
-    <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
-</span>
-    <span class="k">return</span> <span class="n">image</span></code></pre>
+    image = (
+        f"Captured image from camera '{camera}' with {exposure_time=} and {aperture=}, "
+        f"saving it as {filename=} at {location=}."
+    )
+
+    ...  # here any further processing of the image can be done
+
+    return image</code></pre>
 </div>
 </div>
 </div>
@@ -1178,33 +1063,33 @@ Hello, World! <b class="conum">(3)</b>
 <div id="_tabs_4_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_4_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="n">enum</span> <span class="kn">import</span> <span class="n">IntEnum</span>
-<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span><span class="p">,</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">Directory</span>
+<pre class="rouge highlight"><code data-lang="python">from pathlib import Path
+from enum import IntEnum
+from gui_executor.exec import exec_task, FileName, Directory
 
-<span class="k">class</span> <span class="nc">CameraName</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
-    <span class="n">FRONT_DOOR</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">BACK_DOOR</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">GARDEN</span> <span class="o">=</span> <span class="mi">3</span>
-    <span class="n">GARDEN_HOUSE</span> <span class="o">=</span> <span class="mi">4</span>
-    <span class="n">BIRD_HOUSE_1</span> <span class="o">=</span> <span class="mi">5</span>
-    <span class="n">BIRD_HOUSE_2</span> <span class="o">=</span> <span class="mi">6</span>
+class CameraName(IntEnum):
+    FRONT_DOOR = 1
+    BACK_DOOR = 2
+    GARDEN = 3
+    GARDEN_HOUSE = 4
+    BIRD_HOUSE_1 = 5
+    BIRD_HOUSE_2 = 6
 
-<span class="nd">@exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="sh">'</span><span class="s">new_image</span><span class="sh">'</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">capture_image_camera_name</span><span class="p">(</span>
-        <span class="n">camera</span><span class="p">:</span> <span class="n">CameraName</span><span class="p">,</span> <span class="n">exposure_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aperture</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">filename</span><span class="p">:</span> <span class="n">FileName</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="n">Directory</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="sh">"</span><span class="s">~/data/images</span><span class="sh">"</span><span class="p">)</span>
-<span class="p">):</span>
-    <span class="p">...</span>  <span class="c1"># here the actual capturing of the image is done
-</span>
-    <span class="n">image</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">Captured image from camera </span><span class="sh">'</span><span class="si">{</span><span class="n">camera</span><span class="p">.</span><span class="n">name</span><span class="si">}</span><span class="sh">'</span><span class="s"> with </span><span class="si">{</span><span class="n">exposure_time</span><span class="o">=</span><span class="si">}</span><span class="s"> and </span><span class="si">{</span><span class="n">aperture</span><span class="o">=</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">saving it as </span><span class="si">{</span><span class="n">filename</span><span class="o">=</span><span class="si">}</span><span class="s"> at </span><span class="si">{</span><span class="n">location</span><span class="o">=</span><span class="si">}</span><span class="s">.</span><span class="sh">"</span>
-    <span class="p">)</span>
+@exec_task(capture_response='new_image')
+def capture_image_camera_name(
+        camera: CameraName, exposure_time: float, aperture: int,
+        filename: FileName, location: Directory = Path("~/data/images")
+):
+    ...  # here the actual capturing of the image is done
 
-    <span class="p">...</span>  <span class="c1"># here any further processing of the image can be done
-</span>
-    <span class="k">return</span> <span class="n">image</span></code></pre>
+    image = (
+        f"Captured image from camera '{camera.name}' with {exposure_time=} and {aperture=}, "
+        f"saving it as {filename=} at {location=}."
+    )
+
+    ...  # here any further processing of the image can be done
+
+    return image</code></pre>
 </div>
 </div>
 </div>
@@ -1244,33 +1129,33 @@ Hello, World! <b class="conum">(3)</b>
 <div id="_tabs_5_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_5_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<pre class="rouge highlight"><code data-lang="python">from pathlib import Path
 
-<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+from gui_executor.exec import exec_task
 
-<span class="n">HERE</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span>
+HERE = Path(__file__).parent.resolve()
 
-<span class="nd">@exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">bird_count</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">backyard</span><span class="sh">"</span><span class="p">):</span>
+@exec_task()
+def bird_count(camera: str = "backyard"):
 
-    <span class="kn">from</span> <span class="n">rich.table</span> <span class="kn">import</span> <span class="n">Table</span>
-    <span class="n">table</span> <span class="o">=</span> <span class="nc">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">Bird Count for </span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    from rich.table import Table
+    table = Table(title=f"Bird Count for {camera}")
 
-    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Date</span><span class="sh">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="sh">"</span><span class="s">right</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">cyan</span><span class="sh">"</span><span class="p">,</span> <span class="n">no_wrap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Bird name</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">magenta</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Number</span><span class="sh">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="sh">"</span><span class="s">center</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">green</span><span class="sh">"</span><span class="p">)</span>
+    table.add_column("Date", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Bird name", style="magenta")
+    table.add_column("Number", justify="center", style="green")
 
-    <span class="k">for</span> <span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">number</span> <span class="ow">in</span> <span class="p">{</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ChiffChaff</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Robin</span><span class="sh">"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Pigeon</span><span class="sh">"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Magpie</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Sparrow</span><span class="sh">"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Great tit</span><span class="sh">"</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
-    <span class="p">}:</span>
-        <span class="n">table</span><span class="p">.</span><span class="nf">add_row</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nf">str</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
+    for date, name, number in {
+        ("16 Feb 2023", "ChiffChaff", 3),
+        ("16 Feb 2023", "Robin", 1),
+        ("16 Feb 2023", "Pigeon", 5),
+        ("16 Feb 2023", "Magpie", 3),
+        ("16 Feb 2023", "Sparrow", 10),
+        ("16 Feb 2023", "Great tit", 9),
+    }:
+        table.add_row(date, name, str(number))
 
-    <span class="k">return</span> <span class="n">table</span></code></pre>
+    return table</code></pre>
 </div>
 </div>
 </div>
@@ -1307,36 +1192,36 @@ Hello, World! <b class="conum">(3)</b>
 <div id="_tabs_6_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_6_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<pre class="rouge highlight"><code data-lang="python">from pathlib import Path
 
-<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+from gui_executor.exec import exec_task
 
-<span class="n">HERE</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span>
+HERE = Path(__file__).parent.resolve()
 
-<span class="nd">@exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">print_bird_count</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">backyard</span><span class="sh">"</span><span class="p">,</span> <span class="n">date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">today</span><span class="sh">"</span><span class="p">):</span>
+@exec_task()
+def print_bird_count(camera: str = "backyard", date: str = "today"):
 
-    <span class="kn">from</span> <span class="n">rich.table</span> <span class="kn">import</span> <span class="n">Table</span>
-    <span class="kn">from</span> <span class="n">rich.console</span> <span class="kn">import</span> <span class="n">Console</span>
+    from rich.table import Table
+    from rich.console import Console
 
-    <span class="n">table</span> <span class="o">=</span> <span class="nc">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">Bird Count for </span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    table = Table(title=f"Bird Count for {camera}")
 
-    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Date</span><span class="sh">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="sh">"</span><span class="s">right</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">cyan</span><span class="sh">"</span><span class="p">,</span> <span class="n">no_wrap</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Bird name</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">magenta</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">table</span><span class="p">.</span><span class="nf">add_column</span><span class="p">(</span><span class="sh">"</span><span class="s">Number</span><span class="sh">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="sh">"</span><span class="s">center</span><span class="sh">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="sh">"</span><span class="s">green</span><span class="sh">"</span><span class="p">)</span>
+    table.add_column("Date", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Bird name", style="magenta")
+    table.add_column("Number", justify="center", style="green")
 
-    <span class="k">for</span> <span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">number</span> <span class="ow">in</span> <span class="p">{</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ChiffChaff</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Robin</span><span class="sh">"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Pigeon</span><span class="sh">"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Magpie</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Sparrow</span><span class="sh">"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
-        <span class="p">(</span><span class="sh">"</span><span class="s">16 Feb 2023</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Great tit</span><span class="sh">"</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
-    <span class="p">}:</span>
-        <span class="n">table</span><span class="p">.</span><span class="nf">add_row</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nf">str</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
+    for date, name, number in {
+        ("16 Feb 2023", "ChiffChaff", 3),
+        ("16 Feb 2023", "Robin", 1),
+        ("16 Feb 2023", "Pigeon", 5),
+        ("16 Feb 2023", "Magpie", 3),
+        ("16 Feb 2023", "Sparrow", 10),
+        ("16 Feb 2023", "Great tit", 9),
+    }:
+        table.add_row(date, name, str(number))
 
-    <span class="n">console</span> <span class="o">=</span> <span class="nc">Console</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-    <span class="n">console</span><span class="p">.</span><span class="nf">print</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></code></pre>
+    console = Console(width=200)
+    console.print(table)</code></pre>
 </div>
 </div>
 </div>
@@ -1370,21 +1255,21 @@ Hello, World! <b class="conum">(3)</b>
 <div id="_tabs_7_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_7_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<pre class="rouge highlight"><code data-lang="python">from pathlib import Path
 
-<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+from gui_executor.exec import exec_task
 
-<span class="n">HERE</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span>
+HERE = Path(__file__).parent.resolve()
 
-<span class="nd">@exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">preview_image</span><span class="p">(</span><span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">bird_house</span><span class="sh">"</span><span class="p">):</span>
+@exec_task()
+def preview_image(camera: str = "bird_house"):
 
-    <span class="kn">from</span> <span class="n">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">display</span>
+    from IPython.display import Image, display
 
-    <span class="n">image</span> <span class="o">=</span> <span class="nc">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">HERE</span> <span class="o">/</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">camera</span><span class="si">}</span><span class="s">.png</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">display</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    image = Image(filename=HERE / f"{camera}.png")
+    display(image)
 
-    <span class="k">return</span> <span class="n">image</span></code></pre>
+    return image</code></pre>
 </div>
 </div>
 </div>
@@ -1423,7 +1308,7 @@ If you want to follow closely on the printed output of your function, you might 
 <p>As a small recap, type hints that are recognised by the Task GUI are: <code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>list</code>, <code>tuple</code>, and subclasses of <code>Enum</code>. Then, there are a number of types defined by the Task GUI that can be used for paths, i.e. <code>FileName</code> as a type for a filename including extension but without the directory part, <code>FilePath</code> as a type for a full file path which is the relative or absolute path to a file including the filename and extension, and <code>Directory</code> which is the location of a file, i.e. the path to the file without the filename.</p>
 </div>
 <div class="paragraph">
-<p>Then we have a few special cases for more complex arguments to a function. The first one is a <code>FixedList</code> which is a list with a fixed number of elements of specific types. Additionally, there is the <code>ListList</code> which is a dynamic list of fixed lists, and finally, there is the <code>CallBack</code> type which makes your argument dependent on the outcome of a function call at the moment that you select the task and the arguments panel is created. The following sections will describe these <em>type hints</em> in more detail.</p>
+<p>Then we have a few special cases for more complex arguments to a function. The first one is a <code>FixedList</code> which is a list with a fixed number of elements of specific types. Additionally, there is the <code>ListList</code> which is a dynamic list of fixed lists, and the <code>DropdownList</code> which is a dynamic list of dropdown menus. Finally, there is the <code>CallBack</code> type which makes your argument dependent on the outcome of a function call at the moment that you select the task and the arguments panel is created. The following sections will describe these <em>type hints</em> in more detail.</p>
 </div>
 <div class="sect3">
 <h4 id="_the_simple_fixed_list">The simple fixed list</h4>
@@ -1453,16 +1338,16 @@ If you want to follow closely on the printed output of your function, you might 
 <div id="_tabs_8_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_8_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight nowrap"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
-<span class="kn">from</span> <span class="n">gui_executor.utypes</span> <span class="kn">import</span> <span class="n">FixedList</span>
+<pre class="rouge highlight nowrap"><code data-lang="python">from gui_executor.exec import exec_task
+from gui_executor.utypes import FixedList
 
-<span class="nd">@exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">save_observation</span><span class="p">(</span>
-        <span class="n">coordinates</span><span class="p">:</span> <span class="nc">FixedList</span><span class="p">([</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">lat, long</span><span class="sh">"</span><span class="p">),</span>
-        <span class="n">time</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">bird_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
+@exec_task()
+def save_observation(
+        coordinates: FixedList([float, float], name="lat, long"),
+        time: str,
+        bird_name: str,
+):
+    """
     Saves the observation into the database.
 
     Args:
@@ -1470,8 +1355,8 @@ If you want to follow closely on the printed output of your function, you might 
         time (str): the time of the observation [YYYY/MM/DD HH:MM:SS]
         bird_name (str): the name of the bird
 
-    </span><span class="sh">"""</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">A </span><span class="si">{</span><span class="n">bird_name</span><span class="si">}</span><span class="s"> was spotted at [</span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="si">{</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="s">]</span><span class="sh">"</span><span class="p">)</span></code></pre>
+    """
+    print(f"A {bird_name} was spotted at [{coordinates[0]:.6f}, {coordinates[1]:.6f}]")</code></pre>
 </div>
 </div>
 </div>
@@ -1491,7 +1376,107 @@ If you want to follow closely on the printed output of your function, you might 
 <div class="sect3">
 <h4 id="_the_dynamic_list_of_lists">The dynamic list of lists</h4>
 <div class="paragraph">
-<p>TBW</p>
+<p>Use <code>ListList</code> when your task argument is a list where each element is itself a fixed list with predefined types. In the Arguments Panel you get one row with an add icon. Pressing that icon adds a new row with the same fixed structure, so you can provide as many entries as needed.</p>
+</div>
+<div id="_tabs_9" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
+<ul>
+<li id="_tabs_9_code_snippet" class="tab">
+<p>Code snippet</p>
+</li>
+<li id="_tabs_9_resulting_argument_value" class="tab">
+<p>Resulting argument value</p>
+</li>
+</ul>
+</div>
+<div id="_tabs_9_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_9_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight nowrap"><code data-lang="python">from gui_executor.exec import exec_task
+from gui_executor.utypes import ListList
+
+@exec_task()
+def save_targets(
+        targets: ListList([int, float, str], [1, 0.0, "target-A"], name="id, angle, label"),
+):
+    """
+    Save a dynamic number of target definitions.
+
+    Args:
+        targets: list of [id, angle, label]
+    """
+    print(f"{targets = }")
+    return targets</code></pre>
+</div>
+</div>
+</div>
+<div id="_tabs_9_resulting_argument_value--panel" class="tabpanel" aria-labelledby="_tabs_9_resulting_argument_value">
+<div class="listingblock">
+<div class="content">
+<pre>[[1, 0.0, 'target-A'], [2, 45.5, 'target-B'], [3, 90.0, 'target-C']]</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>For the first row, default values can be provided through the second argument of <code>ListList</code>. Added rows use the same type structure, and rows can be removed again with the delete icon.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_the_dynamic_list_of_dropdown_menus">The dynamic list of dropdown menus</h4>
+<div class="paragraph">
+<p>Use <code>DropdownList</code> when each row should be a selection from a fixed set of options. This is useful for workflows where users may select one or more predefined values without typing free text.</p>
+</div>
+<div id="_tabs_10" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
+<ul>
+<li id="_tabs_10_code_snippet" class="tab">
+<p>Code snippet</p>
+</li>
+<li id="_tabs_10_resulting_argument_value" class="tab">
+<p>Resulting argument value</p>
+</li>
+</ul>
+</div>
+<div id="_tabs_10_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_10_code_snippet">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight nowrap"><code data-lang="python">from gui_executor.exec import exec_task
+from gui_executor.utypes import DropdownList
+
+@exec_task()
+def choose_filters(
+        filters: DropdownList(
+            ["none", "bias", "dark", "flat"],
+            defaults=["bias", "dark"],
+            name="Image filters",
+        ),
+):
+    """
+    Select one or more filters to apply.
+
+    Args:
+        filters: list of selected filter names
+    """
+    print(f"{filters = }")
+    return filters</code></pre>
+</div>
+</div>
+</div>
+<div id="_tabs_10_resulting_argument_value--panel" class="tabpanel" aria-labelledby="_tabs_10_resulting_argument_value">
+<div class="listingblock">
+<div class="content">
+<pre>['bias', 'dark', 'flat']</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>When defaults are provided, the widget starts with one row per default value already selected. Users can add additional dropdown rows with the add icon and remove rows with the delete icon.</p>
 </div>
 </div>
 <div class="sect3">
@@ -1508,60 +1493,60 @@ If you want to follow closely on the printed output of your function, you might 
 <div class="paragraph">
 <p>The code below illustrates how this works. The task argument is 'model' which is the variable that is used in your task. The variable name that is taken from the kernel is <code>ldo_model</code>. This latter name shall be defined in the kernel, either manually, or as a return from a previously executed task. If the variable is not defined in the kernel, an error message will be printed.</p>
 </div>
-<div id="_tabs_9" class="openblock tabs is-loading">
+<div id="_tabs_11" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_9_code_snippet" class="tab">
+<li id="_tabs_11_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_9_variables_panel" class="tab">
+<li id="_tabs_11_variables_panel" class="tab">
 <p>Variables Panel</p>
 </li>
-<li id="_tabs_9_output_panel" class="tab">
+<li id="_tabs_11_output_panel" class="tab">
 <p>Output Panel</p>
 </li>
-<li id="_tabs_9_error" class="tab">
+<li id="_tabs_11_error" class="tab">
 <p>Error</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_9_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_9_code_snippet">
+<div id="_tabs_11_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_11_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
 
-<span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Passing known variables</span><span class="sh">"</span>
+UI_MODULE_DISPLAY_NAME = "Passing known variables"
 
-<span class="nd">@exec_task</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">process_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">LDO -&gt; CSL</span><span class="sh">"</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nc">VariableName</span><span class="p">(</span><span class="sh">"</span><span class="s">ldo_model</span><span class="sh">"</span><span class="p">)</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+@exec_task()
+def process_model(name: str = "LDO -&gt; CSL", model: VariableName("ldo_model") = None):
 
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Processing model: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">model</span> <span class="o">=</span> <span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    print(f"Processing model: {name}")
+    print(f"{model = }")
 
-    <span class="c1"># ... your code comess here
-</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="sh">"</span><span class="s">The result of your processing...</span><span class="sh">"</span>
+    # ... your code comess here
 
-    <span class="k">return</span> <span class="n">result</span></code></pre>
+    result = "The result of your processing..."
+
+    return result</code></pre>
 </div>
 </div>
 </div>
-<div id="_tabs_9_variables_panel--panel" class="tabpanel" aria-labelledby="_tabs_9_variables_panel">
+<div id="_tabs_11_variables_panel--panel" class="tabpanel" aria-labelledby="_tabs_11_variables_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_panel.png" alt="variable name panel" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_9_output_panel--panel" class="tabpanel" aria-labelledby="_tabs_9_output_panel">
+<div id="_tabs_11_output_panel--panel" class="tabpanel" aria-labelledby="_tabs_11_output_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_output.png" alt="variable name output" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_9_error--panel" class="tabpanel" aria-labelledby="_tabs_9_error">
+<div id="_tabs_11_error--panel" class="tabpanel" aria-labelledby="_tabs_11_error">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_error.png" alt="variable name error" width="80%">
@@ -1598,49 +1583,49 @@ Since variable name arguments are transparently filled with the variable name th
 <div class="paragraph">
 <p>The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter <code>capture_response</code> which can be a string or a tuple of strings. See an example below. The task <code>generate_model</code> returns three values of which we only need the 'model' and the 'hexhw'. In the <code>capture_response</code> you see that the second unused return value is captured in the <code>_</code> and therefore ignored. If you need to ignore more return values, the <code>*_</code> is a valid choice.</p>
 </div>
-<div id="_tabs_10" class="openblock tabs is-loading">
+<div id="_tabs_12" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_10_code_snippet" class="tab">
+<li id="_tabs_12_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_10_gui" class="tab">
+<li id="_tabs_12_gui" class="tab">
 <p>GUI</p>
 </li>
-<li id="_tabs_10_console" class="tab">
+<li id="_tabs_12_console" class="tab">
 <p>Console</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_10_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_10_code_snippet">
+<div id="_tabs_12_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_12_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_task</span>
+<pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
 
-<span class="n">UI_MODULE_DISPLAY_NAME</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Capturing function responses</span><span class="sh">"</span>
+UI_MODULE_DISPLAY_NAME = "Capturing function responses"
 
-<span class="nd">@exec_task</span><span class="p">(</span><span class="n">capture_response</span><span class="o">=</span><span class="p">(</span><span class="sh">"</span><span class="s">model</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">_</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">hexhw</span><span class="sh">"</span><span class="p">))</span>
-<span class="k">def</span> <span class="nf">generate_model</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">LDO -&gt; CSL</span><span class="sh">"</span><span class="p">):</span>
+@exec_task(capture_response=("model", "_", "hexhw"))
+def generate_model(name: str = "LDO -&gt; CSL"):
 
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Generating model: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    print(f"Generating model: {name}")
 
-    <span class="n">model</span> <span class="o">=</span> <span class="sh">"</span><span class="s">This is a model</span><span class="sh">"</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="sh">"</span><span class="s">an unused return value...</span><span class="sh">"</span>
-    <span class="n">hexhw</span> <span class="o">=</span> <span class="sh">"</span><span class="s">this is a reference to a hardware device</span><span class="sh">"</span>
+    model = "This is a model"
+    s = "an unused return value..."
+    hexhw = "this is a reference to a hardware device"
 
-    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">hexhw</span></code></pre>
+    return model, s, hexhw</code></pre>
 </div>
 </div>
 </div>
-<div id="_tabs_10_gui--panel" class="tabpanel" aria-labelledby="_tabs_10_gui">
+<div id="_tabs_12_gui--panel" class="tabpanel" aria-labelledby="_tabs_12_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response.png" alt="capture response" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_10_console--panel" class="tabpanel" aria-labelledby="_tabs_10_console">
+<div id="_tabs_12_console--panel" class="tabpanel" aria-labelledby="_tabs_12_console">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response-console.png" alt="capture response console" width="80%">
@@ -1686,10 +1671,10 @@ Be careful when you use this parameter because it will overwrite the variables t
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="n">ICON_PATH</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span> <span class="o">/</span> <span class="sh">"</span><span class="s">icons/</span><span class="sh">"</span>
+<pre class="rouge highlight"><code data-lang="python">ICON_PATH = Path(__file__).parent.resolve() / "icons/"
 
-<span class="nd">@exec_ui</span><span class="p">(</span><span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Switch ON</span><span class="sh">"</span><span class="p">,</span>
-         <span class="n">icons</span><span class="o">=</span><span class="p">(</span><span class="n">ICON_PATH</span> <span class="o">/</span> <span class="sh">"</span><span class="s">n1-camera-swon.svg</span><span class="sh">"</span><span class="p">,</span> <span class="n">ICON_PATH</span> <span class="o">/</span> <span class="sh">"</span><span class="s">n1-camera-swon-selected.svg</span><span class="sh">"</span><span class="p">))</span></code></pre>
+@exec_ui(display_name="Switch ON",
+         icons=(ICON_PATH / "n1-camera-swon.svg", ICON_PATH / "n1-camera-swon-selected.svg"))</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1782,11 +1767,11 @@ In [9]: print_bird_count()
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="o">&gt;&gt;&gt;</span> <span class="n">rc</span> <span class="o">=</span> <span class="nf">input</span><span class="p">(</span><span class="sh">"</span><span class="s">Do you want to continue [Y/n]? </span><span class="sh">"</span><span class="p">)</span>
-<span class="n">Do</span> <span class="n">you</span> <span class="n">want</span> <span class="n">to</span> <span class="k">continue</span> <span class="p">[</span><span class="n">Y</span><span class="o">/</span><span class="n">n</span><span class="p">]</span><span class="err">?</span> <span class="n">n</span>
+<pre class="rouge highlight"><code data-lang="python">&gt;&gt;&gt; rc = input("Do you want to continue [Y/n]? ")
+Do you want to continue [Y/n]? n
 
-<span class="o">&gt;&gt;&gt;</span> <span class="n">rc</span>
-<span class="sh">'</span><span class="s">n</span><span class="sh">'</span></code></pre>
+&gt;&gt;&gt; rc
+'n'</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1797,16 +1782,16 @@ In [9]: print_bird_count()
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="nd">@exec_task</span><span class="p">(</span><span class="n">input_request</span><span class="o">=</span><span class="p">(</span><span class="sh">"</span><span class="s">[Y/n]</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">[c/A]</span><span class="sh">"</span><span class="p">),</span> <span class="n">display_name</span><span class="o">=</span><span class="sh">"</span><span class="s">Continue or Abort?</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">continue_or_abort_question</span><span class="p">():</span>
+<pre class="rouge highlight"><code data-lang="python">@exec_task(input_request=("[Y/n]", "[c/A]"), display_name="Continue or Abort?")
+def continue_or_abort_question():
 
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">There should be a dialog appearing with a Continue or Abort question...</span><span class="sh">"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    print("There should be a dialog appearing with a Continue or Abort question...", flush=True)
 
-    <span class="n">response</span> <span class="o">=</span> <span class="nf">input</span><span class="p">(</span><span class="sh">"</span><span class="s">Do you want to continue [Y/n]</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">response</span> <span class="o">=</span> <span class="si">}</span><span class="sh">"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    response = input("Do you want to continue [Y/n]")
+    print(f"{response = }", flush=True)
 
-    <span class="k">if</span> <span class="n">response</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span> <span class="o">==</span> <span class="sh">'</span><span class="s">n</span><span class="sh">'</span><span class="p">:</span>
-        <span class="k">return</span></code></pre>
+    if response.lower() == 'n':
+        return</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1840,34 +1825,34 @@ In [9]: print_bird_count()
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">import</span> <span class="n">os</span>
-<span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<pre class="rouge highlight"><code data-lang="python">import os
+from pathlib import Path
 
-<span class="kn">from</span> <span class="n">executor</span> <span class="kn">import</span> <span class="n">ExternalCommand</span>
+from executor import ExternalCommand
 
-<span class="n">HERE</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">).</span><span class="n">parent</span><span class="p">.</span><span class="nf">resolve</span><span class="p">()</span>
+HERE = Path(__file__).parent.resolve()
 
-<span class="n">UI_TAB_ORDER</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">tests</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">camera</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">gse</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">configuration</span><span class="sh">'</span><span class="p">]</span>
+UI_TAB_ORDER = ['tests', 'camera', 'gse', 'configuration']
 
 
-<span class="k">def</span> <span class="nf">csl_ui</span><span class="p">():</span>
-    <span class="n">logo_path</span> <span class="o">=</span> <span class="n">HERE</span> <span class="o">/</span> <span class="sh">"</span><span class="s">icons/dashboard.svg</span><span class="sh">"</span>
+def csl_ui():
+    logo_path = HERE / "icons/dashboard.svg"
 
-    <span class="c1"># On the client machine, the /data directory is usually mounted read-only.
-</span>    <span class="c1"># If that is the case, write the command log to the users home folder.
-</span>
-    <span class="n">cmd_log</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">environ</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sh">"</span><span class="s">UI_LOG_FILE_LOCATION</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">cmd_log</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="p">.</span><span class="nf">access</span><span class="p">(</span><span class="n">cmd_log</span><span class="p">,</span> <span class="n">os</span><span class="p">.</span><span class="n">W_OK</span><span class="p">):</span>
-        <span class="n">cmd_log</span> <span class="o">=</span> <span class="nf">str</span><span class="p">(</span><span class="nc">Path</span><span class="p">(</span><span class="sh">"</span><span class="s">~</span><span class="sh">"</span><span class="p">).</span><span class="nf">expanduser</span><span class="p">())</span>
+    # On the client machine, the /data directory is usually mounted read-only.
+    # If that is the case, write the command log to the users home folder.
 
-    <span class="n">cmd</span> <span class="o">=</span> <span class="nc">ExternalCommand</span><span class="p">(</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">gui-executor --verbose --module-path camtest.tasks.csl </span><span class="sh">"</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">--module-path camtest.tasks.shared.camera </span><span class="sh">"</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">--kernel-name plato-test-scripts --single </span><span class="sh">"</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">--logo </span><span class="si">{</span><span class="n">logo_path</span><span class="si">}</span><span class="s"> --cmd-log </span><span class="si">{</span><span class="n">cmd_log</span><span class="si">}</span><span class="s"> --app-name </span><span class="sh">'</span><span class="s">CSL Operator GUI</span><span class="sh">'"</span><span class="p">,</span>
-        <span class="n">asynchronous</span><span class="o">=</span><span class="bp">True</span>
-    <span class="p">)</span>
-    <span class="n">cmd</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span></code></pre>
+    cmd_log = os.environ.get("UI_LOG_FILE_LOCATION")
+    if cmd_log is None or not os.access(cmd_log, os.W_OK):
+        cmd_log = str(Path("~").expanduser())
+
+    cmd = ExternalCommand(
+        f"gui-executor --verbose --module-path camtest.tasks.csl "
+        f"--module-path camtest.tasks.shared.camera "
+        f"--kernel-name plato-test-scripts --single "
+        f"--logo {logo_path} --cmd-log {cmd_log} --app-name 'CSL Operator GUI'",
+        asynchronous=True
+    )
+    cmd.start()</code></pre>
 </div>
 </div>
 </div>
@@ -1906,44 +1891,44 @@ response = raise_an_exception(value=0.0)
 <div class="paragraph">
 <p>Apart from tasks that print status information in the output console, there are sometimes specific items that you want to keep track of without the need to execute a task for this. In the project for which this application was developed, we needed to know about two identifiers at all time, i.e. the identifier for the configuration of our equipment (we call it the Setup) and the identifier of the currently running test (we call it the obsid). So, we developed a function which will repeatedly request these identifiers from the microservice that controls the configuration and display them in the status bar at the bottom of the Task GUI. The code snippet below defines a function <code>show_setup_and_obs_id()</code> which is decorated with <code>@exec_recurring_task</code>. The decorator takes a parameter <code>status_type</code> which can be 'NORMAL' or 'PERMANENT'. When <code>status_type</code> is NORMAL the message will be printed on the left side of the status bar, when <code>status_type</code> is PERMANENT the message will be printed on the right side of the statusbar. The example below is specific for our project, in your case, you will want to put different things in the status bar. The GUI in the TAB shows the output of the function.</p>
 </div>
-<div id="_tabs_11" class="openblock tabs is-loading">
+<div id="_tabs_13" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_11_code_snippet" class="tab">
+<li id="_tabs_13_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_11_csl_operator_gui" class="tab">
+<li id="_tabs_13_csl_operator_gui" class="tab">
 <p>CSL Operator GUI</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_11_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_11_code_snippet">
+<div id="_tabs_13_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_13_code_snippet">
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="python"><span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">exec_recurring_task</span>
-<span class="kn">from</span> <span class="n">gui_executor.exec</span> <span class="kn">import</span> <span class="n">StatusType</span>
+<pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_recurring_task
+from gui_executor.exec import StatusType
 
-<span class="kn">from</span> <span class="n">egse.state</span> <span class="kn">import</span> <span class="n">GlobalState</span>
+from egse.state import GlobalState
 
 
-<span class="nd">@exec_recurring_task</span><span class="p">(</span><span class="n">status_type</span><span class="o">=</span><span class="n">StatusType</span><span class="p">.</span><span class="n">PERMANENT</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">show_setup_and_obs_id</span><span class="p">():</span>
-    <span class="kn">from</span> <span class="n">egse.confman</span> <span class="kn">import</span> <span class="n">ConfigurationManagerProxy</span>
-    <span class="kn">from</span> <span class="n">egse.obsid</span> <span class="kn">import</span> <span class="n">ObservationIdentifier</span>
+@exec_recurring_task(status_type=StatusType.PERMANENT)
+def show_setup_and_obs_id():
+    from egse.confman import ConfigurationManagerProxy
+    from egse.obsid import ObservationIdentifier
 
-    <span class="n">obsid</span><span class="p">:</span> <span class="n">ObservationIdentifier</span>
-    <span class="k">with</span> <span class="nc">ConfigurationManagerProxy</span><span class="p">()</span> <span class="k">as</span> <span class="n">cm_proxy</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">obsid</span> <span class="p">:</span><span class="o">=</span> <span class="n">cm_proxy</span><span class="p">.</span><span class="nf">get_obsid</span><span class="p">().</span><span class="n">return_code</span><span class="p">:</span>
-            <span class="n">test_id</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">OBSID = </span><span class="si">{</span><span class="n">obsid</span><span class="p">.</span><span class="n">test_id</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">test_id</span> <span class="o">=</span> <span class="sh">''</span>
+    obsid: ObservationIdentifier
+    with ConfigurationManagerProxy() as cm_proxy:
+        if obsid := cm_proxy.get_obsid().return_code:
+            test_id = f"OBSID = {obsid.test_id}, "
+        else:
+            test_id = ''
 
-    <span class="k">return</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">test_id</span><span class="si">}</span><span class="s">Setup ID = </span><span class="si">{</span><span class="nf">int</span><span class="p">(</span><span class="n">GlobalState</span><span class="p">.</span><span class="n">setup</span><span class="p">.</span><span class="nf">get_id</span><span class="p">())</span><span class="si">}</span><span class="sh">"</span></code></pre>
+    return f"{test_id}Setup ID = {int(GlobalState.setup.get_id())}"</code></pre>
 </div>
 </div>
 </div>
-<div id="_tabs_11_csl_operator_gui--panel" class="tabpanel" aria-labelledby="_tabs_11_csl_operator_gui">
+<div id="_tabs_13_csl_operator_gui--panel" class="tabpanel" aria-labelledby="_tabs_13_csl_operator_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/statusbar-01.png" alt="statusbar 01" width="80%">
@@ -1985,7 +1970,7 @@ response = raise_an_exception(value=0.0)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2024-09-10 23:31:23 +0200
+Last updated 2026-04-21 11:11:41 +0200
 </div>
 </div>
 <script>
