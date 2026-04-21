@@ -15,6 +15,7 @@ import sys
 import tempfile
 import textwrap
 import traceback
+from datetime import datetime
 from enum import Enum
 from functools import partial
 from pathlib import Path
@@ -52,6 +53,7 @@ from PyQt5.QtGui import QImage
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtGui import QRegExpValidator
+from PyQt5.QtGui import QTextDocument
 from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QApplication
@@ -60,6 +62,7 @@ from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QDialogButtonBox
+from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QGroupBox
@@ -622,8 +625,24 @@ class FunctionRunnableQProcess(FunctionRunnable):
 
 
 class ConsoleOutput(QTextEdit):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, save_output_file: str | None = None):
         super().__init__(parent)
+        self._save_output_file = Path(save_output_file).expanduser() if save_output_file else None
+        self._save_output_stream = None
+        self._save_buffer: List[str] = []
+        self._flush_line_threshold = 50
+        self._flush_interval_ms = 1000
+        self._flush_timer = QTimer(self)
+        self._flush_timer.setInterval(self._flush_interval_ms)
+        self._flush_timer.timeout.connect(self.flush_output_buffer)
+
+        # Truncate the autosave file at startup so each run starts a clean log.
+        if self._save_output_file is not None:
+            self._save_output_file.parent.mkdir(parents=True, exist_ok=True)
+            self._save_output_file.write_text("", encoding="utf-8")
+            self._save_output_stream = self._save_output_file.open("a", encoding="utf-8")
+            self._flush_timer.start()
+
         self.setReadOnly(True)
         self.setLineWrapMode(QTextEdit.NoWrap)
         # self.insertPlainText("")
@@ -695,6 +714,56 @@ class ConsoleOutput(QTextEdit):
         sb = self.verticalScrollBar()
         sb.setValue(sb.maximum())
 
+        # Persist a plain-text representation of rich output when autosave is enabled.
+        document = QTextDocument()
+        document.setHtml(text)
+        plain_text = document.toPlainText().rstrip()
+        if plain_text:
+            self._queue_output_line(plain_text)
+
+    def _queue_output_line(self, text: str):
+        if self._save_output_stream is None:
+            return
+
+        self._save_buffer.append(text)
+        if len(self._save_buffer) >= self._flush_line_threshold:
+            self.flush_output_buffer()
+
+    def flush_output_buffer(self):
+        if self._save_output_stream is None or not self._save_buffer:
+            return
+
+        payload = "\n".join(self._save_buffer) + "\n"
+        self._save_output_stream.write(payload)
+        self._save_output_stream.flush()
+        self._save_buffer.clear()
+
+    def shutdown_autosave(self):
+        self.flush_output_buffer()
+
+        if self._flush_timer.isActive():
+            self._flush_timer.stop()
+
+        if self._save_output_stream is not None:
+            self._save_output_stream.close()
+            self._save_output_stream = None
+
+    def save_to_file(self, filename: str):
+        Path(filename).expanduser().write_text(self.toPlainText(), encoding="utf-8")
+
+    def save_to_file_dialog(self):
+        base = (self._save_output_file or Path("./gui-executor-console-output.txt")).expanduser()
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        default = str(base.with_name(f"{base.stem}-{timestamp}{base.suffix or '.txt'}"))
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save console output",
+            default,
+            "Text files (*.txt);;All files (*)",
+        )
+        if filename:
+            self.save_to_file(filename)
+
     def __contextMenu(self):
         self._normalMenu = self.createStandardContextMenu()
         self._addCustomMenuItems(self._normalMenu)
@@ -702,7 +771,12 @@ class ConsoleOutput(QTextEdit):
 
     def _addCustomMenuItems(self, menu):
         menu.addSeparator()
+        menu.addAction("Save Output As...", self.save_to_file_dialog)
         menu.addAction("Clear", self.clear)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.shutdown_autosave()
+        super().closeEvent(event)
 
 
 class SourceCodeWindow(QWidget):
@@ -1310,6 +1384,7 @@ class View(QMainWindow):
         model: Model,
         app_name: str = None,
         cmd_log: str = None,
+        save_output_file: str = None,
         verbosity: int = 0,
         kernel_name: str = "python3",
     ):
@@ -1331,6 +1406,9 @@ class View(QMainWindow):
 
         self.cmd_log = cmd_log
         """The location of the command log files, provided as an argument."""
+
+        self.save_output_file = save_output_file
+        """Optional path where console output is automatically persisted."""
 
         self.question_dialog: YesNoQuestion | None = None
         """A half-modal dialog to answer questions from the runnable."""
@@ -1378,7 +1456,7 @@ class View(QMainWindow):
         self._buttons_panels = self.create_button_panels()
 
         self._args_panel: QWidget = None
-        self._console_panel = ConsoleOutput()
+        self._console_panel = ConsoleOutput(save_output_file=self.save_output_file)
 
         if len(self._buttons_panels) == 1:
             # If there is only one buttons panel, we do not create a TabWidget, but use that panel directly.
@@ -1500,6 +1578,8 @@ class View(QMainWindow):
         if button_pressed == cancel_button:
             event.ignore()
             return
+
+        self._console_panel.shutdown_autosave()
 
         if self._kernel:
             print("Shutting down Jupyter kernel.")

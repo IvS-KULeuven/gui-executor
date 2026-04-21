@@ -466,7 +466,7 @@ wheels = [
 
 [[package]]
 name = "gui-executor"
-version = "0.22.3"
+version = "0.23.0"
 source = { editable = "." }
 dependencies = [
     { name = "distro" },
@@ -495,6 +495,10 @@ test = [
 dev = [
     { name = "pytest" },
 ]
+test = [
+    { name = "faker" },
+    { name = "lorem-text" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -517,6 +521,10 @@ provides-extras = ["test"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.3.5" }]
+test = [
+    { name = "faker", specifier = ">=40.12.0" },
+    { name = "lorem-text", specifier = ">=3.0" },
+]
 
 [[package]]
 name = "humanfriendly"
