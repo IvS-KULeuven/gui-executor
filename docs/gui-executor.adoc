@@ -488,7 +488,7 @@ TIP: If you want to follow closely on the printed output of your function, you m
 
 As a small recap, type hints that are recognised by the Task GUI are: `str`, `int`, `float`, `bool`, `list`, `tuple`, and subclasses of `Enum`. Then, there are a number of types defined by the Task GUI that can be used for paths, i.e. `FileName` as a type for a filename including extension but without the directory part, `FilePath` as a type for a full file path which is the relative or absolute path to a file including the filename and extension, and `Directory` which is the location of a file, i.e. the path to the file without the filename.
 
-Then we have a few special cases for more complex arguments to a function. The first one is a `FixedList` which is a list with a fixed number of elements of specific types. Additionally, there is the `ListList` which is a dynamic list of fixed lists, and finally, there is the `CallBack` type which makes your argument dependent on the outcome of a function call at the moment that you select the task and the arguments panel is created. The following sections will describe these _type hints_ in more detail.
+Then we have a few special cases for more complex arguments to a function. The first one is a `FixedList` which is a list with a fixed number of elements of specific types. Additionally, there is the `ListList` which is a dynamic list of fixed lists, and the `DropdownList` which is a dynamic list of dropdown menus. Finally, there is the `CallBack` type which makes your argument dependent on the outcome of a function call at the moment that you select the task and the arguments panel is created. The following sections will describe these _type hints_ in more detail.
 
 ==== The simple fixed list
 
@@ -536,7 +536,79 @@ Looking at the _Arguments Panel_ tab, the horizontal space after the `coordinate
 
 ==== The dynamic list of lists
 
-TBW
+Use `ListList` when your task argument is a list where each element is itself a fixed list with predefined types. In the Arguments Panel you get one row with an add icon. Pressing that icon adds a new row with the same fixed structure, so you can provide as many entries as needed.
+
+[tabs]
+======
+Code snippet::
++
+[source%nowrap,python]
+----
+from gui_executor.exec import exec_task
+from gui_executor.utypes import ListList
+
+@exec_task()
+def save_targets(
+        targets: ListList([int, float, str], [1, 0.0, "target-A"], name="id, angle, label"),
+):
+    """
+    Save a dynamic number of target definitions.
+
+    Args:
+        targets: list of [id, angle, label]
+    """
+    print(f"{targets = }")
+    return targets
+----
+
+Resulting argument value::
++
+----
+[[1, 0.0, 'target-A'], [2, 45.5, 'target-B'], [3, 90.0, 'target-C']]
+----
+======
+
+For the first row, default values can be provided through the second argument of `ListList`. Added rows use the same type structure, and rows can be removed again with the delete icon.
+
+==== The dynamic list of dropdown menus
+
+Use `DropdownList` when each row should be a selection from a fixed set of options. This is useful for workflows where users may select one or more predefined values without typing free text.
+
+[tabs]
+======
+Code snippet::
++
+[source%nowrap,python]
+----
+from gui_executor.exec import exec_task
+from gui_executor.utypes import DropdownList
+
+@exec_task()
+def choose_filters(
+        filters: DropdownList(
+            ["none", "bias", "dark", "flat"],
+            defaults=["bias", "dark"],
+            name="Image filters",
+        ),
+):
+    """
+    Select one or more filters to apply.
+
+    Args:
+        filters: list of selected filter names
+    """
+    print(f"{filters = }")
+    return filters
+----
+
+Resulting argument value::
++
+----
+['bias', 'dark', 'flat']
+----
+======
+
+When defaults are provided, the widget starts with one row per default value already selected. Users can add additional dropdown rows with the add icon and remove rows with the delete icon.
 
 ==== The call back function
 
