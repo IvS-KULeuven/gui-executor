@@ -40,9 +40,6 @@ dependencies = [
 #    "qtconsole == 5.4.3",
 ]
 
-[project.optional-dependencies]
-test = ["faker", "lorem-text"]
-
 [project.gui-scripts]
 gui-executor = "gui_executor.__main__:main"
 
@@ -74,4 +71,8 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
+]
+test = [
+    "faker>=40.12.0",
+    "lorem-text>=3.0",
 ]
