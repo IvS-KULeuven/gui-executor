@@ -1,5 +1,7 @@
-from gui_executor.exec import exec_task
-from gui_executor.utypes import FixedList, ListList, DropdownList
+from enum import IntEnum
+
+from gui_executor.exec import exec_task, exec_ui
+from gui_executor.utypes import Callback, DropdownList, FixedList, ListList
 
 
 @exec_task()
@@ -50,3 +52,34 @@ def choose_filters(
     """
     print(f"{filters = }")
     return filters
+
+
+class Digit(IntEnum):
+    ZERO = 0
+    ONE = 1
+    TWO = 2
+    THREE = 3
+
+
+def available_digits():
+    return Digit
+
+
+def default_digit():
+    return Digit.TWO
+
+
+@exec_task()
+def select_digit(digit: Callback(available_digits, name="digit", default=default_digit)):
+    """Select a digit from values determined at runtime."""
+    print(f"{digit = }")
+
+
+@exec_ui()
+def select_mode(mode: Callback(lambda: ["full", "fast"], name="mode")):
+    print(f"{mode = }")
+
+
+@exec_ui()
+def use_calibration(enabled: Callback(lambda: True, name="calibration")):
+    print(f"{enabled = }")
