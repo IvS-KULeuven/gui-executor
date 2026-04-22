@@ -50,6 +50,7 @@ from PyQt5.QtGui import QCursor
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QImage
 from PyQt5.QtGui import QIntValidator
@@ -65,6 +66,7 @@ from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFontDialog
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QGroupBox
@@ -748,8 +750,9 @@ class ConsoleOutput(QTextEdit):
         self.document().setDocumentMargin(4.0)  # this is also the default
         self.document().setDefaultStyleSheet("p { margin: 0; } pre { margin: 0; }")
         self.setMinimumSize(600, 100)
-        monospaced_font = QFont("Courier New")
-        monospaced_font.setStyleHint(QFont.Monospace)
+
+        # Use the platform default fixed-width font and normalize to a comfortable size.
+        monospaced_font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
         monospaced_font.setPointSize(12)  # TODO: should be a setting
         self.setFont(monospaced_font)
 
@@ -1148,6 +1151,13 @@ class ConsoleOutput(QTextEdit):
         if filename:
             self.save_to_file(filename)
 
+    def choose_font_dialog(self):
+        """Open a font dialog and apply the selected font to the console widget."""
+        current_font = self.font()
+        selected_font, accepted = QFontDialog.getFont(current_font, self, "Choose Console Font")
+        if accepted:
+            self.setFont(selected_font)
+
     def __contextMenu(self):
         self._normalMenu = self.createStandardContextMenu()
         self._addCustomMenuItems(self._normalMenu)
@@ -1160,6 +1170,7 @@ class ConsoleOutput(QTextEdit):
         plain_text_action.setCheckable(True)
         plain_text_action.setChecked(self.is_plain_text_mode())
         plain_text_action.triggered.connect(self._toggle_plain_text_mode)
+        menu.addAction("Console Font...", self.choose_font_dialog)
         menu.addAction("Save Output As...", self.save_to_file_dialog)
         menu.addAction("Clear", self.clear)
 
@@ -1998,8 +2009,13 @@ class View(QMainWindow):
         self._plain_text_mode_action.setChecked(True)
         self._plain_text_mode_action.triggered.connect(self.set_console_plain_text_mode)
 
+        choose_console_font_action = QAction(self)
+        choose_console_font_action.setText("Console Font...")
+        choose_console_font_action.triggered.connect(self.choose_console_font)
+
         file_menu.addAction(reload_action)
         view_menu.addAction(self._plain_text_mode_action)
+        view_menu.addAction(choose_console_font_action)
         help_menu.addAction(open_url_action)
 
     def set_console_plain_text_mode(self, checked: bool):
@@ -2014,6 +2030,10 @@ class View(QMainWindow):
         self._plain_text_mode_action.blockSignals(True)
         self._plain_text_mode_action.setChecked(checked)
         self._plain_text_mode_action.blockSignals(False)
+
+    def choose_console_font(self):
+        """Open the console font picker from the main View menu."""
+        self._console_panel.choose_font_dialog()
 
     def open_url(self, url: str):
         """Open a documentation URL in the desktop browser."""
