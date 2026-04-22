@@ -68,6 +68,11 @@ def fixed_list_with_name(x_list: FixedList([int, int], [3, 42], name="X, Y")):
 
 @exec_ui(display_name="list → Numpy Array")
 def list_to_array(angles: list):
+    """
+    Example of a task that takes a list as an argument and converts it to a numpy array.
+
+    The list is expected to be a list of lists, where each inner list has two elements: [theta, phi].
+    """
     import numpy as np
 
     if isinstance(angles, list):
