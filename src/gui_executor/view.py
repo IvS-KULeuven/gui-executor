@@ -4,6 +4,8 @@ import ast
 import contextlib
 import errno
 import fcntl
+import html
+import io
 import importlib
 import inspect
 import logging
@@ -380,6 +382,13 @@ class FunctionRunnableKernel(FunctionRunnable):
         self.running = True
         success = False
         client = None
+        stream_buffer: List[str] = []
+
+        def flush_stream_buffer():
+            if not stream_buffer:
+                return
+            self.signals.data.emit("\n".join(stream_buffer))
+            stream_buffer.clear()
 
         try:
             self.signals.data.emit(f"----- Running script '{self.func_name}' in kernel")
@@ -416,8 +425,12 @@ class FunctionRunnableKernel(FunctionRunnable):
                     if io_msg_type == "stream":
                         if "text" in io_msg_content:
                             text = io_msg_content["text"].rstrip()
-                            self.signals.data.emit(text)
+                            if text:
+                                stream_buffer.append(text)
+                                if len(stream_buffer) >= 50:
+                                    flush_stream_buffer()
                     elif io_msg_type == "status":
+                        flush_stream_buffer()
                         if io_msg_content["execution_state"] == "idle":
                             if VERBOSE_DEBUG:
                                 LOGGER.debug(f"{id(client)}: Execution State is Idle, terminating...")
@@ -432,6 +445,7 @@ class FunctionRunnableKernel(FunctionRunnable):
                                 LOGGER.debug(f"{id(client)}: Execution State is starting...")
                             continue
                     elif io_msg_type == "display_data":
+                        flush_stream_buffer()
                         if "data" in io_msg_content:
                             if VERBOSE_DEBUG:
                                 LOGGER.debug(f"{id(client)}: display data of type {io_msg_content['data'].keys()}")
@@ -447,10 +461,12 @@ class FunctionRunnableKernel(FunctionRunnable):
                     elif io_msg_type == "execute_input":
                         ...  # ignore this message type
                     elif io_msg_type == "error":
+                        flush_stream_buffer()
                         if "traceback" in io_msg_content:
                             traceback = io_msg_content["traceback"]
                             self.signals.data.emit(Text.from_ansi("\n".join(traceback)))
                     else:
+                        flush_stream_buffer()
                         self.signals.error.emit(RuntimeError(f"Unknown io_msg_type: {io_msg_type}"))
 
                 except queue.Empty:
@@ -472,6 +488,7 @@ class FunctionRunnableKernel(FunctionRunnable):
                     LOGGER.error(f"{id(client)}: Caught Exception: {exc}", exc_info=True)
                     self.signals.data.emit(exc)
 
+            flush_stream_buffer()
             success = True
 
         except RuntimeError as exc:
@@ -625,8 +642,38 @@ class FunctionRunnableQProcess(FunctionRunnable):
 
 
 class ConsoleOutput(QTextEdit):
+    render_mode_changed = pyqtSignal(bool)
+
+    class RenderMode(Enum):
+        LIGHTWEIGHT = "lightweight"
+        PLAIN_TEXT = "plain_text"
+
+    _ANSI_SGR_RE = re.compile(r"\x1b\[([0-9;]*)m")
+
+    _ANSI_16_COLORS = {
+        30: "#000000",
+        31: "#aa0000",
+        32: "#00aa00",
+        33: "#aa5500",
+        34: "#0000aa",
+        35: "#aa00aa",
+        36: "#00aaaa",
+        37: "#aaaaaa",
+        90: "#555555",
+        91: "#ff5555",
+        92: "#55ff55",
+        93: "#ffff55",
+        94: "#5555ff",
+        95: "#ff55ff",
+        96: "#55ffff",
+        97: "#ffffff",
+    }
+
     def __init__(self, parent=None, save_output_file: str | None = None):
         super().__init__(parent)
+        self._render_mode = self.RenderMode.PLAIN_TEXT
+        self._max_visible_lines = 50000
+        self._trim_batch_lines = 2000
         self._save_output_file = Path(save_output_file).expanduser() if save_output_file else None
         self._save_output_stream = None
         self._save_buffer: List[str] = []
@@ -650,6 +697,7 @@ class ConsoleOutput(QTextEdit):
         self.setAcceptRichText(True)
         self.setUndoRedoEnabled(False)
         self.document().setDocumentMargin(4.0)  # this is also the default
+        self.document().setDefaultStyleSheet("p { margin: 0; } pre { margin: 0; }")
         self.setMinimumSize(600, 100)
         monospaced_font = QFont("Courier New")
         monospaced_font.setStyleHint(QFont.Monospace)
@@ -667,22 +715,226 @@ class ConsoleOutput(QTextEdit):
     def append(self, text):
         import builtins
 
+        renderable = text
+        plain_text_input = "" if text is None else str(text)
+        is_plain_string_input = isinstance(renderable, str) or renderable is None
+
         if VERBOSE_DEBUG:
-            builtins.print(f"{text = }")
+            builtins.print(f"{renderable = }")
 
         theme = Theme({"info": "bold cyan", "warning": "magenta", "danger": "bold red"})
-        console = Console(record=True, file=open(os.devnull, "wt"), width=240, theme=theme)  # color_system="truecolor"
-        console.print(text)
 
-        exported_html = console.export_html(
-            inline_styles=True,
-            code_format="<pre>{code}</pre>",
-        )
+        has_rich_markup = re.search(r"\[/?[a-zA-Z][^\]]*\]", plain_text_input) is not None
+        if (
+            self._render_mode == self.RenderMode.PLAIN_TEXT
+            and is_plain_string_input
+            and "\x1b[" not in plain_text_input
+            and not has_rich_markup
+        ):
+            self.setUpdatesEnabled(False)
+            try:
+                self.moveCursor(QTextCursor.End)
+                self.insertPlainText(plain_text_input)
+                self.insertPlainText("\n")
+                self.moveCursor(QTextCursor.End)
+            except Exception:
+                LOGGER.exception("append: error while rendering plain-text output")
+            finally:
+                self.setUpdatesEnabled(True)
 
-        if VERBOSE_DEBUG:
-            builtins.print(f"{exported_html = }")
+            sb = self.verticalScrollBar()
+            sb.setValue(sb.maximum())
+            if plain_text_input:
+                self._queue_output_line(plain_text_input)
+            self._enforce_line_limit()
+            return
 
-        self.append_html(exported_html)
+        try:
+            ansi_buffer = io.StringIO()
+            console = Console(file=ansi_buffer, force_terminal=True, color_system="truecolor", width=240, theme=theme)
+            console.print(renderable)
+            ansi_output = ansi_buffer.getvalue().replace("\r", "")
+
+            if VERBOSE_DEBUG:
+                builtins.print(f"{ansi_output = }")
+
+            self.append_ansi(ansi_output)
+        except Exception:
+            try:
+                # Safety fallback to Rich's full HTML export for unexpected ANSI edge cases.
+                console = Console(record=True, file=io.StringIO(), width=240, theme=theme)
+                console.print(renderable)
+                exported_html = console.export_html(inline_styles=True, code_format="<pre>{code}</pre>")
+                self.append_html(exported_html)
+            except Exception:
+                LOGGER.exception("append: failed in Rich rendering and HTML fallback")
+                self.setUpdatesEnabled(False)
+                try:
+                    self.moveCursor(QTextCursor.End)
+                    self.insertPlainText(plain_text_input)
+                    self.insertPlainText("\n")
+                    self.moveCursor(QTextCursor.End)
+                finally:
+                    self.setUpdatesEnabled(True)
+        self._enforce_line_limit()
+
+    @staticmethod
+    def _xterm_256_to_hex(index: int) -> str:
+        if index < 16:
+            table = [
+                "#000000",
+                "#800000",
+                "#008000",
+                "#808000",
+                "#000080",
+                "#800080",
+                "#008080",
+                "#c0c0c0",
+                "#808080",
+                "#ff0000",
+                "#00ff00",
+                "#ffff00",
+                "#0000ff",
+                "#ff00ff",
+                "#00ffff",
+                "#ffffff",
+            ]
+            return table[index]
+        if index < 232:
+            index -= 16
+            r = (index // 36) % 6
+            g = (index // 6) % 6
+            b = index % 6
+
+            def to_rgb(component: int) -> int:
+                return 0 if component == 0 else 55 + 40 * component
+
+            return f"#{to_rgb(r):02x}{to_rgb(g):02x}{to_rgb(b):02x}"
+        gray = 8 + (index - 232) * 10
+        return f"#{gray:02x}{gray:02x}{gray:02x}"
+
+    @classmethod
+    def _ansi_to_html(cls, ansi_text: str) -> str:
+        def style_css(state):
+            parts = []
+            if state["fg"]:
+                parts.append(f"color: {state['fg']};")
+            if state["bg"]:
+                parts.append(f"background-color: {state['bg']};")
+            if state["bold"]:
+                parts.append("font-weight: bold;")
+            if state["italic"]:
+                parts.append("font-style: italic;")
+            if state["underline"]:
+                parts.append("text-decoration: underline;")
+            return " ".join(parts)
+
+        state = {"fg": None, "bg": None, "bold": False, "italic": False, "underline": False}
+        html_parts = []
+        pos = 0
+
+        for match in cls._ANSI_SGR_RE.finditer(ansi_text):
+            chunk = ansi_text[pos : match.start()]
+            if chunk:
+                css = style_css(state)
+                escaped = html.escape(chunk)
+                if css:
+                    html_parts.append(f'<span style="{css}">{escaped}</span>')
+                else:
+                    html_parts.append(escaped)
+
+            params = [int(p) for p in match.group(1).split(";") if p] or [0]
+            idx = 0
+            while idx < len(params):
+                p = params[idx]
+                if p == 0:
+                    state = {"fg": None, "bg": None, "bold": False, "italic": False, "underline": False}
+                elif p == 1:
+                    state["bold"] = True
+                elif p == 3:
+                    state["italic"] = True
+                elif p == 4:
+                    state["underline"] = True
+                elif p == 22:
+                    state["bold"] = False
+                elif p == 23:
+                    state["italic"] = False
+                elif p == 24:
+                    state["underline"] = False
+                elif p == 39:
+                    state["fg"] = None
+                elif p == 49:
+                    state["bg"] = None
+                elif p in cls._ANSI_16_COLORS:
+                    state["fg"] = cls._ANSI_16_COLORS[p]
+                elif 40 <= p <= 47:
+                    fg_equiv = p - 10
+                    state["bg"] = cls._ANSI_16_COLORS.get(fg_equiv)
+                elif 100 <= p <= 107:
+                    fg_equiv = p - 10
+                    state["bg"] = cls._ANSI_16_COLORS.get(fg_equiv)
+                elif p in (38, 48) and idx + 1 < len(params):
+                    mode = params[idx + 1]
+                    if mode == 5 and idx + 2 < len(params):
+                        color = cls._xterm_256_to_hex(params[idx + 2])
+                        if p == 38:
+                            state["fg"] = color
+                        else:
+                            state["bg"] = color
+                        idx += 2
+                    elif mode == 2 and idx + 4 < len(params):
+                        r, g, b = params[idx + 2], params[idx + 3], params[idx + 4]
+                        color = f"#{r:02x}{g:02x}{b:02x}"
+                        if p == 38:
+                            state["fg"] = color
+                        else:
+                            state["bg"] = color
+                        idx += 4
+                idx += 1
+
+            pos = match.end()
+
+        tail = ansi_text[pos:]
+        if tail:
+            css = style_css(state)
+            escaped = html.escape(tail)
+            if css:
+                html_parts.append(f'<span style="{css}">{escaped}</span>')
+            else:
+                html_parts.append(escaped)
+
+        html_body = "".join(html_parts)
+        return f'<pre style="margin:0;">{html_body}</pre>'
+
+    @classmethod
+    def _ansi_to_plain_text(cls, ansi_text: str) -> str:
+        return cls._ANSI_SGR_RE.sub("", ansi_text).rstrip()
+
+    @pyqtSlot(str)
+    def append_ansi(self, ansi_text: str):
+        self.setUpdatesEnabled(False)
+        try:
+            self.moveCursor(QTextCursor.End)
+
+            if self._render_mode == self.RenderMode.LIGHTWEIGHT:
+                self.insertHtml(self._ansi_to_html(ansi_text))
+            else:
+                self.insertPlainText(self._ansi_to_plain_text(ansi_text))
+            self.insertPlainText("\n")
+
+            self.moveCursor(QTextCursor.End)
+        except Exception:
+            LOGGER.exception("append_ansi: error while rendering ANSI output")
+        finally:
+            self.setUpdatesEnabled(True)
+
+        sb = self.verticalScrollBar()
+        sb.setValue(sb.maximum())
+
+        plain_text = self._ansi_to_plain_text(ansi_text)
+        if plain_text:
+            self._queue_output_line(plain_text)
+        self._enforce_line_limit()
 
     def append_image(self, data):
         from IPython.display import Image as IPythonImage
@@ -705,21 +957,65 @@ class ConsoleOutput(QTextEdit):
         # builtins.print(f"{text = }")
 
         self.setUpdatesEnabled(False)
-        self.moveCursor(QTextCursor.End)
-        self.insertHtml(text)
-        self.insertHtml("<br>")
-        self.moveCursor(QTextCursor.End)
-        self.setUpdatesEnabled(True)
+        try:
+            self.moveCursor(QTextCursor.End)
+
+            if self._render_mode == self.RenderMode.LIGHTWEIGHT:
+                self.insertHtml(text)
+                self.insertHtml("<br>")
+                # Only parse the HTML for plain-text when autosave actually needs it.
+                if self._save_output_stream is not None:
+                    document = QTextDocument()
+                    document.setHtml(text)
+                    plain_text = document.toPlainText().rstrip()
+                    if plain_text:
+                        self._queue_output_line(plain_text)
+            else:
+                document = QTextDocument()
+                document.setHtml(text)
+                plain_text = document.toPlainText().rstrip()
+                self.insertPlainText(plain_text)
+                self.insertPlainText("\n")
+                if plain_text:
+                    self._queue_output_line(plain_text)
+
+            self.moveCursor(QTextCursor.End)
+        except Exception:
+            LOGGER.exception("append_html: error while rendering HTML output")
+        finally:
+            self.setUpdatesEnabled(True)
 
         sb = self.verticalScrollBar()
         sb.setValue(sb.maximum())
+        self._enforce_line_limit()
 
-        # Persist a plain-text representation of rich output when autosave is enabled.
-        document = QTextDocument()
-        document.setHtml(text)
-        plain_text = document.toPlainText().rstrip()
-        if plain_text:
-            self._queue_output_line(plain_text)
+    def set_render_mode(self, mode: "ConsoleOutput.RenderMode"):
+        changed = mode != self._render_mode
+        self._render_mode = mode
+        if changed:
+            self.render_mode_changed.emit(self.is_plain_text_mode())
+
+    def is_plain_text_mode(self) -> bool:
+        return self._render_mode == self.RenderMode.PLAIN_TEXT
+
+    def _enforce_line_limit(self):
+        if self._max_visible_lines <= 0:
+            return
+
+        block_count = self.document().blockCount()
+        if block_count <= self._max_visible_lines:
+            return
+
+        remove_count = max(self._trim_batch_lines, block_count - self._max_visible_lines)
+
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.movePosition(QTextCursor.Start)
+        for _ in range(remove_count):
+            cursor.select(QTextCursor.BlockUnderCursor)
+            cursor.removeSelectedText()
+            cursor.deleteChar()
+        cursor.endEditBlock()
 
     def _queue_output_line(self, text: str):
         if self._save_output_stream is None:
@@ -733,10 +1029,13 @@ class ConsoleOutput(QTextEdit):
         if self._save_output_stream is None or not self._save_buffer:
             return
 
-        payload = "\n".join(self._save_buffer) + "\n"
-        self._save_output_stream.write(payload)
-        self._save_output_stream.flush()
-        self._save_buffer.clear()
+        try:
+            payload = "\n".join(self._save_buffer) + "\n"
+            self._save_output_stream.write(payload)
+            self._save_output_stream.flush()
+            self._save_buffer.clear()
+        except Exception:
+            LOGGER.exception("flush_output_buffer: error flushing autosave buffer")
 
     def shutdown_autosave(self):
         self.flush_output_buffer()
@@ -749,7 +1048,15 @@ class ConsoleOutput(QTextEdit):
             self._save_output_stream = None
 
     def save_to_file(self, filename: str):
-        Path(filename).expanduser().write_text(self.toPlainText(), encoding="utf-8")
+        target = Path(filename).expanduser()
+
+        # Keep context-menu saves consistent with autosave formatting.
+        if self._save_output_file is not None:
+            self.flush_output_buffer()
+            target.write_text(self._save_output_file.read_text(encoding="utf-8"), encoding="utf-8")
+            return
+
+        target.write_text(self.toPlainText(), encoding="utf-8")
 
     def save_to_file_dialog(self):
         base = (self._save_output_file or Path("./gui-executor-console-output.txt")).expanduser()
@@ -771,8 +1078,16 @@ class ConsoleOutput(QTextEdit):
 
     def _addCustomMenuItems(self, menu):
         menu.addSeparator()
+        plain_text_action = menu.addAction("Plain Text Mode")
+        plain_text_action.setCheckable(True)
+        plain_text_action.setChecked(self.is_plain_text_mode())
+        plain_text_action.triggered.connect(self._toggle_plain_text_mode)
         menu.addAction("Save Output As...", self.save_to_file_dialog)
         menu.addAction("Clear", self.clear)
+
+    def _toggle_plain_text_mode(self, checked: bool):
+        mode = self.RenderMode.PLAIN_TEXT if checked else self.RenderMode.LIGHTWEIGHT
+        self.set_render_mode(mode)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.shutdown_autosave()
@@ -1457,6 +1772,7 @@ class View(QMainWindow):
 
         self._args_panel: QWidget = None
         self._console_panel = ConsoleOutput(save_output_file=self.save_output_file)
+        self._console_panel.render_mode_changed.connect(self._sync_plain_text_menu_action)
 
         if len(self._buttons_panels) == 1:
             # If there is only one buttons panel, we do not create a TabWidget, but use that panel directly.
@@ -1541,6 +1857,7 @@ class View(QMainWindow):
         menu_bar.setNativeMenuBar(True)
 
         file_menu = menu_bar.addMenu("File")
+        view_menu = menu_bar.addMenu("View")
         help_menu = menu_bar.addMenu("Help")
 
         reload_action = QAction(self)
@@ -1551,8 +1868,26 @@ class View(QMainWindow):
         open_url_action.setText("Developer Manual...")
         open_url_action.triggered.connect(partial(self.open_url, "https://ivs-kuleuven.github.io/gui-executor/"))
 
+        self._plain_text_mode_action = QAction(self)
+        self._plain_text_mode_action.setText("Plain Text Console Mode")
+        self._plain_text_mode_action.setCheckable(True)
+        self._plain_text_mode_action.setChecked(True)
+        self._plain_text_mode_action.triggered.connect(self.set_console_plain_text_mode)
+
         file_menu.addAction(reload_action)
+        view_menu.addAction(self._plain_text_mode_action)
         help_menu.addAction(open_url_action)
+
+    def set_console_plain_text_mode(self, checked: bool):
+        mode = ConsoleOutput.RenderMode.PLAIN_TEXT if checked else ConsoleOutput.RenderMode.LIGHTWEIGHT
+        self._console_panel.set_render_mode(mode)
+
+    def _sync_plain_text_menu_action(self, checked: bool):
+        if self._plain_text_mode_action is None:
+            return
+        self._plain_text_mode_action.blockSignals(True)
+        self._plain_text_mode_action.setChecked(checked)
+        self._plain_text_mode_action.blockSignals(False)
 
     def open_url(self, url: str):
         url = QUrl(url)
@@ -1605,8 +1940,11 @@ class View(QMainWindow):
         pass
 
     def run_recurring_tasks(self):
-        for func in self._recurring_tasks:
-            self.start_recurring_task(func)
+        try:
+            for func in self._recurring_tasks:
+                self.start_recurring_task(func)
+        except Exception:
+            LOGGER.exception("run_recurring_tasks: error in recurring task dispatch")
 
     def update_status(self, func: Callable, msg: str):
         if func.__ui_status_type__ == StatusType.NORMAL:
