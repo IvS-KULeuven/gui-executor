@@ -49,7 +49,8 @@ class MyClient:
         self._client.start_channels()
         try:
             self.wait_for_ready(timeout=self._startup_timeout)
-            LOGGER.info("Client channels ready.")
+            if VERBOSE_DEBUG:
+                LOGGER.debug("Client channels ready.")
         except RuntimeError:
             self._client.stop_channels()
             raise
@@ -206,7 +207,9 @@ class MyClient:
             # execute_reply, don't block forever waiting for idle.
             if reply is not None and reply_received_at is not None:
                 if time.monotonic() - reply_received_at > self._timeout:
-                    LOGGER.warning(f"{id(self)}: Execute reply received but no idle status observed; proceeding")
+                    if VERBOSE_DEBUG:
+                        LOGGER.debug(f"{id(self)}: Execute reply received but no idle status observed; proceeding")
+                        LOGGER.debug(f"{id(self)}: {reply = }")
                     break
 
         if VERBOSE_DEBUG:
@@ -217,9 +220,7 @@ class MyClient:
 
         if VERBOSE_DEBUG:
             LOGGER.debug(f"{id(self)}: {type(reply) = }")
-        if VERBOSE_DEBUG:
             LOGGER.debug(f"{id(self)}: {reply = }")
-        if VERBOSE_DEBUG:
             LOGGER.debug(f"{id(self)}: {reply['content'] = }")
 
         if reply["content"]["status"] == "error":

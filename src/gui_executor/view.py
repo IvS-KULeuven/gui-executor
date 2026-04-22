@@ -4,6 +4,8 @@ import ast
 import contextlib
 import errno
 import fcntl
+import html
+import io
 import importlib
 import inspect
 import logging
@@ -48,6 +50,7 @@ from PyQt5.QtGui import QCursor
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QImage
 from PyQt5.QtGui import QIntValidator
@@ -63,6 +66,7 @@ from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFontDialog
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QGroupBox
@@ -169,7 +173,10 @@ class RecurringTaskSignals(QObject):
 
 
 class RecurringTask(QRunnable):
+    """Run lightweight status/update callbacks on the shared thread pool."""
+
     def __init__(self, func: Callable, *args, **kwargs):
+        """Store the callable and its arguments for periodic execution."""
         super().__init__()
         self._func = func
         self._args = args
@@ -178,6 +185,7 @@ class RecurringTask(QRunnable):
 
     @pyqtSlot()
     def run(self):
+        """Execute the recurring callback and emit result, error, and finished signals."""
         try:
             result = self._func(*self._args, **self._kwargs)
         except Exception:
@@ -188,6 +196,14 @@ class RecurringTask(QRunnable):
             self.signals.result.emit(result)  # Return the result of the processing
         finally:
             self.signals.finished.emit()  # Done
+
+
+def get_thread_pool() -> QThreadPool:
+    """Helper function to get the global QThreadPool instance, ensuring that a QCoreApplication is active."""
+    pool = QThreadPool.globalInstance()
+    if pool is None:
+        raise RuntimeError("No active QCoreApplication instance")
+    return pool
 
 
 class FunctionThreadSignals(QObject):
@@ -217,7 +233,18 @@ class FunctionThreadSignals(QObject):
 
 
 class FunctionRunnable(QRunnable):
+    """Base runnable that standardizes signal emission for task execution backends."""
+
     def __init__(self, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
+        """Initialize common execution state shared by all runnable implementations.
+
+        Args:
+            func: the callable to execute
+            args: the list of positional arguments to execute the callable with
+            kwargs: the dictionary of keyword arguments to execute the callable with
+            input_queue: the queue to use for handling input requests
+
+        """
         super().__init__()
         self.signals = FunctionThreadSignals()
         self._func = func
@@ -228,11 +255,13 @@ class FunctionRunnable(QRunnable):
         self._input_queue: Queue = input_queue
 
     def check_for_input(self, patterns: Tuple):
+        """Enable prompt pattern matching for guarded interactive input requests."""
         if patterns is not None:
             self._check_for_input = True
             self._input_patterns = [pattern.rstrip() for pattern in patterns]
 
     def run_in_current_interpreter(self):
+        """Execute the function in-process and stream captured stdout/stderr/results."""
         # This runs the function within the current Python interpreter. This might be a security risk
         # if you allow to run functions that are not under your control.
         success = False
@@ -257,10 +286,12 @@ class FunctionRunnable(QRunnable):
             self.signals.finished.emit(self, self._func.__name__, success)
 
     def start(self):
-        QThreadPool.globalInstance().start(self)
+        """Submit this runnable to Qt's global thread pool."""
+        get_thread_pool().start(self)
 
-    def handle_input_request(self, message: str = None) -> str:
-        self.signals.input.emit(message)
+    def handle_input_request(self, prompt: str | None = None) -> str:
+        """Forward an input prompt to the UI layer and block until the answer is provided."""
+        self.signals.input.emit(prompt)
 
         response = self._input_queue.get()
         self._input_queue.task_done()
@@ -269,14 +300,18 @@ class FunctionRunnable(QRunnable):
 
     @property
     def func_name(self):
+        """Return the underlying callable name used in status messages."""
         return self._func.__name__
 
 
 class FunctionRunnableExternalCommand(FunctionRunnable):
+    """Execute a task by spawning a new Python process via ExternalCommand."""
+
     def __init__(self, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
         super().__init__(func, args, kwargs, input_queue)
 
     def run(self):
+        """Run the generated snippet as an external process and stream stdout/stderr."""
         tmp = tempfile.NamedTemporaryFile(mode="w", delete=False)
         tmp.write(create_code_snippet(self._func, self._args, self._kwargs, call_func=True))
         tmp.close()
@@ -343,11 +378,13 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
 
     @staticmethod
     def make_async(fd):
+        """Set a file descriptor to non-blocking mode."""
         # Helper function to add the O_NONBLOCK flag to a file descriptor
         fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
     @staticmethod
     def read_async(fd) -> bytes:
+        """Read from a non-blocking descriptor while ignoring EAGAIN."""
         # Helper function to read some data from a file descriptor, ignoring EAGAIN errors
         try:
             return fd.read()
@@ -359,6 +396,8 @@ class FunctionRunnableExternalCommand(FunctionRunnable):
 
 
 class FunctionRunnableKernel(FunctionRunnable):
+    """Execute a task inside a Jupyter kernel and relay rich output back to the UI."""
+
     def __init__(
         self,
         kernel: MyKernel,
@@ -374,12 +413,21 @@ class FunctionRunnableKernel(FunctionRunnable):
         self.running = False
 
     def is_running(self):
+        """Report whether kernel execution for this runnable is currently active."""
         return self.running
 
     def run(self):
+        """Run the snippet in the kernel, process IOPub messages, and emit completion state."""
         self.running = True
         success = False
         client = None
+        stream_buffer: List[str] = []
+
+        def flush_stream_buffer():
+            if not stream_buffer:
+                return
+            self.signals.data.emit("\n".join(stream_buffer))
+            stream_buffer.clear()
 
         try:
             self.signals.data.emit(f"----- Running script '{self.func_name}' in kernel")
@@ -400,7 +448,7 @@ class FunctionRunnableKernel(FunctionRunnable):
 
             while True:
                 try:
-                    io_msg = client.get_iopub_msg(timeout=1.0)
+                    io_msg = client.get_iopub_msg(timeout=0.5)
 
                     if io_msg["parent_header"].get("msg_id") != msg_id:
                         if VERBOSE_DEBUG:
@@ -416,8 +464,12 @@ class FunctionRunnableKernel(FunctionRunnable):
                     if io_msg_type == "stream":
                         if "text" in io_msg_content:
                             text = io_msg_content["text"].rstrip()
-                            self.signals.data.emit(text)
+                            if text:
+                                stream_buffer.append(text)
+                                if len(stream_buffer) >= 50:
+                                    flush_stream_buffer()
                     elif io_msg_type == "status":
+                        flush_stream_buffer()
                         if io_msg_content["execution_state"] == "idle":
                             if VERBOSE_DEBUG:
                                 LOGGER.debug(f"{id(client)}: Execution State is Idle, terminating...")
@@ -432,6 +484,7 @@ class FunctionRunnableKernel(FunctionRunnable):
                                 LOGGER.debug(f"{id(client)}: Execution State is starting...")
                             continue
                     elif io_msg_type == "display_data":
+                        flush_stream_buffer()
                         if "data" in io_msg_content:
                             if VERBOSE_DEBUG:
                                 LOGGER.debug(f"{id(client)}: display data of type {io_msg_content['data'].keys()}")
@@ -447,17 +500,20 @@ class FunctionRunnableKernel(FunctionRunnable):
                     elif io_msg_type == "execute_input":
                         ...  # ignore this message type
                     elif io_msg_type == "error":
+                        flush_stream_buffer()
                         if "traceback" in io_msg_content:
                             traceback = io_msg_content["traceback"]
                             self.signals.data.emit(Text.from_ansi("\n".join(traceback)))
                     else:
+                        flush_stream_buffer()
                         self.signals.error.emit(RuntimeError(f"Unknown io_msg_type: {io_msg_type}"))
 
                 except queue.Empty:
                     if VERBOSE_DEBUG:
                         LOGGER.debug(f"{id(client)}: Catching on empty queue -----------")
-                    # We fall through here when no output is received from the kernel. This can mean that the kernel
-                    # is waiting for input and therefore this is a good opportunity to check for stdin messages.
+                        # We fall through here when no output is received from the kernel. This can mean that the kernel
+                        # is waiting for input and therefore this is a good opportunity to check for stdin messages.
+                    flush_stream_buffer()
                     with contextlib.suppress(queue.Empty):
                         in_msg = client.get_stdin_msg(timeout=0.1)
 
@@ -472,6 +528,7 @@ class FunctionRunnableKernel(FunctionRunnable):
                     LOGGER.error(f"{id(client)}: Caught Exception: {exc}", exc_info=True)
                     self.signals.data.emit(exc)
 
+            flush_stream_buffer()
             success = True
 
         except RuntimeError as exc:
@@ -485,7 +542,7 @@ class FunctionRunnableKernel(FunctionRunnable):
             self.running = False
             self.signals.finished.emit(self, self.func_name, success)
 
-    def handle_input_request(self, prompt: str = None) -> str:
+    def handle_input_request(self, prompt: str | None = None) -> str:
         """
         This function is called when a stdin message is received from the kernel.
 
@@ -519,7 +576,7 @@ class FunctionRunnableKernel(FunctionRunnable):
             # The input() function had no prompt argument
             self.signals.data.emit(
                 textwrap.dedent(
-                    f"""\
+                    """\
                     [red][bold]ERROR: [/]No prompt was given to the input request function.[/]
                     An input request was detected from the Jupyter kernel, but no message was given to describe the
                     request. Ask the developer of the task to pass a proper message to the input request.
@@ -531,6 +588,7 @@ class FunctionRunnableKernel(FunctionRunnable):
             return ""
 
     def collect_response_payload(self, client, msg_id, timeout: float):
+        """Consume the matching shell reply to capture final execution status and traceback data."""
         try:
             shell_msg = client.get_shell_msg(timeout=timeout)
         except queue.Empty:
@@ -562,12 +620,15 @@ class FunctionRunnableKernel(FunctionRunnable):
 
 
 class FunctionRunnableQProcess(FunctionRunnable):
+    """Execute a task in a helper GUI process using Qt's QProcess."""
+
     def __init__(self, func: Callable, args: List, kwargs: Dict, input_queue: Queue):
         super().__init__(func, args, kwargs, input_queue)
 
         self._process = None
 
     def run(self):
+        """Launch the helper process and forward its process output to the console."""
         tmp = tempfile.NamedTemporaryFile(mode="w", delete=False)
         tmp.write(create_code_snippet(self._func, self._args, self._kwargs, call_func=False))
         tmp.close()
@@ -598,6 +659,7 @@ class FunctionRunnableQProcess(FunctionRunnable):
             os.unlink(tmp.name)
 
     def handle_stdout(self):
+        """Forward process standard output to the function output signal."""
         data = self._process.readAllStandardOutput()
         stdout = bytes(data).decode("utf8")
         self.signals.data.emit(stdout)
@@ -607,26 +669,62 @@ class FunctionRunnableQProcess(FunctionRunnable):
             self._process.write(bytes(f"{response}\n".encode()))
 
     def handle_stderr(self):
+        """Forward process standard error to the function output signal."""
         data = self._process.readAllStandardError()
         stderr = bytes(data).decode("utf8")
         self.signals.data.emit(stderr)
 
     def handle_state(self, state):
+        """Log process state transitions for debugging process lifecycle issues."""
         states = {
-            QProcess.NotRunning: "Not running",
-            QProcess.Starting: "Starting",
-            QProcess.Running: "Running",
+            QProcess.ProcessState.NotRunning: "Not running",
+            QProcess.ProcessState.Starting: "Starting",
+            QProcess.ProcessState.Running: "Running",
         }
         state_name = states[state]
         self.signals.data.emit(f"State changed: {state_name}")
 
     def process_finished(self):
+        """Clear process state when the child process exits."""
         self._process = None
 
 
 class ConsoleOutput(QTextEdit):
+    """Console widget that supports rich/lightweight and plain-text rendering modes."""
+
+    render_mode_changed = pyqtSignal(bool)
+
+    class RenderMode(Enum):
+        LIGHTWEIGHT = "lightweight"
+        PLAIN_TEXT = "plain_text"
+
+    _ANSI_SGR_RE = re.compile(r"\x1b\[([0-9;]*)m")
+
+    _ANSI_16_COLORS = {
+        30: "#000000",
+        31: "#aa0000",
+        32: "#00aa00",
+        33: "#aa5500",
+        34: "#0000aa",
+        35: "#aa00aa",
+        36: "#00aaaa",
+        37: "#aaaaaa",
+        90: "#555555",
+        91: "#ff5555",
+        92: "#55ff55",
+        93: "#ffff55",
+        94: "#5555ff",
+        95: "#ff55ff",
+        96: "#55ffff",
+        97: "#ffffff",
+    }
+
     def __init__(self, parent=None, save_output_file: str | None = None):
+        """Initialize console rendering, autosave buffering, and context-menu actions."""
         super().__init__(parent)
+        self._render_mode = self.RenderMode.PLAIN_TEXT
+        self._max_visible_lines = 50000
+        self._trim_batch_lines = 2000
         self._save_output_file = Path(save_output_file).expanduser() if save_output_file else None
         self._save_output_stream = None
         self._save_buffer: List[str] = []
@@ -650,13 +748,15 @@ class ConsoleOutput(QTextEdit):
         self.setAcceptRichText(True)
         self.setUndoRedoEnabled(False)
         self.document().setDocumentMargin(4.0)  # this is also the default
+        self.document().setDefaultStyleSheet("p { margin: 0; } pre { margin: 0; }")
         self.setMinimumSize(600, 100)
-        monospaced_font = QFont("Courier New")
-        monospaced_font.setStyleHint(QFont.Monospace)
+
+        # Use the platform default fixed-width font and normalize to a comfortable size.
+        monospaced_font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
         monospaced_font.setPointSize(12)  # TODO: should be a setting
         self.setFont(monospaced_font)
 
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.__contextMenu)
 
         # p = self.viewport().palette()
@@ -665,26 +765,251 @@ class ConsoleOutput(QTextEdit):
 
     @pyqtSlot(str)
     def append(self, text):
+        """Render one output item, preferring fast plain-text and falling back to ANSI/HTML paths."""
         import builtins
 
+        renderable = text
+        plain_text_input = "" if text is None else str(text)
+
         if VERBOSE_DEBUG:
-            builtins.print(f"{text = }")
+            builtins.print(f"{renderable = }")
+
+        if self._append_plain_text_fast_path(renderable, plain_text_input):
+            return
 
         theme = Theme({"info": "bold cyan", "warning": "magenta", "danger": "bold red"})
-        console = Console(record=True, file=open(os.devnull, "wt"), width=240, theme=theme)  # color_system="truecolor"
-        console.print(text)
 
-        exported_html = console.export_html(
-            inline_styles=True,
-            code_format="<pre>{code}</pre>",
-        )
+        try:
+            self._append_via_ansi_path(renderable, theme)
+        except Exception:
+            try:
+                self._append_via_html_path(renderable, theme)
+            except Exception:
+                LOGGER.exception("append: failed in Rich rendering and HTML fallback")
+                self._append_plain_text_line(plain_text_input, queue_line=False)
+
+    def _append_plain_text_fast_path(self, renderable: Any, plain_text_input: str) -> bool:
+        """Append directly in plain-text mode when no ANSI or rich markup processing is needed."""
+        is_plain_string_input = isinstance(renderable, str) or renderable is None
+        has_rich_markup = re.search(r"\[/?[a-zA-Z][^\]]*\]", plain_text_input) is not None
+
+        if (
+            self._render_mode == self.RenderMode.PLAIN_TEXT
+            and is_plain_string_input
+            and "\x1b[" not in plain_text_input
+            and not has_rich_markup
+        ):
+            self._append_plain_text_line(plain_text_input)
+            return True
+
+        return False
+
+    def _append_via_ansi_path(self, renderable: Any, theme: Theme):
+        """Render through Rich into ANSI text and delegate to ANSI-aware insertion."""
+        ansi_buffer = io.StringIO()
+        console = Console(file=ansi_buffer, force_terminal=True, color_system="truecolor", width=240, theme=theme)
+        console.print(renderable)
+        ansi_output = ansi_buffer.getvalue().replace("\r", "")
 
         if VERBOSE_DEBUG:
-            builtins.print(f"{exported_html = }")
+            import builtins
 
+            builtins.print(f"{ansi_output = }")
+
+        self.append_ansi(ansi_output)
+
+    def _append_via_html_path(self, renderable: Any, theme: Theme):
+        """Fallback renderer that exports Rich output as HTML for insertion."""
+        # Safety fallback to Rich's full HTML export for unexpected ANSI edge cases.
+        console = Console(record=True, file=io.StringIO(), width=240, theme=theme)
+        console.print(renderable)
+        exported_html = console.export_html(inline_styles=True, code_format="<pre>{code}</pre>")
         self.append_html(exported_html)
 
+    def _append_plain_text_line(self, text: str, queue_line: bool = True):
+        """Insert a raw line into the widget and optionally queue it for autosave."""
+        self.setUpdatesEnabled(False)
+        try:
+            self.moveCursor(QTextCursor.End)
+            self.insertPlainText(text)
+            self.insertPlainText("\n")
+            self.moveCursor(QTextCursor.End)
+        except Exception:
+            LOGGER.exception("append: error while rendering plain-text output")
+        finally:
+            self.setUpdatesEnabled(True)
+
+        if queue_line and text:
+            self._queue_output_line(text)
+        self._finalize_console_update()
+
+    def _finalize_console_update(self):
+        """Keep the viewport scrolled to the end and enforce the configured line cap."""
+        sb = self.verticalScrollBar()
+        sb.setValue(sb.maximum())
+        self._enforce_line_limit()
+
+    @staticmethod
+    def _xterm_256_to_hex(index: int) -> str:
+        if index < 16:
+            table = [
+                "#000000",
+                "#800000",
+                "#008000",
+                "#808000",
+                "#000080",
+                "#800080",
+                "#008080",
+                "#c0c0c0",
+                "#808080",
+                "#ff0000",
+                "#00ff00",
+                "#ffff00",
+                "#0000ff",
+                "#ff00ff",
+                "#00ffff",
+                "#ffffff",
+            ]
+            return table[index]
+        if index < 232:
+            index -= 16
+            r = (index // 36) % 6
+            g = (index // 6) % 6
+            b = index % 6
+
+            def to_rgb(component: int) -> int:
+                return 0 if component == 0 else 55 + 40 * component
+
+            return f"#{to_rgb(r):02x}{to_rgb(g):02x}{to_rgb(b):02x}"
+        gray = 8 + (index - 232) * 10
+        return f"#{gray:02x}{gray:02x}{gray:02x}"
+
+    @classmethod
+    def _ansi_to_html(cls, ansi_text: str) -> str:
+        def style_css(state):
+            parts = []
+            if state["fg"]:
+                parts.append(f"color: {state['fg']};")
+            if state["bg"]:
+                parts.append(f"background-color: {state['bg']};")
+            if state["bold"]:
+                parts.append("font-weight: bold;")
+            if state["italic"]:
+                parts.append("font-style: italic;")
+            if state["underline"]:
+                parts.append("text-decoration: underline;")
+            return " ".join(parts)
+
+        state = {"fg": None, "bg": None, "bold": False, "italic": False, "underline": False}
+        html_parts = []
+        pos = 0
+
+        for match in cls._ANSI_SGR_RE.finditer(ansi_text):
+            chunk = ansi_text[pos : match.start()]
+            if chunk:
+                css = style_css(state)
+                escaped = html.escape(chunk)
+                if css:
+                    html_parts.append(f'<span style="{css}">{escaped}</span>')
+                else:
+                    html_parts.append(escaped)
+
+            params = [int(p) for p in match.group(1).split(";") if p] or [0]
+            idx = 0
+            while idx < len(params):
+                p = params[idx]
+                if p == 0:
+                    state = {"fg": None, "bg": None, "bold": False, "italic": False, "underline": False}
+                elif p == 1:
+                    state["bold"] = True
+                elif p == 3:
+                    state["italic"] = True
+                elif p == 4:
+                    state["underline"] = True
+                elif p == 22:
+                    state["bold"] = False
+                elif p == 23:
+                    state["italic"] = False
+                elif p == 24:
+                    state["underline"] = False
+                elif p == 39:
+                    state["fg"] = None
+                elif p == 49:
+                    state["bg"] = None
+                elif p in cls._ANSI_16_COLORS:
+                    state["fg"] = cls._ANSI_16_COLORS[p]
+                elif 40 <= p <= 47:
+                    fg_equiv = p - 10
+                    state["bg"] = cls._ANSI_16_COLORS.get(fg_equiv)
+                elif 100 <= p <= 107:
+                    fg_equiv = p - 10
+                    state["bg"] = cls._ANSI_16_COLORS.get(fg_equiv)
+                elif p in (38, 48) and idx + 1 < len(params):
+                    mode = params[idx + 1]
+                    if mode == 5 and idx + 2 < len(params):
+                        color = cls._xterm_256_to_hex(params[idx + 2])
+                        if p == 38:
+                            state["fg"] = color
+                        else:
+                            state["bg"] = color
+                        idx += 2
+                    elif mode == 2 and idx + 4 < len(params):
+                        r, g, b = params[idx + 2], params[idx + 3], params[idx + 4]
+                        color = f"#{r:02x}{g:02x}{b:02x}"
+                        if p == 38:
+                            state["fg"] = color
+                        else:
+                            state["bg"] = color
+                        idx += 4
+                idx += 1
+
+            pos = match.end()
+
+        tail = ansi_text[pos:]
+        if tail:
+            css = style_css(state)
+            escaped = html.escape(tail)
+            if css:
+                html_parts.append(f'<span style="{css}">{escaped}</span>')
+            else:
+                html_parts.append(escaped)
+
+        html_body = "".join(html_parts)
+        return f'<pre style="margin:0;">{html_body}</pre>'
+
+    @classmethod
+    def _ansi_to_plain_text(cls, ansi_text: str) -> str:
+        return cls._ANSI_SGR_RE.sub("", ansi_text).rstrip()
+
+    @pyqtSlot(str)
+    def append_ansi(self, ansi_text: str):
+        """Insert ANSI-formatted content according to the active render mode."""
+        self.setUpdatesEnabled(False)
+        try:
+            self.moveCursor(QTextCursor.End)
+
+            if self._render_mode == self.RenderMode.LIGHTWEIGHT:
+                self.insertHtml(self._ansi_to_html(ansi_text))
+            else:
+                self.insertPlainText(self._ansi_to_plain_text(ansi_text))
+            self.insertPlainText("\n")
+
+            self.moveCursor(QTextCursor.End)
+        except Exception:
+            LOGGER.exception("append_ansi: error while rendering ANSI output")
+        finally:
+            self.setUpdatesEnabled(True)
+
+        sb = self.verticalScrollBar()
+        sb.setValue(sb.maximum())
+
+        plain_text = self._ansi_to_plain_text(ansi_text)
+        if plain_text:
+            self._queue_output_line(plain_text)
+        self._finalize_console_update()
+
     def append_image(self, data):
+        """Display image-like output objects produced by notebook display hooks."""
         from IPython.display import Image as IPythonImage
         from IPython.display import display
         from PIL import Image as PILImage
@@ -701,27 +1026,74 @@ class ConsoleOutput(QTextEdit):
 
     @pyqtSlot(str)
     def append_html(self, text):
+        """Insert HTML output and maintain plain-text autosave compatibility."""
         # import builtins
         # builtins.print(f"{text = }")
 
         self.setUpdatesEnabled(False)
-        self.moveCursor(QTextCursor.End)
-        self.insertHtml(text)
-        self.insertHtml("<br>")
-        self.moveCursor(QTextCursor.End)
-        self.setUpdatesEnabled(True)
+        try:
+            self.moveCursor(QTextCursor.End)
 
-        sb = self.verticalScrollBar()
-        sb.setValue(sb.maximum())
+            if self._render_mode == self.RenderMode.LIGHTWEIGHT:
+                self.insertHtml(text)
+                self.insertHtml("<br>")
+                # Only parse the HTML for plain-text when autosave actually needs it.
+                if self._save_output_stream is not None:
+                    document = QTextDocument()
+                    document.setHtml(text)
+                    plain_text = document.toPlainText().rstrip()
+                    if plain_text:
+                        self._queue_output_line(plain_text)
+            else:
+                document = QTextDocument()
+                document.setHtml(text)
+                plain_text = document.toPlainText().rstrip()
+                self.insertPlainText(plain_text)
+                self.insertPlainText("\n")
+                if plain_text:
+                    self._queue_output_line(plain_text)
 
-        # Persist a plain-text representation of rich output when autosave is enabled.
-        document = QTextDocument()
-        document.setHtml(text)
-        plain_text = document.toPlainText().rstrip()
-        if plain_text:
-            self._queue_output_line(plain_text)
+            self.moveCursor(QTextCursor.End)
+        except Exception:
+            LOGGER.exception("append_html: error while rendering HTML output")
+        finally:
+            self.setUpdatesEnabled(True)
+
+        self._finalize_console_update()
+
+    def set_render_mode(self, mode: "ConsoleOutput.RenderMode"):
+        """Switch rendering mode and emit synchronization signal when it changes."""
+        changed = mode != self._render_mode
+        self._render_mode = mode
+        if changed:
+            self.render_mode_changed.emit(self.is_plain_text_mode())
+
+    def is_plain_text_mode(self) -> bool:
+        """Return True when plain-text rendering mode is active."""
+        return self._render_mode == self.RenderMode.PLAIN_TEXT
+
+    def _enforce_line_limit(self):
+        """Trim the oldest blocks when visible output exceeds the configured cap."""
+        if self._max_visible_lines <= 0:
+            return
+
+        block_count = self.document().blockCount()
+        if block_count <= self._max_visible_lines:
+            return
+
+        remove_count = max(self._trim_batch_lines, block_count - self._max_visible_lines)
+
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.movePosition(QTextCursor.Start)
+        for _ in range(remove_count):
+            cursor.select(QTextCursor.BlockUnderCursor)
+            cursor.removeSelectedText()
+            cursor.deleteChar()
+        cursor.endEditBlock()
 
     def _queue_output_line(self, text: str):
+        """Queue one plain-text line for batched autosave flushing."""
         if self._save_output_stream is None:
             return
 
@@ -730,15 +1102,20 @@ class ConsoleOutput(QTextEdit):
             self.flush_output_buffer()
 
     def flush_output_buffer(self):
+        """Flush buffered autosave lines to disk."""
         if self._save_output_stream is None or not self._save_buffer:
             return
 
-        payload = "\n".join(self._save_buffer) + "\n"
-        self._save_output_stream.write(payload)
-        self._save_output_stream.flush()
-        self._save_buffer.clear()
+        try:
+            payload = "\n".join(self._save_buffer) + "\n"
+            self._save_output_stream.write(payload)
+            self._save_output_stream.flush()
+            self._save_buffer.clear()
+        except Exception:
+            LOGGER.exception("flush_output_buffer: error flushing autosave buffer")
 
     def shutdown_autosave(self):
+        """Flush, stop timer, and close autosave resources."""
         self.flush_output_buffer()
 
         if self._flush_timer.isActive():
@@ -749,9 +1126,19 @@ class ConsoleOutput(QTextEdit):
             self._save_output_stream = None
 
     def save_to_file(self, filename: str):
-        Path(filename).expanduser().write_text(self.toPlainText(), encoding="utf-8")
+        """Save current console content, reusing autosave file when configured."""
+        target = Path(filename).expanduser()
+
+        # Keep context-menu saves consistent with autosave formatting.
+        if self._save_output_file is not None:
+            self.flush_output_buffer()
+            target.write_text(self._save_output_file.read_text(encoding="utf-8"), encoding="utf-8")
+            return
+
+        target.write_text(self.toPlainText(), encoding="utf-8")
 
     def save_to_file_dialog(self):
+        """Prompt for a destination file and save console content."""
         base = (self._save_output_file or Path("./gui-executor-console-output.txt")).expanduser()
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         default = str(base.with_name(f"{base.stem}-{timestamp}{base.suffix or '.txt'}"))
@@ -764,23 +1151,44 @@ class ConsoleOutput(QTextEdit):
         if filename:
             self.save_to_file(filename)
 
+    def choose_font_dialog(self):
+        """Open a font dialog and apply the selected font to the console widget."""
+        current_font = self.font()
+        selected_font, accepted = QFontDialog.getFont(current_font, self, "Choose Console Font")
+        if accepted:
+            self.setFont(selected_font)
+
     def __contextMenu(self):
         self._normalMenu = self.createStandardContextMenu()
         self._addCustomMenuItems(self._normalMenu)
         self._normalMenu.exec_(QCursor.pos())
 
     def _addCustomMenuItems(self, menu):
+        """Add console-specific context menu actions."""
         menu.addSeparator()
+        plain_text_action = menu.addAction("Plain Text Mode")
+        plain_text_action.setCheckable(True)
+        plain_text_action.setChecked(self.is_plain_text_mode())
+        plain_text_action.triggered.connect(self._toggle_plain_text_mode)
+        menu.addAction("Console Font...", self.choose_font_dialog)
         menu.addAction("Save Output As...", self.save_to_file_dialog)
         menu.addAction("Clear", self.clear)
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def _toggle_plain_text_mode(self, checked: bool):
+        """Context-menu slot to toggle between plain-text and lightweight rendering."""
+        mode = self.RenderMode.PLAIN_TEXT if checked else self.RenderMode.LIGHTWEIGHT
+        self.set_render_mode(mode)
+
+    def closeEvent(self, event: QCloseEvent) -> None:  # type: ignore
         self.shutdown_autosave()
         super().closeEvent(event)
 
 
 class SourceCodeWindow(QWidget):
+    """Read-only window that displays syntax-highlighted source for a selected task."""
+
     def __init__(self, func: Callable):
+        """Render the function source code with line numbers in a separate window."""
         super().__init__()
         layout = QVBoxLayout()
         layout.setContentsMargins(
@@ -799,11 +1207,12 @@ class SourceCodeWindow(QWidget):
 
         text_edit = QTextEdit()
 
-        console = Console(record=True, width=1200)
+        console = Console(record=True, file=io.StringIO(), width=1200)
         syntax = Syntax(source_code, "python", theme="default", line_numbers=True)
 
-        with console.capture():
-            console.print(syntax)
+        # Print directly into the recording console; capture can yield empty HTML exports.
+        console.print(syntax)
+        rendered_text = console.export_text(clear=False)
 
         exported_html = console.export_html(
             inline_styles=True,
@@ -811,13 +1220,35 @@ class SourceCodeWindow(QWidget):
         )
 
         text_edit.setFontFamily("Courier")
-        text_edit.insertHtml(exported_html)
+        if rendered_text.strip() and exported_html and exported_html.strip():
+            text_edit.setHtml(exported_html)
+        else:
+            numbered_source = "\n".join(
+                f"{idx:>4}: {line}" for idx, line in enumerate(source_code.splitlines(), start=1)
+            )
+            text_edit.setPlainText(numbered_source)
 
         document = text_edit.document()
         cursor = QTextCursor(document)
-        cursor.setPosition(source_line)
-        # cursor.movePosition()
+
+        # source_line is 1-based; move to the corresponding text block start.
+        target_line = max(0, source_line - 1)
+        block = document.findBlockByLineNumber(target_line)
+        if block.isValid():
+            cursor.setPosition(block.position())
+        else:
+            cursor.movePosition(QTextCursor.Start)
+
         text_edit.setTextCursor(cursor)
+        text_edit.ensureCursorVisible()
+
+        def center_cursor_in_viewport():
+            sb = text_edit.verticalScrollBar()
+            rect = text_edit.cursorRect()
+            target = sb.value() + rect.top() - (text_edit.viewport().height() // 2)
+            sb.setValue(max(sb.minimum(), min(sb.maximum(), target)))
+
+        QTimer.singleShot(0, center_cursor_in_viewport)
         layout.addWidget(text_edit)
 
         self.setMinimumSize(1200, 600)
@@ -826,6 +1257,8 @@ class SourceCodeWindow(QWidget):
 
 
 class DynamicButton(QWidget):
+    """Button-like row widget representing one executable Task function that is decorated with `exec_ui` or `exec_task`."""
+
     icon_size = QSize(30, 30)
     horizontal_spacing = 2
 
@@ -838,6 +1271,7 @@ class DynamicButton(QWidget):
         final_stretch=True,
         icon_size: QSize = icon_size,
     ):
+        """Build icon/label presentation and bind metadata for one task function."""
         super().__init__()
         self.source_code_window = None
         self._function = func
@@ -887,7 +1321,8 @@ class DynamicButton(QWidget):
 
         self.setToolTip(func.__doc__)
 
-    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:  # type: ignore
+        """Show button context menu with source viewing actions."""
         context_menu = QMenu(self)
 
         view_source_action = context_menu.addAction("View source ...")
@@ -896,19 +1331,23 @@ class DynamicButton(QWidget):
         context_menu.exec_(event.globalPos())
 
     def view_source(self):
+        """Open a detached source-code window for this button's function."""
         self.source_code_window = SourceCodeWindow(self.function)
         self.source_code_window.show()
 
     def select(self):
+        """Switch icon to selected state."""
         self.label_icon.set_icon_path(self.icon_selected_path)
         self.label_icon.repaint()
 
     def deselect(self):
+        """Restore icon to normal (non-selected) state."""
         self.label_icon.set_icon_path(self.icon_path)
         self.label_icon.repaint()
 
     @property
     def function(self) -> Callable:
+        """Return the callable represented by this button."""
         return self._function
 
     @property
@@ -930,6 +1369,7 @@ class DynamicButton(QWidget):
 
     @property
     def function_display_name(self) -> str:
+        """Return the user-facing task name shown in the button row."""
         name = self._function.__ui_display_name__ or self.label or self._function.__name__
 
         # The following line will put the display_name within triangles: ▶︎ name ◀︎
@@ -940,17 +1380,23 @@ class DynamicButton(QWidget):
 
     @property
     def label(self) -> str:
+        """Return the configured label fallback for display-name generation."""
         return self._label
 
     def immediate_run(self):
+        """Return whether this function should execute immediately when pressed."""
         return self.function.__ui_immediate_run__
 
     def __repr__(self):
+        """Return concise debug representation for logs and diagnostics."""
         return f'DynamicButton("{self.label}", {self.function})'
 
 
 class TextInputField(QLineEdit):
-    def __init__(self, name: str, default: Any, placeholder_text: str = None):
+    """Line edit with convenience actions for argument defaults."""
+
+    def __init__(self, name: str, default: Any, placeholder_text: str | None = None):
+        """Initialize argument field metadata, placeholders, and default actions."""
         super().__init__()
         self._name = name
         if VERBOSE_DEBUG:
@@ -976,19 +1422,23 @@ class TextInputField(QLineEdit):
         action.setToolTip("Set the default value.")
 
     def __contextMenu(self):
+        """Show custom context menu including default-reset action."""
         self._normalMenu = self.createStandardContextMenu()
         self._addCustomMenuItems(self._normalMenu)
         self._normalMenu.exec_(QCursor.pos())
 
     def _addCustomMenuItems(self, menu):
+        """Add field-specific actions to the context menu."""
         menu.addSeparator()
         menu.addAction("Set default", self.set_default)
 
     def set_default(self):
+        """Reset field text to the configured default value."""
         self.setText(self._default)
 
 
 def is_optional(annotation) -> Tuple[bool, str]:
+    """Return whether an annotation is Optional[T] and extract the inner type name."""
     pattern = r"typing\.Union\[(.*), NoneType\]"
     if match := re.search(pattern, str(annotation)):
         return True, match.group(1)
@@ -997,7 +1447,10 @@ def is_optional(annotation) -> Tuple[bool, str]:
 
 
 class ArgumentsPanel(QScrollArea):
+    """Form panel that maps function signature metadata to editable input fields."""
+
     def __init__(self, button: DynamicButton, ui_args: Dict[str, Argument]):
+        """Build argument editors, runnable selectors, and run/close controls."""
         super().__init__()
 
         self.setWidgetResizable(True)
@@ -1187,6 +1640,7 @@ class ArgumentsPanel(QScrollArea):
 
     @staticmethod
     def _first_input_row_height(widget: QWidget) -> int:
+        """Estimate the first interactive row height for vertically expanding widgets."""
         if isinstance(widget, UQWidget):
             if row_height := widget.get_first_row_height():
                 return row_height
@@ -1199,6 +1653,7 @@ class ArgumentsPanel(QScrollArea):
 
     @staticmethod
     def _center_in_first_row(widget: QWidget, row_height: int) -> QWidget:
+        """Wrap a widget so it aligns with the first row of multi-row input controls."""
         wrapper = QWidget()
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1210,34 +1665,41 @@ class ArgumentsPanel(QScrollArea):
 
     @staticmethod
     def select_folder(input_field: QLineEdit, *args):
+        """Open a directory picker and populate the target input field."""
         input_dir = input_field.displayText() or input_field.placeholderText()
         if dir_name := select_directory(directory=input_dir):
             input_field.setText(dir_name)
 
     @staticmethod
     def select_file(input_field: QLineEdit, *args, full_path: bool = True):
+        """Open a file picker and store either full path or basename in the field."""
         input_file = input_field.displayText() or input_field.placeholderText()
         if filename := select_file(filename=input_file):
             filename = filename if full_path else Path(filename).name
             input_field.setText(filename)
 
     def runnable_clicked(self, runnable: int):
+        """Persist runnable selection back to function UI metadata."""
         self.function.__ui_runnable__ = runnable
 
     @property
     def function(self):
+        """Return function metadata object represented by this arguments panel."""
         return self._button.function
 
     @property
     def args(self):
+        """Return positional arguments converted from UI field values."""
         return [self._cast_arg(name, field) for name, field in self._args_fields.items()]
 
     @property
     def kwargs(self):
+        """Return keyword arguments converted from UI field values."""
         return {name: self._cast_arg(name, field) for name, field in self._kwargs_fields.items()}
 
     @property
     def runnable(self):
+        """Return selected runnable backend constant."""
         if self.kernel_rb.isChecked():
             return RUNNABLE_KERNEL
         elif self.app_rb.isChecked():
@@ -1250,6 +1712,7 @@ class ArgumentsPanel(QScrollArea):
             return RUNNABLE_SCRIPT
 
     def _cast_arg(self, name: str, field: QLineEdit | QCheckBox | QComboBox | UQWidget):
+        """Convert one UI field value to the expected argument type annotation."""
         arg = self._ui_args[name]
 
         is_optional_arg, optional_arg = is_optional(arg.annotation)
@@ -1285,7 +1748,10 @@ class ArgumentsPanel(QScrollArea):
 
 
 class FunctionButtonsPanel(QScrollArea):
+    """Scrollable collection of task buttons grouped by module display name."""
+
     def __init__(self):
+        """Initialize grouped module layouts and button registry."""
         super().__init__()
 
         self.setWidgetResizable(True)
@@ -1329,6 +1795,7 @@ class FunctionButtonsPanel(QScrollArea):
         self.setWidget(widget)
 
     def add_button(self, button: DynamicButton):
+        """Insert a task button into the appropriate module group grid."""
         module_name = button.module_display_name
         if module_name not in self.modules:
             grid = QGridLayout()
@@ -1352,6 +1819,8 @@ class FunctionButtonsPanel(QScrollArea):
 
 
 class KernelPanel(QWidget):
+    """Toolbar widget for selecting which kernel spec should be started."""
+
     def __init__(self, name: str = "python3"):
         super().__init__()
 
@@ -1375,10 +1844,13 @@ class KernelPanel(QWidget):
 
     @property
     def selected_kernel(self) -> str:
+        """Return the currently selected kernel name."""
         return self.kernel_list.currentText()
 
 
 class View(QMainWindow):
+    """Main application window orchestrating task selection, execution, and output display."""
+
     def __init__(
         self,
         model: Model,
@@ -1417,6 +1889,8 @@ class View(QMainWindow):
 
         self._gui_apps = []
         self._recurring_tasks = []
+        self._running_recurring_tasks = set()
+        self._last_status_messages: dict[StatusType, str] = {}
         self._kernel_runnable_in_progress = False
 
         self.setWindowTitle(app_name or "GUI Executor")
@@ -1424,7 +1898,8 @@ class View(QMainWindow):
         desktop_widget = QApplication.desktop()
         desktop_screen = desktop_widget.screenNumber(self)
         desktop_geometry = desktop_widget.availableGeometry(screen=desktop_screen)
-        LOGGER.debug(f"{desktop_screen = }, {desktop_geometry = }")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"{desktop_screen = }, {desktop_geometry = }")
 
         # Not sure anymore why I put this line in, but it restricts the size of the main window to the size of the
         # main desktop screen, which might be smaller than e.g. an external screens that is attached.
@@ -1457,6 +1932,7 @@ class View(QMainWindow):
 
         self._args_panel: QWidget = None
         self._console_panel = ConsoleOutput(save_output_file=self.save_output_file)
+        self._console_panel.render_mode_changed.connect(self._sync_plain_text_menu_action)
 
         if len(self._buttons_panels) == 1:
             # If there is only one buttons panel, we do not create a TabWidget, but use that panel directly.
@@ -1537,10 +2013,12 @@ class View(QMainWindow):
         self._timer.start()
 
     def _create_menu_bar(self):
+        """Create top-level File/View/Help menus and connect their actions."""
         menu_bar = self.menuBar()
         menu_bar.setNativeMenuBar(True)
 
         file_menu = menu_bar.addMenu("File")
+        view_menu = menu_bar.addMenu("View")
         help_menu = menu_bar.addMenu("Help")
 
         reload_action = QAction(self)
@@ -1551,18 +2029,50 @@ class View(QMainWindow):
         open_url_action.setText("Developer Manual...")
         open_url_action.triggered.connect(partial(self.open_url, "https://ivs-kuleuven.github.io/gui-executor/"))
 
+        self._plain_text_mode_action = QAction(self)
+        self._plain_text_mode_action.setText("Plain Text Console Mode")
+        self._plain_text_mode_action.setCheckable(True)
+        self._plain_text_mode_action.setChecked(True)
+        self._plain_text_mode_action.triggered.connect(self.set_console_plain_text_mode)
+
+        choose_console_font_action = QAction(self)
+        choose_console_font_action.setText("Console Font...")
+        choose_console_font_action.triggered.connect(self.choose_console_font)
+
         file_menu.addAction(reload_action)
+        view_menu.addAction(self._plain_text_mode_action)
+        view_menu.addAction(choose_console_font_action)
         help_menu.addAction(open_url_action)
 
+    def set_console_plain_text_mode(self, checked: bool):
+        """Update console render mode from the View menu toggle."""
+        mode = ConsoleOutput.RenderMode.PLAIN_TEXT if checked else ConsoleOutput.RenderMode.LIGHTWEIGHT
+        self._console_panel.set_render_mode(mode)
+
+    def _sync_plain_text_menu_action(self, checked: bool):
+        """Keep the View menu toggle synchronized with console context-menu state."""
+        if self._plain_text_mode_action is None:
+            return
+        self._plain_text_mode_action.blockSignals(True)
+        self._plain_text_mode_action.setChecked(checked)
+        self._plain_text_mode_action.blockSignals(False)
+
+    def choose_console_font(self):
+        """Open the console font picker from the main View menu."""
+        self._console_panel.choose_font_dialog()
+
     def open_url(self, url: str):
+        """Open a documentation URL in the desktop browser."""
         url = QUrl(url)
         if not QDesktopServices.openUrl(url):
             QMessageBox.warning(self, "Open Url", f"Could not open url {url.url()}")
 
     def reload_tasks(self):
+        """Placeholder action for runtime task reload support."""
         QMessageBox.warning(self, "Reloading tasks", "Sorry, this option is not yet implemented.")
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:  # type: ignore
+        """Confirm shutdown, stop kernel/autosave, and wait for recurring tasks to finish."""
         question = QMessageBox()
         question.setIcon(QMessageBox.Warning)
         question.setWindowTitle("Closing GUI and Kernel?")
@@ -1582,39 +2092,66 @@ class View(QMainWindow):
         self._console_panel.shutdown_autosave()
 
         if self._kernel:
-            print("Shutting down Jupyter kernel.")
+            if VERBOSE_DEBUG:
+                LOGGER.debug("Shutting down Jupyter kernel.")
             self._kernel.shutdown()
 
         event.accept()
 
-        print("Waiting for recurring tasks to end.", end="", flush=True)
+        if VERBOSE_DEBUG:
+            LOGGER.debug("Waiting for recurring tasks to end.")
         while not self.threadpool.waitForDone(100):
-            print(".", end="", flush=True)
-        print("\nDone.", flush=True)
+            ...
+        LOGGER.info("Application finished.")
 
     def start_recurring_task(self, task: Callable):
+        """Schedule one recurring status function on the thread pool."""
+        if task in self._running_recurring_tasks:
+            return
+
+        self._running_recurring_tasks.add(task)
+
         # Pass the function to execute
         worker = RecurringTask(task)  # Any other args, kwargs are passed to the run function
         worker.signals.result.connect(partial(self.update_status, task))
-        worker.signals.finished.connect(self.end_recurring_task)
+        worker.signals.finished.connect(partial(self.end_recurring_task, task))
 
         # Execute
         self.threadpool.start(worker)
 
-    def end_recurring_task(self):
-        pass
+    def end_recurring_task(self, task: Callable):
+        """Recurring task completion hook."""
+        self._running_recurring_tasks.discard(task)
 
     def run_recurring_tasks(self):
-        for func in self._recurring_tasks:
-            self.start_recurring_task(func)
+        """Dispatch all registered recurring functions at each timer tick."""
+        try:
+            for func in self._recurring_tasks:
+                self.start_recurring_task(func)
+        except Exception:
+            LOGGER.exception("run_recurring_tasks: error in recurring task dispatch")
 
     def update_status(self, func: Callable, msg: str):
-        if func.__ui_status_type__ == StatusType.NORMAL:
+        """Update the normal or fixed status bar area based on task status metadata."""
+        status_type = func.__ui_status_type__
+        if status_type is None:
+            status_type = StatusType.PERMANENT
+
+        if not isinstance(msg, str):
+            msg = str(msg)
+
+        if self._last_status_messages.get(status_type) == msg:
+            return
+
+        self._last_status_messages[status_type] = msg
+
+        if status_type == StatusType.NORMAL:
             self._status_bar.showMessage(msg)
         else:
             self._status_bar_fixed_widget.setText(msg)
 
     def start_kernel(self, force: bool = False) -> MyKernel:
+        """Start or restart the kernel, optionally forcing a restart without prompt."""
         # Starting the kernel will need a proper PYTHONPATH for importing the packages
 
         if force or self._kernel is None:
@@ -1631,11 +2168,13 @@ class View(QMainWindow):
         return self._kernel
 
     def _start_new_kernel(self):
+        """Create a new kernel instance, initialize helpers, and load optional startup snippets."""
         if self._kernel is not None:
             self._kernel.shutdown()
 
         name = self.kernel_panel.selected_kernel
-        LOGGER.info(f"Starting new kernel {name}...")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"Starting new kernel {name}...")
         self._kernel = MyKernel(name)
         self._console_panel.append(f"New kernel '{name}' started...")
 
@@ -1696,6 +2235,7 @@ class View(QMainWindow):
                 )
 
     def interrupt_kernel(self):
+        """Interrupt current kernel execution and log still-running runnable state."""
         self._kernel.interrupt_kernel()
         for runnable in self._gui_apps:
             LOGGER.warning(
@@ -1705,12 +2245,14 @@ class View(QMainWindow):
         # self._gui_apps.clear()
 
     def start_qt_console(self):
+        """Open a companion qtconsole session connected to the active kernel."""
         if self._qt_console is not None and self._qt_console.is_running:
             dialog = QMessageBox.information(self, "Qt Console", "There is already a Qt Console running.")
         else:
             self._qt_console = start_qtconsole(self._kernel or self.start_kernel(), verbosity=self.verbosity)
 
     def run_function(self, func: Callable, args: List, kwargs: Dict, runnable_type: int):
+        """Create and start a runnable backend for the selected task function."""
         # TODO:
         #  * disable run button (should be activate again in function_complete?)
         if runnable_type == RUNNABLE_KERNEL:
@@ -1899,8 +2441,9 @@ class View(QMainWindow):
 
         ui_args = get_arguments(button.function)
 
-        LOGGER.debug(f"UI arguments for '{button.function.__name__}': {ui_args}")
-        LOGGER.debug(f"Extracted args: {extract_var_name_args_and_kwargs(ui_args)}")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"UI arguments for '{button.function.__name__}': {ui_args}")
+            LOGGER.debug(f"Extracted args: {extract_var_name_args_and_kwargs(ui_args)}")
 
         args_panel = ArgumentsPanel(button, ui_args)
         args_panel.run_button.clicked.connect(
@@ -1941,6 +2484,7 @@ class View(QMainWindow):
 
     @pyqtSlot(object)
     def function_output(self, data: object):
+        """Route generic task output to the appropriate console rendering path."""
         from IPython.display import Image as IPythonImage
         from PIL.Image import Image as PILImage
 
@@ -1953,10 +2497,12 @@ class View(QMainWindow):
 
     @pyqtSlot(str)
     def function_output_html(self, data: str):
+        """Handle HTML output emitted by a runnable."""
         self._console_panel.append_html(data)
 
     @pyqtSlot(str)
     def function_output_png(self, data: str):
+        """Decode and display PNG payloads emitted by notebook display_data messages."""
         if VERBOSE_DEBUG:
             LOGGER.debug(f"function_output_png('{data[:80]}')")
         image = QImage()
@@ -1981,6 +2527,7 @@ class View(QMainWindow):
 
     @pyqtSlot(object, str, bool)
     def function_complete(self, runnable: FunctionRunnable, name: str, success: bool):
+        """Finalize runnable state, release kernel busy flag, and report completion."""
         if isinstance(runnable, FunctionRunnableKernel):
             self._kernel_runnable_in_progress = False
         if success:
@@ -1999,11 +2546,13 @@ class View(QMainWindow):
 
     @pyqtSlot(Exception)
     def function_error(self, msg: Exception):
+        """Report execution exceptions to the console output."""
         text = Text.styled(f"{msg.__class__.__name__}: {msg}", style="bold red")
         self._console_panel.append(msg)
 
     @pyqtSlot(str)
     def input_request(self, msg: str):
+        """Show a yes/no dialog in response to script input requests."""
         message = textwrap.dedent(
             """\
             Input Request from Script\n\n
@@ -2024,6 +2573,7 @@ class View(QMainWindow):
         self.question_dialog.button_box.rejected.connect(partial(self.answer, "N"))
 
     def answer(self, msg: str, *args, **kwargs):
+        """Forward a dialog answer back to the runnable input queue and re-enable UI controls."""
         self.input_queue.put(msg)
         # print(f"answer -> {msg=}, {args=}, {kwargs=}")
         self.question_dialog.close()
@@ -2035,7 +2585,10 @@ class View(QMainWindow):
 
 
 class YesNoQuestion(QDialog):
-    def __init__(self, message: str, title: str = None, buttons=None, parent=None):
+    """Simple reusable yes/no dialog for task input prompts."""
+
+    def __init__(self, message: str, title: str | None = None, buttons=None, parent=None):
+        """Initialize dialog text and button layout."""
         super().__init__(parent)
         self.setWindowTitle(title or "Reply to Question from Console")
 
