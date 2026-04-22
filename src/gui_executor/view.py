@@ -1723,7 +1723,8 @@ class ArgumentsPanel(QScrollArea):
         if arg.annotation is bool:
             return field.checkState() == Qt.Checked
         elif isinstance(arg.annotation, TypeObject):
-            LOGGER.debug(f"{type(field)=}, {field.get_value()=}")
+            if VERBOSE_DEBUG:
+                LOGGER.debug(f"{type(field)=}, {field.get_value()=}")
             return field.get_value()
         elif inspect.isclass(arg.annotation) and issubclass(arg.annotation, Enum):
             return arg.annotation[field.currentText()]
@@ -2029,9 +2030,7 @@ class View(QMainWindow):
             )
             attention_color = "#d62828"
 
-        self.app_frame.setStyleSheet(
-            f"QFrame#AppFrame {{ border: 4px solid {attention_color}; border-radius: 2px; }}"
-        )
+        self.app_frame.setStyleSheet(f"QFrame#AppFrame {{ border: 4px solid {attention_color}; border-radius: 2px; }}")
 
         label = ATTENTION_LABEL or "ATTENTION MODE"
         self._attention_mode_label = QLabel(label)
