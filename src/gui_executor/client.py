@@ -3,7 +3,7 @@ import queue
 import time
 from typing import List
 
-from jupyter_client import KernelClient
+from jupyter_client.client import KernelClient
 
 from gui_executor.kernel import MyKernel
 from gui_executor.utils import bool_env, decode_traceback
@@ -26,7 +26,7 @@ class MyClient:
         self._client: KernelClient = kernel._kernel.client()
 
         if VERBOSE_DEBUG:
-            LOGGER.debug(f"{id(self)}: Created client [{type(self)}] for kernel [{type(kernel)}].")
+            LOGGER.debug(f"{id(self)}: Created client [{type(self._client)}] for kernel [{type(kernel)}].")
 
     def connect(self):
         if VERBOSE_DEBUG:
@@ -71,7 +71,7 @@ class MyClient:
         start = time.monotonic()
         while True:
             try:
-                msg = self._client.get_shell_msg(timeout=0.2)
+                msg = self._client.get_shell_msg(timeout=0.2)  # type: ignore[union-attr]
                 if VERBOSE_DEBUG:
                     LOGGER.debug(f"{id(self)}: Received message while waiting for kernel to be ready: {msg}")
                 if msg["msg_type"] == "kernel_info_reply" and msg["parent_header"].get("msg_id") == msg_id:
@@ -91,7 +91,7 @@ class MyClient:
         if VERBOSE_DEBUG:
             LOGGER.debug(f"{id(self)}: {msg_id = }")
 
-        shell_msg = self._client.get_shell_msg(timeout=self._timeout)
+        shell_msg = self._client.get_shell_msg(timeout=self._timeout)  # type: ignore[union-attr]
         if VERBOSE_DEBUG:
             LOGGER.debug(f"{id(self)}: {shell_msg = }")
 
@@ -101,19 +101,19 @@ class MyClient:
 
     def get_shell_msg(self, *args, **kwargs):
         """Get a message from the shell channel"""
-        return self._client.get_shell_msg(*args, **kwargs)
+        return self._client.get_shell_msg(*args, **kwargs)  # type: ignore[union-attr]
 
     def get_iopub_msg(self, *args, **kwargs):
         """Get a message from the iopub channel"""
-        return self._client.get_iopub_msg(*args, **kwargs)
+        return self._client.get_iopub_msg(*args, **kwargs)  # type: ignore[union-attr]
 
     def get_stdin_msg(self, *args, **kwargs):
         """Get a message from the stdin channel"""
-        return self._client.get_stdin_msg(*args, **kwargs)
+        return self._client.get_stdin_msg(*args, **kwargs)  # type: ignore[union-attr]
 
     def get_control_msg(self, *args, **kwargs):
         """Get a message from the control channel"""
-        return self._client.get_control_msg(*args, **kwargs)
+        return self._client.get_control_msg(*args, **kwargs)  # type: ignore[union-attr]
 
     def get_error(self):
         return self._error
@@ -148,7 +148,7 @@ class MyClient:
 
         while True:
             try:
-                io_msg = self._client.get_iopub_msg(timeout=self._timeout)
+                io_msg = self._client.get_iopub_msg(timeout=self._timeout)  # type: ignore[union-attr]
                 io_msg_type = io_msg["msg_type"]
                 io_msg_content = io_msg["content"]
                 io_parent_msg_id = io_msg.get("parent_header", {}).get("msg_id")
@@ -192,7 +192,7 @@ class MyClient:
                     LOGGER.debug(f"{id(self)}: IOPub timed out while waiting for execution to complete; continuing")
 
             try:
-                shell_msg = self._client.get_shell_msg(timeout=0.05)
+                shell_msg = self._client.get_shell_msg(timeout=0.05)  # type: ignore[union-attr]
                 if shell_msg["msg_type"] == "execute_reply" and shell_msg["parent_header"].get("msg_id") == msg_id:
                     reply = shell_msg
                     if reply_received_at is None:
