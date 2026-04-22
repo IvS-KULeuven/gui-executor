@@ -7,6 +7,13 @@ UI_MODULE_DISPLAY_NAME = "Console Output"
 
 @exec_ui(display_name="Returns output")
 def generates_a_lot_of_return(n_paragraphs: int = 10):
+    """
+    Generate a large amount of text output as the return value of the task. This is useful for testing how the
+    GUI handles large return values and whether it can display them without freezing or crashing.
+
+        Note: The output is returned as a tuple of two strings: the first is generated using the lorem_text library,
+        and the second is the content of the current file. This allows us to test both generated and static content.
+    """
     from lorem_text import lorem
 
     out1 = lorem.paragraphs(n_paragraphs)
@@ -17,6 +24,14 @@ def generates_a_lot_of_return(n_paragraphs: int = 10):
 
 @exec_ui(display_name="Prints output")
 def generates_a_lot_of_output(n_paragraphs: int = 10):
+    """
+    Generate a large amount of text output to the console. This is useful for testing how the GUI handles large
+    volumes of console output and whether it can display them without freezing or crashing.
+
+        Note: The output is printed directly to the console using the print function, and it includes both generated
+        text from the lorem_text library and the content of the current file. This allows us to
+        test the rendering of both dynamic and static content in the console output.
+    """
     from lorem_text import lorem
 
     print(lorem.paragraphs(n_paragraphs), flush=True)
