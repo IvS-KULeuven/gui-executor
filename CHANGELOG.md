@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-04-22
+
+### Added
+
+- Added plain text and lightweight (ANSI colored) rendering modes to the console output panel. Plain Text mode is the new default; Lightweight mode renders Rich markup and ANSI escape sequences with colors and styling.
+- Added a font selection dialog for the console output panel, accessible from the `View` menu and the console context menu.
+- Added autosave feature for console output via the `--save-console-output <path>` command-line option. The file is truncated on startup and flushed continuously as plain text regardless of the active render mode.
+- Added attention mode: setting the environment variable `GUI_EXECUTOR_ATTENTION_LABEL` draws a colored border around the application window and shows a permanent badge in the status bar. The color defaults to red (`#d62828`) and can be overridden with `GUI_EXECUTOR_ATTENTION_COLOR`. The fallback `GUI_EXECUTOR_ATTENTION_MODE` boolean flag is also supported.
+- Anti-flicker improvement for recurring status-bar tasks: overlapping runs of the same task are now skipped, and redundant status bar writes (same text) are suppressed.
+
+### Fixed
+
+- Fixed `AttributeError` when interrupting the kernel: `interrupt_kernel` now safely checks whether a kernel and a running runnable are actually present before attempting to interrupt.
+- Fixed the SourceCodeWindow: source code was no longer shown after a refactor; the window now centers the cursor on the function's first line.
+- Suppressed a spurious `rich.print` dump of the `execute_reply` shell message that appeared in the terminal on GUI startup.
+
+## [0.23.0] - 2026-03-28
+
+### Added
+
+- Added `DropdownList` user type: a dynamic list of dropdown (combo box) selectors. Each row presents a `QComboBox` populated from a provided list of choices, allowing tasks to accept a variable number of enum-style selections.
+- Added documentation for `ListList` and `DropdownList` type hints.
+
 ## [0.22.3] - 2026-03-26
 
 - Added QCheckBox support for boolean Callback return values. The CallbackWidget always rendered a QLineEdit for boolean callbacks, making it impossible to set False (bool of any non-empty string is True).
@@ -26,5 +49,8 @@ Other changes are not blocking and can be implemented later when needed.
 
 
 
-[Unreleased]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.23.0...v0.24.0
+[0.23.0]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.22.4...v0.23.0
+[0.22.3]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.22.0...v0.22.3
 [0.22.0]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.21.3...v0.22.0
