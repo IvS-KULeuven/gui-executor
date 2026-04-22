@@ -1889,6 +1889,8 @@ class View(QMainWindow):
 
         self._gui_apps = []
         self._recurring_tasks = []
+        self._running_recurring_tasks = set()
+        self._last_status_messages: dict[StatusType, str] = {}
         self._kernel_runnable_in_progress = False
 
         self.setWindowTitle(app_name or "GUI Executor")
@@ -2104,17 +2106,22 @@ class View(QMainWindow):
 
     def start_recurring_task(self, task: Callable):
         """Schedule one recurring status function on the thread pool."""
+        if task in self._running_recurring_tasks:
+            return
+
+        self._running_recurring_tasks.add(task)
+
         # Pass the function to execute
         worker = RecurringTask(task)  # Any other args, kwargs are passed to the run function
         worker.signals.result.connect(partial(self.update_status, task))
-        worker.signals.finished.connect(self.end_recurring_task)
+        worker.signals.finished.connect(partial(self.end_recurring_task, task))
 
         # Execute
         self.threadpool.start(worker)
 
-    def end_recurring_task(self):
+    def end_recurring_task(self, task: Callable):
         """Recurring task completion hook."""
-        pass
+        self._running_recurring_tasks.discard(task)
 
     def run_recurring_tasks(self):
         """Dispatch all registered recurring functions at each timer tick."""
@@ -2126,7 +2133,19 @@ class View(QMainWindow):
 
     def update_status(self, func: Callable, msg: str):
         """Update the normal or fixed status bar area based on task status metadata."""
-        if func.__ui_status_type__ == StatusType.NORMAL:
+        status_type = func.__ui_status_type__
+        if status_type is None:
+            status_type = StatusType.PERMANENT
+
+        if not isinstance(msg, str):
+            msg = str(msg)
+
+        if self._last_status_messages.get(status_type) == msg:
+            return
+
+        self._last_status_messages[status_type] = msg
+
+        if status_type == StatusType.NORMAL:
             self._status_bar.showMessage(msg)
         else:
             self._status_bar_fixed_widget.setText(msg)
