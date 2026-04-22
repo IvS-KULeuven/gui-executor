@@ -129,6 +129,9 @@ from .utypes import UQWidget
 
 HERE = Path(__file__).parent.resolve()
 VERBOSE_DEBUG = bool_env("VERBOSE_DEBUG")
+ATTENTION_LABEL = os.getenv("GUI_EXECUTOR_ATTENTION_LABEL", "").strip()
+ATTENTION_MODE = bool(ATTENTION_LABEL) or bool_env("GUI_EXECUTOR_ATTENTION_MODE")
+ATTENTION_COLOR = os.getenv("GUI_EXECUTOR_ATTENTION_COLOR", "#d62828").strip() or "#d62828"
 LOGGER = logging.getLogger("gui-executor.view")
 
 
@@ -1891,6 +1894,7 @@ class View(QMainWindow):
         self._recurring_tasks = []
         self._running_recurring_tasks = set()
         self._last_status_messages: dict[StatusType, str] = {}
+        self._attention_mode_label: QLabel | None = None
         self._kernel_runnable_in_progress = False
 
         self.setWindowTitle(app_name or "GUI Executor")
@@ -1968,6 +1972,7 @@ class View(QMainWindow):
         self._status_bar_fixed_widget = QLabel("")
         self._status_bar = self.statusBar()
         self._status_bar.addPermanentWidget(self._status_bar_fixed_widget)
+        self._setup_attention_mode_indicator()
 
         # Add a button to the toolbar to restart the kernel
 
@@ -2011,6 +2016,30 @@ class View(QMainWindow):
         self._timer.setInterval(1000)  # This interval shall be in the settings
         self._timer.timeout.connect(self.run_recurring_tasks)
         self._timer.start()
+
+    def _setup_attention_mode_indicator(self):
+        """Enable a prominent visual mode and show the configured attention label."""
+        if not ATTENTION_MODE:
+            return
+
+        attention_color = ATTENTION_COLOR
+        if not QtGui.QColor(attention_color).isValid():
+            LOGGER.warning(
+                f"Invalid GUI_EXECUTOR_ATTENTION_COLOR '{attention_color}'; using default #d62828.",
+            )
+            attention_color = "#d62828"
+
+        self.app_frame.setStyleSheet(
+            f"QFrame#AppFrame {{ border: 4px solid {attention_color}; border-radius: 2px; }}"
+        )
+
+        label = ATTENTION_LABEL or "ATTENTION MODE"
+        self._attention_mode_label = QLabel(label)
+        self._attention_mode_label.setStyleSheet(
+            f"QLabel {{ background-color: {attention_color}; color: white; font-weight: bold; padding: 1px 8px; border-radius: 3px; }}"
+        )
+        self._status_bar.addPermanentWidget(self._attention_mode_label)
+        self._status_bar.showMessage(f"{label} is active", 5000)
 
     def _create_menu_bar(self):
         """Create top-level File/View/Help menus and connect their actions."""
