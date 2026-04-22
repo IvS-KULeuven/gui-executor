@@ -561,6 +561,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_your_functions_parameters">Your function&#8217;s parameters</a></li>
 <li><a href="#_your_functions_result">Your function&#8217;s result</a></li>
 <li><a href="#_your_functions_output">Your function&#8217;s output</a></li>
+<li><a href="#_console_output">Console Output</a></li>
 <li><a href="#_advanced_type_hints_and_defaults">Advanced Type Hints and Defaults</a></li>
 <li><a href="#_expert_type_hints_and_defaults">Expert Type Hints and defaults</a></li>
 <li><a href="#capture_response">Capture the result</a></li>
@@ -571,6 +572,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#init">The __init__.py files</a></li>
 <li><a href="#_the_command_log">The command log</a></li>
 <li><a href="#_recurring_functions">Recurring Functions</a></li>
+<li><a href="#_attention_mode">Attention Mode</a></li>
 </ul>
 </li>
 <li><a href="#_best_practices">Best Practices</a></li>
@@ -632,7 +634,7 @@ The Task GUI is <strong>not</strong> an IDE and as such it doesn&#8217;t replace
 <pre class="nowrap">$ gui-executor --help
 usage: gui-executor [-h] [--version] [--verbose] [--cmd-log CMD_LOG] [--module-path MODULE_PATH]
                     [--kernel-name KERNEL_NAME] [--config CONFIG] [--logo LOGO] [--app-name APP_NAME]
-                    [--debug] [--single]
+                    [--save-console-output SAVE_CONSOLE_OUTPUT] [--debug] [--single]
 
 options:
   -h, --help            show this help message and exit
@@ -646,6 +648,8 @@ options:
   --config CONFIG       a YAML file that configures the executor
   --logo LOGO           path to logo PNG or SVG file
   --app-name APP_NAME   the name of the GUI app, will go in the window title
+    --save-console-output SAVE_CONSOLE_OUTPUT
+                                                path to autosave the Console Output as plain text
   --debug, -d           set debugging mode
   --single              the UI can be started only once (instead of multiple times)</pre>
 </div>
@@ -1303,6 +1307,123 @@ If you want to follow closely on the printed output of your function, you might 
 </div>
 </div>
 <div class="sect2">
+<h3 id="_console_output">Console Output</h3>
+<div class="paragraph">
+<p>The console panel supports two display modes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Plain Text mode: output is shown as plain text without colors or Rich styling. This is the default mode and is the fastest option for large amounts of output.</p>
+</li>
+<li>
+<p>Lightweight mode: ANSI colors and Rich styling are rendered in the console, which is useful when your tasks print colored output, tables, warnings, or other formatted text.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can switch between these modes in two places:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>from the <code>View</code> menu with <code>Plain Text Console Mode</code></p>
+</li>
+<li>
+<p>from the console context menu with <code>Plain Text Mode</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In practice, Plain Text mode is best when you care mostly about speed and readability, while Lightweight mode is better when the formatting itself carries information.</p>
+</div>
+<div class="paragraph">
+<p>The same task output can therefore look slightly different depending on the selected console mode. In the example below, the task prints Rich markup and ANSI-colored output. In Plain Text mode, the emphasis is removed and the text is shown as regular text. In Lightweight mode, the warning and success messages keep their visual styling.</p>
+</div>
+<div id="_tabs_8" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
+<ul>
+<li id="_tabs_8_plain_text_mode" class="tab">
+<p>Plain Text mode</p>
+</li>
+<li id="_tabs_8_lightweight_mode" class="tab">
+<p>Lightweight mode</p>
+</li>
+</ul>
+</div>
+<div id="_tabs_8_plain_text_mode--panel" class="tabpanel" aria-labelledby="_tabs_8_plain_text_mode">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/plain-text.png" alt="plain text" width="80%">
+</div>
+</div>
+</div>
+<div id="_tabs_8_lightweight_mode--panel" class="tabpanel" aria-labelledby="_tabs_8_lightweight_mode">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/ansi-colored-text.png" alt="ansi colored text" width="80%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The console font can be changed at runtime:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>from the <code>View</code> menu with <code>Console Font&#8230;&#8203;</code></p>
+</li>
+<li>
+<p>from the console context menu with <code>Console Font&#8230;&#8203;</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This only affects how the output is displayed in the GUI. It does not change the actual task output.</p>
+</div>
+<div class="paragraph">
+<p>The console output can also be saved to disk:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Save Output As&#8230;&#8203;</code> from the console context menu saves the current visible console content as plain text</p>
+</li>
+<li>
+<p><code>--save-console-output &lt;filename&gt;</code> enables autosave mode and continuously writes the console output to the given file as plain text</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Autosave mode has a few important properties:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>the file is truncated when the GUI starts, so each run starts with a fresh output log</p>
+</li>
+<li>
+<p>the saved file always contains plain text, even when the GUI displays ANSI colors or Rich formatting</p>
+</li>
+<li>
+<p>when autosave mode is active, manual save reuses the autosaved plain-text content</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash">gui-executor --module-path yakka \
+             --save-console-output ~/gui-executor-console.txt</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_advanced_type_hints_and_defaults">Advanced Type Hints and Defaults</h3>
 <div class="paragraph">
 <p>As a small recap, type hints that are recognised by the Task GUI are: <code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>list</code>, <code>tuple</code>, and subclasses of <code>Enum</code>. Then, there are a number of types defined by the Task GUI that can be used for paths, i.e. <code>FileName</code> as a type for a filename including extension but without the directory part, <code>FilePath</code> as a type for a full file path which is the relative or absolute path to a file including the filename and extension, and <code>Directory</code> which is the location of a file, i.e. the path to the file without the filename.</p>
@@ -1323,19 +1444,19 @@ If you want to follow closely on the printed output of your function, you might 
 <div class="paragraph">
 <p>In practice a <code>FixedList</code> is used when the argument to your function is a list with a limited number of arguments, e.g. a list of positions that you want to visit, or the first name, middle initials and last name of a person. In the example below we use a <code>FixedList</code> to hold the GPS coordinates where I spotted of a bird.</p>
 </div>
-<div id="_tabs_8" class="openblock tabs is-loading">
+<div id="_tabs_9" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_8_code_snippet" class="tab">
+<li id="_tabs_9_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_8_arguments_panel" class="tab">
+<li id="_tabs_9_arguments_panel" class="tab">
 <p>Arguments Panel</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_8_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_8_code_snippet">
+<div id="_tabs_9_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_9_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight nowrap"><code data-lang="python">from gui_executor.exec import exec_task
@@ -1360,7 +1481,7 @@ def save_observation(
 </div>
 </div>
 </div>
-<div id="_tabs_8_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_8_arguments_panel">
+<div id="_tabs_9_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_9_arguments_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/fixed-list.png" alt="fixed list" width="80%">
@@ -1378,22 +1499,22 @@ def save_observation(
 <div class="paragraph">
 <p>Use <code>ListList</code> when your task argument is a list where each element is itself a fixed list with predefined types. In the Arguments Panel you get one row with an add icon. Pressing that icon adds a new row with the same fixed structure, so you can provide as many entries as needed.</p>
 </div>
-<div id="_tabs_9" class="openblock tabs is-loading">
+<div id="_tabs_10" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_9_code_snippet" class="tab">
+<li id="_tabs_10_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_9_arguments_panel" class="tab">
+<li id="_tabs_10_arguments_panel" class="tab">
 <p>Arguments Panel</p>
 </li>
-<li id="_tabs_9_resulting_argument_value" class="tab">
+<li id="_tabs_10_resulting_argument_value" class="tab">
 <p>Resulting argument value</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_9_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_9_code_snippet">
+<div id="_tabs_10_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_10_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight nowrap"><code data-lang="python">from gui_executor.exec import exec_task
@@ -1414,14 +1535,14 @@ def save_targets(
 </div>
 </div>
 </div>
-<div id="_tabs_9_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_9_arguments_panel">
+<div id="_tabs_10_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_10_arguments_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/save-targets.png" alt="save targets" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_9_resulting_argument_value--panel" class="tabpanel" aria-labelledby="_tabs_9_resulting_argument_value">
+<div id="_tabs_10_resulting_argument_value--panel" class="tabpanel" aria-labelledby="_tabs_10_resulting_argument_value">
 <div class="listingblock">
 <div class="content">
 <pre>[[1, 0.0, 'target-A'], [2, 45.5, 'target-B'], [3, 90.0, 'target-C']]</pre>
@@ -1439,22 +1560,22 @@ def save_targets(
 <div class="paragraph">
 <p>Use <code>DropdownList</code> when each row should be a selection from a fixed set of options. This is useful for workflows where users may select one or more predefined values without typing free text.</p>
 </div>
-<div id="_tabs_10" class="openblock tabs is-loading">
+<div id="_tabs_11" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_10_code_snippet" class="tab">
+<li id="_tabs_11_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_10_arguments_panel" class="tab">
+<li id="_tabs_11_arguments_panel" class="tab">
 <p>Arguments Panel</p>
 </li>
-<li id="_tabs_10_resulting_argument_value" class="tab">
+<li id="_tabs_11_resulting_argument_value" class="tab">
 <p>Resulting argument value</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_10_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_10_code_snippet">
+<div id="_tabs_11_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_11_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight nowrap"><code data-lang="python">from gui_executor.exec import exec_task
@@ -1479,14 +1600,14 @@ def choose_filters(
 </div>
 </div>
 </div>
-<div id="_tabs_10_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_10_arguments_panel">
+<div id="_tabs_11_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_11_arguments_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/choose-filters.png" alt="choose filters" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_10_resulting_argument_value--panel" class="tabpanel" aria-labelledby="_tabs_10_resulting_argument_value">
+<div id="_tabs_11_resulting_argument_value--panel" class="tabpanel" aria-labelledby="_tabs_11_resulting_argument_value">
 <div class="listingblock">
 <div class="content">
 <pre>['bias', 'dark', 'flat']</pre>
@@ -1526,22 +1647,22 @@ def choose_filters(
 <div class="paragraph">
 <p>You can optionally pass a <code>default</code> callback to select a default value for list/Enum based dropdowns.</p>
 </div>
-<div id="_tabs_11" class="openblock tabs is-loading">
+<div id="_tabs_12" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_11_code_snippet" class="tab">
+<li id="_tabs_12_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_11_arguments_panel" class="tab">
+<li id="_tabs_12_arguments_panel" class="tab">
 <p>Arguments Panel</p>
 </li>
-<li id="_tabs_11_alternative_callback_return_values" class="tab">
+<li id="_tabs_12_alternative_callback_return_values" class="tab">
 <p>Alternative callback return values</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_11_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_11_code_snippet">
+<div id="_tabs_12_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_12_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight nowrap"><code data-lang="python">from enum import IntEnum
@@ -1572,14 +1693,14 @@ def select_digit(digit: Callback(available_digits, name="digit", default=default
 </div>
 </div>
 </div>
-<div id="_tabs_11_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_11_arguments_panel">
+<div id="_tabs_12_arguments_panel--panel" class="tabpanel" aria-labelledby="_tabs_12_arguments_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/select-digit.png" alt="select digit" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_11_alternative_callback_return_values--panel" class="tabpanel" aria-labelledby="_tabs_11_alternative_callback_return_values">
+<div id="_tabs_12_alternative_callback_return_values--panel" class="tabpanel" aria-labelledby="_tabs_12_alternative_callback_return_values">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight nowrap"><code data-lang="python">@exec_ui()
@@ -1607,25 +1728,25 @@ def use_calibration(enabled: Callback(lambda: True, name="calibration")):
 <div class="paragraph">
 <p>The code below illustrates how this works. The task argument is 'model' which is the variable that is used in your task. The variable name that is taken from the kernel is <code>ldo_model</code>. This latter name shall be defined in the kernel, either manually, or as a return from a previously executed task. If the variable is not defined in the kernel, an error message will be printed.</p>
 </div>
-<div id="_tabs_12" class="openblock tabs is-loading">
+<div id="_tabs_13" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_12_code_snippet" class="tab">
+<li id="_tabs_13_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_12_variables_panel" class="tab">
+<li id="_tabs_13_variables_panel" class="tab">
 <p>Variables Panel</p>
 </li>
-<li id="_tabs_12_output_panel" class="tab">
+<li id="_tabs_13_output_panel" class="tab">
 <p>Output Panel</p>
 </li>
-<li id="_tabs_12_error" class="tab">
+<li id="_tabs_13_error" class="tab">
 <p>Error</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_12_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_12_code_snippet">
+<div id="_tabs_13_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_13_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
@@ -1646,21 +1767,21 @@ def process_model(name: str = "LDO -&gt; CSL", model: VariableName("ldo_model") 
 </div>
 </div>
 </div>
-<div id="_tabs_12_variables_panel--panel" class="tabpanel" aria-labelledby="_tabs_12_variables_panel">
+<div id="_tabs_13_variables_panel--panel" class="tabpanel" aria-labelledby="_tabs_13_variables_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_panel.png" alt="variable name panel" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_12_output_panel--panel" class="tabpanel" aria-labelledby="_tabs_12_output_panel">
+<div id="_tabs_13_output_panel--panel" class="tabpanel" aria-labelledby="_tabs_13_output_panel">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_output.png" alt="variable name output" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_12_error--panel" class="tabpanel" aria-labelledby="_tabs_12_error">
+<div id="_tabs_13_error--panel" class="tabpanel" aria-labelledby="_tabs_13_error">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/variable_name_error.png" alt="variable name error" width="80%">
@@ -1697,22 +1818,22 @@ Since variable name arguments are transparently filled with the variable name th
 <div class="paragraph">
 <p>The developer of the task can decide to capture the result of a task in a different variable or set of variables. This can be specified in the decorator parameter <code>capture_response</code> which can be a string or a tuple of strings. See an example below. The task <code>generate_model</code> returns three values of which we only need the 'model' and the 'hexhw'. In the <code>capture_response</code> you see that the second unused return value is captured in the <code>_</code> and therefore ignored. If you need to ignore more return values, the <code>*_</code> is a valid choice.</p>
 </div>
-<div id="_tabs_13" class="openblock tabs is-loading">
+<div id="_tabs_14" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_13_code_snippet" class="tab">
+<li id="_tabs_14_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_13_gui" class="tab">
+<li id="_tabs_14_gui" class="tab">
 <p>GUI</p>
 </li>
-<li id="_tabs_13_console" class="tab">
+<li id="_tabs_14_console" class="tab">
 <p>Console</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_13_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_13_code_snippet">
+<div id="_tabs_14_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_14_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_task
@@ -1732,14 +1853,14 @@ def generate_model(name: str = "LDO -&gt; CSL"):
 </div>
 </div>
 </div>
-<div id="_tabs_13_gui--panel" class="tabpanel" aria-labelledby="_tabs_13_gui">
+<div id="_tabs_14_gui--panel" class="tabpanel" aria-labelledby="_tabs_14_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response.png" alt="capture response" width="80%">
 </div>
 </div>
 </div>
-<div id="_tabs_13_console--panel" class="tabpanel" aria-labelledby="_tabs_13_console">
+<div id="_tabs_14_console--panel" class="tabpanel" aria-labelledby="_tabs_14_console">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/capture-response-console.png" alt="capture response console" width="80%">
@@ -2005,19 +2126,19 @@ response = raise_an_exception(value=0.0)
 <div class="paragraph">
 <p>Apart from tasks that print status information in the output console, there are sometimes specific items that you want to keep track of without the need to execute a task for this. In the project for which this application was developed, we needed to know about two identifiers at all time, i.e. the identifier for the configuration of our equipment (we call it the Setup) and the identifier of the currently running test (we call it the obsid). So, we developed a function which will repeatedly request these identifiers from the microservice that controls the configuration and display them in the status bar at the bottom of the Task GUI. The code snippet below defines a function <code>show_setup_and_obs_id()</code> which is decorated with <code>@exec_recurring_task</code>. The decorator takes a parameter <code>status_type</code> which can be 'NORMAL' or 'PERMANENT'. When <code>status_type</code> is NORMAL the message will be printed on the left side of the status bar, when <code>status_type</code> is PERMANENT the message will be printed on the right side of the statusbar. The example below is specific for our project, in your case, you will want to put different things in the status bar. The GUI in the TAB shows the output of the function.</p>
 </div>
-<div id="_tabs_14" class="openblock tabs is-loading">
+<div id="_tabs_15" class="openblock tabs is-loading">
 <div class="content">
 <div class="ulist tablist">
 <ul>
-<li id="_tabs_14_code_snippet" class="tab">
+<li id="_tabs_15_code_snippet" class="tab">
 <p>Code snippet</p>
 </li>
-<li id="_tabs_14_csl_operator_gui" class="tab">
+<li id="_tabs_15_csl_operator_gui" class="tab">
 <p>CSL Operator GUI</p>
 </li>
 </ul>
 </div>
-<div id="_tabs_14_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_14_code_snippet">
+<div id="_tabs_15_code_snippet--panel" class="tabpanel" aria-labelledby="_tabs_15_code_snippet">
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="python">from gui_executor.exec import exec_recurring_task
@@ -2042,7 +2163,7 @@ def show_setup_and_obs_id():
 </div>
 </div>
 </div>
-<div id="_tabs_14_csl_operator_gui--panel" class="tabpanel" aria-labelledby="_tabs_14_csl_operator_gui">
+<div id="_tabs_15_csl_operator_gui--panel" class="tabpanel" aria-labelledby="_tabs_15_csl_operator_gui">
 <div class="imageblock text-center">
 <div class="content">
 <img src="images/statusbar-01.png" alt="statusbar 01" width="80%">
@@ -2059,6 +2180,92 @@ def show_setup_and_obs_id():
 </div>
 <div class="paragraph">
 <p>The recurring functions are executed every second in a separate thread so they don&#8217;t block the Task GUI. Take care that your recurring function doesn&#8217;t take longer than a fraction of a second to execute.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_attention_mode">Attention Mode</h3>
+<div class="paragraph">
+<p>You can enable a permanent visual warning in the Task GUI to make clear that the user is working in a special environment (for example TEST, STAGING, or TRAINING).</p>
+</div>
+<div class="paragraph">
+<p>When attention mode is enabled, the GUI shows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>a colored border around the main application frame</p>
+</li>
+<li>
+<p>a permanent badge in the status bar with your custom label</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Attention mode can be configured with these environment variables:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>GUI_EXECUTOR_ATTENTION_LABEL</code> (string): custom text shown in the status bar badge (defaults to ATTENTION MODE)</p>
+</li>
+<li>
+<p><code>GUI_EXECUTOR_ATTENTION_COLOR</code> (string): color used for the border and badge background (defaults to <code>#d62828</code> (red))</p>
+</li>
+<li>
+<p><code>GUI_EXECUTOR_ATTENTION_MODE</code> (bool): optional fallback switch when no label is provided</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The mode is enabled when either:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>GUI_EXECUTOR_ATTENTION_LABEL</code> is a non-empty string, or</p>
+</li>
+<li>
+<p><code>GUI_EXECUTOR_ATTENTION_MODE</code> is set to a truthy value</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If <code>GUI_EXECUTOR_ATTENTION_COLOR</code> is missing, the default color <code>#d62828</code> is used. If an invalid color is provided, the same default is used and a warning is logged.</p>
+</div>
+<div class="paragraph">
+<p>Example:</p>
+</div>
+<div id="_tabs_16" class="openblock tabs is-loading">
+<div class="content">
+<div class="ulist tablist">
+<ul>
+<li id="_tabs_16_environment_variables" class="tab">
+<p>Environment Variables</p>
+</li>
+<li id="_tabs_16_gui" class="tab">
+<p>GUI</p>
+</li>
+</ul>
+</div>
+<div id="_tabs_16_environment_variables--panel" class="tabpanel" aria-labelledby="_tabs_16_environment_variables">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash">export GUI_EXECUTOR_ATTENTION_LABEL="TEST ENVIRONMENT"
+export GUI_EXECUTOR_ATTENTION_COLOR="#ff8800"
+export GUI_EXECUTOR_ATTENTION_MODE=truecolor
+
+gui-executor --module-path your.package</code></pre>
+</div>
+</div>
+</div>
+<div id="_tabs_16_gui--panel" class="tabpanel" aria-labelledby="_tabs_16_gui">
+<div class="imageblock text-center">
+<div class="content">
+<img src="images/attention-mode.png" alt="attention mode" width="80%">
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -2084,7 +2291,7 @@ def show_setup_and_obs_id():
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-21 12:46:48 +0200
+Last updated 2026-04-22 16:36:28 +0200
 </div>
 </div>
 <script>

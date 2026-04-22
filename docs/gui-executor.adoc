@@ -32,7 +32,7 @@ Use the `--help` option to see the commandline options for the `gui-executor`:
 $ gui-executor --help
 usage: gui-executor [-h] [--version] [--verbose] [--cmd-log CMD_LOG] [--module-path MODULE_PATH]
                     [--kernel-name KERNEL_NAME] [--config CONFIG] [--logo LOGO] [--app-name APP_NAME]
-                    [--debug] [--single]
+                    [--save-console-output SAVE_CONSOLE_OUTPUT] [--debug] [--single]
 
 options:
   -h, --help            show this help message and exit
@@ -46,6 +46,8 @@ options:
   --config CONFIG       a YAML file that configures the executor
   --logo LOGO           path to logo PNG or SVG file
   --app-name APP_NAME   the name of the GUI app, will go in the window title
+    --save-console-output SAVE_CONSOLE_OUTPUT
+                                                path to autosave the Console Output as plain text
   --debug, -d           set debugging mode
   --single              the UI can be started only once (instead of multiple times)
 ----
@@ -482,6 +484,60 @@ image::images/console-image-bird-house.png[width=100%,align=center]
 ======
 
 TIP: If you want to follow closely on the printed output of your function, you might want to consider using the `flush=True` argument for the `print` function.
+
+
+=== Console Output
+
+The console panel supports two display modes:
+
+* Plain Text mode: output is shown as plain text without colors or Rich styling. This is the default mode and is the fastest option for large amounts of output.
+* Lightweight mode: ANSI colors and Rich styling are rendered in the console, which is useful when your tasks print colored output, tables, warnings, or other formatted text.
+
+You can switch between these modes in two places:
+
+* from the `View` menu with `Plain Text Console Mode`
+* from the console context menu with `Plain Text Mode`
+
+In practice, Plain Text mode is best when you care mostly about speed and readability, while Lightweight mode is better when the formatting itself carries information.
+
+The same task output can therefore look slightly different depending on the selected console mode. In the example below, the task prints Rich markup and ANSI-colored output. In Plain Text mode, the emphasis is removed and the text is shown as regular text. In Lightweight mode, the warning and success messages keep their visual styling.
+
+[tabs]
+======
+Plain Text mode::
++
+image::images/plain-text.png[width=80%,align=center]
+
+Lightweight mode::
++
+image::images/ansi-colored-text.png[width=80%,align=center]
+======
+
+The console font can be changed at runtime:
+
+* from the `View` menu with `Console Font...`
+* from the console context menu with `Console Font...`
+
+This only affects how the output is displayed in the GUI. It does not change the actual task output.
+
+The console output can also be saved to disk:
+
+* `Save Output As...` from the console context menu saves the current visible console content as plain text
+* `--save-console-output <filename>` enables autosave mode and continuously writes the console output to the given file as plain text
+
+Autosave mode has a few important properties:
+
+* the file is truncated when the GUI starts, so each run starts with a fresh output log
+* the saved file always contains plain text, even when the GUI displays ANSI colors or Rich formatting
+* when autosave mode is active, manual save reuses the autosaved plain-text content
+
+Example:
+
+[source,bash]
+----
+gui-executor --module-path yakka \
+             --save-console-output ~/gui-executor-console.txt
+----
 
 
 === Advanced Type Hints and Defaults
@@ -1008,6 +1064,48 @@ The recurring task can in principle be defined in any module that is located in 
 
 The recurring functions are executed every second in a separate thread so they don't block the Task GUI. Take care that your recurring function doesn't take longer than a fraction of a second to execute.
 
+
+=== Attention Mode
+
+You can enable a permanent visual warning in the Task GUI to make clear that the user is working in a special environment (for example TEST, STAGING, or TRAINING).
+
+When attention mode is enabled, the GUI shows:
+
+* a colored border around the main application frame
+* a permanent badge in the status bar with your custom label
+
+Attention mode can be configured with these environment variables:
+
+* `GUI_EXECUTOR_ATTENTION_LABEL` (string): custom text shown in the status bar badge (defaults to ATTENTION MODE)
+* `GUI_EXECUTOR_ATTENTION_COLOR` (string): color used for the border and badge background (defaults to `#d62828` (red))
+* `GUI_EXECUTOR_ATTENTION_MODE` (bool): optional fallback switch when no label is provided
+
+The mode is enabled when either:
+
+* `GUI_EXECUTOR_ATTENTION_LABEL` is a non-empty string, or
+* `GUI_EXECUTOR_ATTENTION_MODE` is set to a truthy value
+
+If `GUI_EXECUTOR_ATTENTION_COLOR` is missing, the default color `#d62828` is used. If an invalid color is provided, the same default is used and a warning is logged.
+
+Example:
+
+[tabs]
+======
+Environment Variables::
++
+[source,bash]
+----
+export GUI_EXECUTOR_ATTENTION_LABEL="TEST ENVIRONMENT"
+export GUI_EXECUTOR_ATTENTION_COLOR="#ff8800"
+export GUI_EXECUTOR_ATTENTION_MODE=truecolor
+
+gui-executor --module-path your.package
+----
+
+GUI::
++
+image::images/attention-mode.png[width=80%,align=center]
+======
 
 == Best Practices
 
