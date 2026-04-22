@@ -446,7 +446,7 @@ class FunctionRunnableKernel(FunctionRunnable):
 
             while True:
                 try:
-                    io_msg = client.get_iopub_msg(timeout=1.0)
+                    io_msg = client.get_iopub_msg(timeout=0.5)
 
                     if io_msg["parent_header"].get("msg_id") != msg_id:
                         if VERBOSE_DEBUG:
@@ -509,8 +509,9 @@ class FunctionRunnableKernel(FunctionRunnable):
                 except queue.Empty:
                     if VERBOSE_DEBUG:
                         LOGGER.debug(f"{id(client)}: Catching on empty queue -----------")
-                    # We fall through here when no output is received from the kernel. This can mean that the kernel
-                    # is waiting for input and therefore this is a good opportunity to check for stdin messages.
+                        # We fall through here when no output is received from the kernel. This can mean that the kernel
+                        # is waiting for input and therefore this is a good opportunity to check for stdin messages.
+                    flush_stream_buffer()
                     with contextlib.suppress(queue.Empty):
                         in_msg = client.get_stdin_msg(timeout=0.1)
 
