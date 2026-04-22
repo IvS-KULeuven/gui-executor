@@ -485,12 +485,6 @@ dependencies = [
     { name = "rich" },
 ]
 
-[package.optional-dependencies]
-test = [
-    { name = "faker" },
-    { name = "lorem-text" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
@@ -504,20 +498,17 @@ test = [
 requires-dist = [
     { name = "distro" },
     { name = "executor" },
-    { name = "faker", marker = "extra == 'test'" },
     { name = "ipykernel" },
     { name = "ipython", specifier = ">=8" },
     { name = "jupyter-client" },
     { name = "jupyter-console" },
     { name = "jupyter-core" },
-    { name = "lorem-text", marker = "extra == 'test'" },
     { name = "matplotlib" },
     { name = "pyqt5", specifier = ">=5.15" },
     { name = "pyyaml" },
     { name = "qtconsole" },
     { name = "rich", specifier = ">=14" },
 ]
-provides-extras = ["test"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.3.5" }]
