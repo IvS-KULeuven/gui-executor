@@ -1207,11 +1207,12 @@ class SourceCodeWindow(QWidget):
 
         text_edit = QTextEdit()
 
-        console = Console(record=True, width=1200)
+        console = Console(record=True, file=io.StringIO(), width=1200)
         syntax = Syntax(source_code, "python", theme="default", line_numbers=True)
 
-        with console.capture():
-            console.print(syntax)
+        # Print directly into the recording console; capture can yield empty HTML exports.
+        console.print(syntax)
+        rendered_text = console.export_text(clear=False)
 
         exported_html = console.export_html(
             inline_styles=True,
@@ -1219,12 +1220,25 @@ class SourceCodeWindow(QWidget):
         )
 
         text_edit.setFontFamily("Courier")
-        text_edit.insertHtml(exported_html)
+        if rendered_text.strip() and exported_html and exported_html.strip():
+            text_edit.setHtml(exported_html)
+        else:
+            numbered_source = "\n".join(
+                f"{idx:>4}: {line}" for idx, line in enumerate(source_code.splitlines(), start=1)
+            )
+            text_edit.setPlainText(numbered_source)
 
         document = text_edit.document()
         cursor = QTextCursor(document)
-        cursor.setPosition(source_line)
-        # cursor.movePosition()
+
+        # source_line is 1-based; move to the corresponding text block start.
+        target_line = max(0, source_line - 1)
+        block = document.findBlockByLineNumber(target_line)
+        if block.isValid():
+            cursor.setPosition(block.position())
+        else:
+            cursor.movePosition(QTextCursor.Start)
+
         text_edit.setTextCursor(cursor)
         layout.addWidget(text_edit)
 
