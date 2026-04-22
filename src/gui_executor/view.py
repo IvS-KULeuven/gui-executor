@@ -2236,12 +2236,14 @@ class View(QMainWindow):
 
     def interrupt_kernel(self):
         """Interrupt current kernel execution and log still-running runnable state."""
-        self._kernel.interrupt_kernel()
+        if self._kernel:
+            self._kernel.interrupt_kernel()
         for runnable in self._gui_apps:
-            LOGGER.warning(
-                f"Function {runnable.func_name} from the list of threads is "
-                f"{'STILL' if runnable.is_running() else 'NOT'} running."
-            )
+            if hasattr(runnable, "is_running") and callable(runnable.is_running):
+                LOGGER.warning(
+                    f"Function {runnable.func_name} from the list of threads is "
+                    f"{'STILL' if runnable.is_running() else 'NOT'} running."
+                )
         # self._gui_apps.clear()
 
     def start_qt_console(self):
