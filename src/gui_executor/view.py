@@ -1240,6 +1240,15 @@ class SourceCodeWindow(QWidget):
             cursor.movePosition(QTextCursor.Start)
 
         text_edit.setTextCursor(cursor)
+        text_edit.ensureCursorVisible()
+
+        def center_cursor_in_viewport():
+            sb = text_edit.verticalScrollBar()
+            rect = text_edit.cursorRect()
+            target = sb.value() + rect.top() - (text_edit.viewport().height() // 2)
+            sb.setValue(max(sb.minimum(), min(sb.maximum(), target)))
+
+        QTimer.singleShot(0, center_cursor_in_viewport)
         layout.addWidget(text_edit)
 
         self.setMinimumSize(1200, 600)
