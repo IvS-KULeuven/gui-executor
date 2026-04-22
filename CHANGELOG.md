@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Removed
+
+- Removed the unused `command.py` module (`Command`, `ScriptCommand`, `SnippetCommand`, `AppCommand`, `CommandError`) and its associated tests (`test_command.py`, `test_executor.py`, `test_environment.py`) and test data files (`scripts.yaml`, `snippets.yaml`).
+- Removed the unused `config.py` module (`ExecutorConfiguration`, `ConfigError`, `load_config`) and its associated tests (`test_config.py`) and test data file (`sample_config.yaml`).
+- Removed the `--config` CLI option from `gui-executor` (was calling the now-removed `load_config`).
+- Removed the `cutelog` socket log handler and its `CUTELOG_HOST` environment variable from `__main__.py`.
+- Removed dead commented-out `VERBOSE_DEBUG` assignments in the `--debug` branch of `__main__.py`.
+
+### Fixed
+
+- Fixed incorrect log message in `MyClient.__init__`: was logging `type(self)` (always `MyClient`) instead of `type(self._client)` (the actual underlying kernel client type).
+- Fixed import path for `KernelClient`: changed `from jupyter_client import KernelClient` to `from jupyter_client.client import KernelClient`.
+- Fixed a debug log statement in `view._cast_arg` that was emitting unconditionally; it is now guarded by `if VERBOSE_DEBUG`.
+- Fixed `test_file_selection.py`: replaced hardcoded absolute path with a portable `~/Desktop/` expansion, added proper assertions, and added a 1-second auto-close timer so the test does not hang.
+- Fixed `test_gui_exec.py`: replaced stale references to the removed `contingency` module with `tasks.shared.unit_tests`; replaced the non-portable `test_end_observation` test with `test_run_func` that exercises the new `convert_to_float` task.
+- Added `.vscode/` to `.gitignore`.
+
+### Added
+
+- Added `tests/tasks/specific/output/convert.py` with a `convert_to_float` task used by the updated `test_run_func` test.
+
 ## [0.24.0] - 2026-04-22
 
 ### Added

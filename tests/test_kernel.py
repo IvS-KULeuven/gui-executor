@@ -52,13 +52,14 @@ def test_kernel_after_initialisation(kernel):
     assert out == "True"
 
 
-def test_kernel_info(kernel):
+def test_get_kernel_specs(kernel):
     rich.print()
 
-    info = kernel.get_kernel_info()
-    rich.print(info)
-
     specs = kernel.get_kernel_specs()
+
+    assert "python3" in specs
+    assert isinstance(specs, dict)
+
     rich.print(specs)
 
 
@@ -67,18 +68,15 @@ def test_run_snippet(kernel):
 
     snippet = textwrap.dedent("""
         import time
-        
+
         print("starting...", flush=True, end="")
-        time.sleep(5.0)
+        time.sleep(1.0)
         print("finished!", flush=True)
-        
+
     """)
 
     client = MyClient(kernel)
-    msg_id = client.execute(snippet)
-    msg = client.get_shell_msg(msg_id)
-    print(f"1 {'-' * 20} {msg = }")
+    out = client.run_snippet(snippet)
 
-    io_msg = client.get_iopub_msg(timeout=1.0)
-    io_msg_content = io_msg["content"]
-    print(f"2 {'-' * 20} {io_msg_content = }")
+    assert "starting..." in out
+    assert "finished!" in out

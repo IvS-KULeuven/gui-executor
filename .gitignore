@@ -3,6 +3,7 @@
 /requirements-*.txt
 /src/gui_executor.egg-info/
 /.idea/
+/.vscode/
 /tests/yakka/
 
 .DS_Store

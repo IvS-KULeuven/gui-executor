@@ -46,39 +46,25 @@ def test_find_modules():
     assert "hello, World!" in funcs["ui_echo"]("hello, World!")
 
     with sys_path(HERE):  # make sure Python knows where to look for the module
-        mods = find_modules("contingency")
+        mods = find_modules("tasks.shared.unit_tests")
 
     assert "__init__" not in mods
     assert "ui_test_script" in mods
 
     mod = importlib.import_module(mods["ui_test_script"])
-    assert mod.__name__ == "contingency.ui_test_script"
-
-
-def test_find_sub_modules():
-    print()
-
-    assert has_sub_modules("tasks") is True
-
-    with sys_path(HERE):
-        tasks = find_modules("tasks")
-
-    print(tasks)
+    assert mod.__name__ == "tasks.shared.unit_tests.ui_test_script"
 
 
 def test_ui_script():
     with sys_path(HERE):  # make sure Python knows where to look for the module
-        funcs = find_ui_button_functions("contingency.ui_test_script")
+        funcs = find_ui_button_functions("tasks.shared.unit_tests.ui_test_script")
 
     assert "concatenate_args" in funcs
     assert "compare_args" in funcs
 
     concatenate_args = funcs["concatenate_args"]
     assert concatenate_args("one", "two") == "onetwo"
-    assert (
-        concatenate_args.__doc__
-        == "Concatenates the two arguments with the '+' operator."
-    )
+    assert concatenate_args.__doc__ == "Concatenates the two arguments with the '+' operator."
 
     compare_args = funcs["compare_args"]
     assert not compare_args(23, "two")
@@ -92,7 +78,7 @@ def test_ui_function_args():
     # This test is here only to learn about how to interpret the Signatures
 
     with sys_path(HERE):  # make sure Python knows where to look for the module
-        funcs = find_ui_button_functions("contingency.ui_test_script")
+        funcs = find_ui_button_functions("tasks.shared.unit_tests.ui_test_script")
 
     func = funcs["func_with_args"]
     sig = inspect.signature(func)
@@ -127,7 +113,7 @@ def test_get_arguments():
     print()
 
     with sys_path(HERE):  # make sure Python knows where to look for the module
-        funcs = find_ui_button_functions("contingency.ui_test_script")
+        funcs = find_ui_button_functions("tasks.shared.unit_tests.ui_test_script")
 
     func = funcs["func_with_only_kwargs"]
 
@@ -154,23 +140,14 @@ def test_get_arguments():
     assert arg_c.default is None
 
 
-def test_end_observation():
+def test_run_func():
     print()
 
-    with (
-        sys_path("/Users/rik/git/plato-test-scripts/src"),
-        sys_path(
-            "/Users/rik/git/plato-test-scripts/venv38/lib/python3.8/site-packages/"
-        ),
-        sys_path("/Users/rik/git/plato-common-egse/src"),
-    ):
-        funcs = find_ui_button_functions("camtest.contingency.end_observation")
-        funcs.update(find_ui_button_functions("camtest.contingency.start_observation"))
+    with sys_path(HERE):
+        funcs = find_ui_button_functions("tasks.specific.output.convert")
 
-    print(f"{funcs = }")
+    assert "convert_to_float" in funcs
 
-    start_observation = funcs["start_observation"]
-    start_observation()  # FIXME: what if this function returns something like an error code?
-    time.sleep(10)
-    end_observation = funcs["end_observation"]
-    end_observation()
+    func = funcs["convert_to_float"]
+    result = func("3.14")
+    assert isinstance(result, float)
