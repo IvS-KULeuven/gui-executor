@@ -3,7 +3,6 @@ import contextlib
 import logging
 import os
 import sys
-from logging.handlers import SocketHandler
 from pathlib import Path
 
 from PyQt5.QtCore import QLockFile
@@ -11,6 +10,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from gui_executor.utils import print_system_info
+
 from .config import load_config
 from .model import Model
 from .view import View
@@ -95,18 +95,8 @@ def main():
 
     log = logging.getLogger("gui-executor")
     log.setLevel(1 if args.debug else logging.WARNING)  # to send all records to cutelog
-    host = os.environ.get("CUTELOG_HOST", "127.0.0.1")
-    socket_handler = SocketHandler(host, 19996)  # default listening address
-    log.addHandler(socket_handler)
 
     if args.debug:
-        from gui_executor import view, client, kernel
-
-        # We now use the VERBOSE_DEBUG env variable to control the debug logging in the view, client and kernel modules.
-        # view.VERBOSE_DEBUG = True
-        # client.VERBOSE_DEBUG = True
-        # kernel.VERBOSE_DEBUG = True
-        # Add the log messages to stdout for debugging purposes
         log.addHandler(logging.StreamHandler(sys.stdout))
 
     # We have only implemented the --module-path option for now
@@ -128,7 +118,7 @@ def main():
         # Set app name, if PyObjC is installed
         # Python 3: pip3 install pyobjc-framework-Cocoa
         with contextlib.suppress(ImportError):
-            from Foundation import NSBundle
+            from Foundation import NSBundle  # type: ignore
 
             if bundle := NSBundle.mainBundle():
                 if app_info := bundle.localizedInfoDictionary() or bundle.infoDictionary():
