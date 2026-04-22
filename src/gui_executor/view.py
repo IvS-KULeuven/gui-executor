@@ -1896,7 +1896,8 @@ class View(QMainWindow):
         desktop_widget = QApplication.desktop()
         desktop_screen = desktop_widget.screenNumber(self)
         desktop_geometry = desktop_widget.availableGeometry(screen=desktop_screen)
-        LOGGER.debug(f"{desktop_screen = }, {desktop_geometry = }")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"{desktop_screen = }, {desktop_geometry = }")
 
         # Not sure anymore why I put this line in, but it restricts the size of the main window to the size of the
         # main desktop screen, which might be smaller than e.g. an external screens that is attached.
@@ -2089,15 +2090,17 @@ class View(QMainWindow):
         self._console_panel.shutdown_autosave()
 
         if self._kernel:
-            print("Shutting down Jupyter kernel.")
+            if VERBOSE_DEBUG:
+                LOGGER.debug("Shutting down Jupyter kernel.")
             self._kernel.shutdown()
 
         event.accept()
 
-        print("Waiting for recurring tasks to end.", end="", flush=True)
+        if VERBOSE_DEBUG:
+            LOGGER.debug("Waiting for recurring tasks to end.")
         while not self.threadpool.waitForDone(100):
-            print(".", end="", flush=True)
-        print("\nDone.", flush=True)
+            ...
+        LOGGER.info("Application finished.")
 
     def start_recurring_task(self, task: Callable):
         """Schedule one recurring status function on the thread pool."""
@@ -2151,7 +2154,8 @@ class View(QMainWindow):
             self._kernel.shutdown()
 
         name = self.kernel_panel.selected_kernel
-        LOGGER.info(f"Starting new kernel {name}...")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"Starting new kernel {name}...")
         self._kernel = MyKernel(name)
         self._console_panel.append(f"New kernel '{name}' started...")
 
@@ -2418,8 +2422,9 @@ class View(QMainWindow):
 
         ui_args = get_arguments(button.function)
 
-        LOGGER.debug(f"UI arguments for '{button.function.__name__}': {ui_args}")
-        LOGGER.debug(f"Extracted args: {extract_var_name_args_and_kwargs(ui_args)}")
+        if VERBOSE_DEBUG:
+            LOGGER.debug(f"UI arguments for '{button.function.__name__}': {ui_args}")
+            LOGGER.debug(f"Extracted args: {extract_var_name_args_and_kwargs(ui_args)}")
 
         args_panel = ArgumentsPanel(button, ui_args)
         args_panel.run_button.clicked.connect(
