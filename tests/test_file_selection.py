@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget
@@ -12,8 +14,11 @@ def test_select_directory():
     widget.show()
 
     print()
-    print(select_directory("/Users/rik/Desktop/plot.png"), flush=True)
+    directory = select_directory(str(Path("~/Desktop/").expanduser()))
+    assert directory is not None
+    assert directory == str(Path("~/Desktop/").expanduser())
+    assert Path(directory).exists()
 
-    # QTimer.singleShot(1000, app.exit)
+    QTimer.singleShot(1000, app.exit)  # Exit the app after 1 second
 
     app.exec()

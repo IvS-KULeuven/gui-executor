@@ -26,6 +26,6 @@ def sleep_for_a_while(seconds: float = 10.0, verbose: bool = False) -> str:
         time.sleep(interval)
         elapsed = time.monotonic() - start_time
         if verbose:
-            print(f"Elapsed time: {elapsed:.2f} seconds")
+            print(f"Elapsed time: {elapsed:.2f} seconds", flush=True)
 
     return f"Slept for {seconds} seconds."

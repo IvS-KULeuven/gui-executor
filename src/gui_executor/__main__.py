@@ -11,7 +11,6 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from gui_executor.utils import print_system_info
 
-from .config import load_config
 from .model import Model
 from .view import View
 
@@ -62,7 +61,6 @@ def main():
         "--kernel-name",
         help="the kernel that will be started by default, python3 if not given",
     )
-    parser.add_argument("--config", help="a YAML file that configures the executor")
     parser.add_argument("--logo", help="path to logo PNG or SVG file")
     parser.add_argument("--app-name", help="the name of the GUI app, will go in the window title")
     parser.add_argument("--save-console-output", help="path to autosave the Console Output as plain text")
@@ -105,9 +103,6 @@ def main():
         print("You need to provide at least one --module-path option.")
         parser.print_help()
         return
-
-    if args.config:
-        load_config(args.config)
 
     if args.cmd_log and not Path(args.cmd_log).exists():
         print("The argument to --cmd-log must be an existing directory.")

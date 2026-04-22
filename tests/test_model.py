@@ -8,22 +8,21 @@ HERE = Path(__file__).parent.resolve()
 
 def test_get_ui_modules():
     with sys_path(HERE):
-        model = Model("tasks")
+        model = Model(["tasks.shared.unit_tests"])
 
         modules = model.get_ui_modules()
-        assert "first_row" in modules
-        assert "second_row" in modules
+        assert "immediate_run" in modules
+        assert "input_requests" in modules
 
 
 def test_get_ui_subpackages():
-    module_path = "tasks"
+    module_path = "tasks.specific"
 
     with sys_path(HERE):
-        model = Model(module_path)
+        model = Model([module_path])
 
         subpackages = model.get_ui_subpackages()
-        assert "second_tab" in subpackages
+        assert "concurrency" in subpackages
 
-        for subpackage in subpackages:
-            modules = model.get_ui_modules(f"{module_path}.{subpackage}")
-            assert "print_this" in modules
+        modules = model.get_ui_modules([f"{module_path}.concurrency"])
+        assert "print_hello" in modules
