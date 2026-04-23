@@ -1559,13 +1559,17 @@ class ArgumentsPanel(QScrollArea):
 
             if arg.annotation is Directory:
                 folder_button = IconLabel(icon_path=HERE / "icons/folder.svg", size=QSize(20, 20))
-                folder_button.mousePressEvent = partial(self.select_folder, input_field)
+                folder_button.mousePressEvent = partial(self.select_folder, input_field)  # type: ignore
             elif arg.annotation is FileName:
                 folder_button = IconLabel(icon_path=HERE / "icons/filename.svg", size=QSize(20, 20))
-                folder_button.mousePressEvent = partial(self.select_file, input_field, full_path=False)
+                folder_button.mousePressEvent = partial(self.select_file, input_field, full_path=False)  # type: ignore
             elif arg.annotation in (Path, FilePath):
+                file_filter = self.check_file_dialog_filter(button, arg)
+                LOGGER.info(f"{file_filter = }")
                 folder_button = IconLabel(icon_path=HERE / "icons/filepath.svg", size=QSize(20, 20))
-                folder_button.mousePressEvent = partial(self.select_file, input_field, full_path=True)
+                folder_button.mousePressEvent = partial(
+                    self.select_file, input_field, full_path=True, file_filter=file_filter
+                )  # type: ignore
             else:
                 folder_button = None
 
@@ -1642,6 +1646,19 @@ class ArgumentsPanel(QScrollArea):
         # self.setStyleSheet("border:1px solid rgb(0, 0, 0); ")
 
     @staticmethod
+    def check_file_dialog_filter(button: DynamicButton, arg: Argument) -> str | None:
+        """Return a file dialog filter string based on the expected argument type and file_filer directive."""
+        if not hasattr(button.function, "__ui_file_filter__") or not isinstance(
+            button.function.__ui_file_filter__, dict
+        ):
+            return None
+
+        for key, filter_str in button.function.__ui_file_filter__.items():
+            if key == arg.name:
+                return filter_str
+        return None
+
+    @staticmethod
     def _first_input_row_height(widget: QWidget) -> int:
         """Estimate the first interactive row height for vertically expanding widgets."""
         if isinstance(widget, UQWidget):
@@ -1674,10 +1691,10 @@ class ArgumentsPanel(QScrollArea):
             input_field.setText(dir_name)
 
     @staticmethod
-    def select_file(input_field: QLineEdit, *args, full_path: bool = True):
+    def select_file(input_field: QLineEdit, *args, full_path: bool = True, file_filter: str | None = None):
         """Open a file picker and store either full path or basename in the field."""
         input_file = input_field.displayText() or input_field.placeholderText()
-        if filename := select_file(filename=input_file):
+        if filename := select_file(filename=input_file, file_filter=file_filter):
             filename = filename if full_path else Path(filename).name
             input_field.setText(filename)
 

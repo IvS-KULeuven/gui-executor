@@ -892,6 +892,10 @@ def hello_you(name: str = "John"):  <b class="conum">(3)</b>
 <dd>
 <p>a string or a tuple of strings that represent the variable(s) in which the result of the function shall be captured. See <a href="#capture_response">Capture the result</a> for more detailed information.</p>
 </dd>
+<dt class="hdlist1"><code>file_filter</code></dt>
+<dd>
+<p>a dictionary that maps argument names to a file selector filter. This applies to arguments of type <code>FilePath</code> and <code>Path</code> that open a file dialog. The filter value can be a simple wildcard such as <code>*.yaml</code> or <code>SETUP*.yaml</code>, or a Qt-style named filter such as <code>YAML Files (*.yaml *.yml)</code>.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -1048,6 +1052,28 @@ def capture_image_file_type_hints(
 </div>
 <div class="paragraph">
 <p>The change with the added decorator parameter <code>capture_response</code> is apparent in the arguments panel where it now says the return values will be captured in 'new_image', but also in the output console you can see that the variable name in which the return value is captured is <code>new_image</code>. So, this function will now, when it is executed, make the return value available in the kernel as the variable named <code>new_image</code>.</p>
+</div>
+<div class="paragraph">
+<p>For file arguments, you can further restrict what the user is allowed to pick in the file dialog by using the <code>file_filter</code> parameter on <code>@exec_task</code> or <code>@exec_ui</code>. The keys of the dictionary are the function argument names and the values are the filters that should be applied to that argument. This works for <code>FilePath</code> and <code>Path</code> arguments that open a file selector.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="python">from pathlib import Path
+from gui_executor.exec import exec_ui, FilePath
+
+@exec_ui(
+    display_name="Select a specific file type",
+    file_filter={
+        "yaml_file": "YAML Files (*.yaml *.yml)",
+        "setup_file": "SETUP*.yaml",
+    },
+)
+def select_file(yaml_file: FilePath, setup_file: Path):
+    ...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example, the <code>yaml_file</code> selector will only show YAML files, while <code>setup_file</code> will only show files that match <code>SETUP*.yaml</code>. If you prefer, you can also use a simple wildcard filter like <code>*.ini</code>.</p>
 </div>
 <div class="paragraph">
 <p>Let&#8217;s go one step further and change the type of the camera name. We have only a limited number of camera&#8217;s around the house and we don&#8217;t like to type their name all the time, so, we are going to create a dropdown list (or ComboBox) where we can select the camera we want to capture. Luckily, we do not have to worry about coding this dropdown menu, the Task GUI understands the type hint <code>Enum</code> and will automatically create a dropdown box for this parameter. In the following code snippet, we have created a <code>CameraName</code> enumeration class and use it as a type hint for the camera parameter.</p>
@@ -2291,7 +2317,7 @@ gui-executor --module-path your.package</code></pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-22 16:36:28 +0200
+Last updated 2026-04-23 10:17:48 +0200
 </div>
 </div>
 <script>

@@ -200,6 +200,7 @@ If you check back on <<csl-task-gui>>, you can see that each of the tasks is vis
 `icons`:: This is a tuple of two filepaths that locate the icons that shall be used for the button of this task. The first filepath is the icon for the task button and the second filepath is the icon for the task button when the button is selected. The defaults are image:images/script-function.svg[width=20px] and image:images/script-function-selected.svg[width=20px] respectively.
 `allow_kernel_interrupt`:: a flag that, when True, allows the GUI to interrupt the kernel and stop any running task before executing this task. Use this parameter carefully, it is intended for tasks that have an emergency action and need to run immediately regardless if a previous task is still running or not.
 `capture_response`:: a string or a tuple of strings that represent the variable(s) in which the result of the function shall be captured. See <<capture_response>> for more detailed information.
+`file_filter`:: a dictionary that maps argument names to a file selector filter. This applies to arguments of type `FilePath` and `Path` that open a file dialog. The filter value can be a simple wildcard such as `\*.yaml` or `SETUP*.yaml`, or a Qt-style named filter such as `YAML Files (*.yaml *.yml)`.
 
 === Your function's parameters
 
@@ -304,6 +305,26 @@ image::images/func_param_03.png[width=80%,align=center]
 If you now select the GUI tab above, the changes in the code result in two new icons (image:images/filename.svg[width=20px] and image:images/folder.svg[width=20px]) that replace the type behind the filename and location input fields. If you click these icons, a file selector box will open and allow you to select either a filename or a folder from your local disk. If you look at the code snippet printed in the output console, the filename and location arguments to the function are now of type _PosixPath_.
 
 The change with the added decorator parameter `capture_response` is apparent in the arguments panel where it now says the return values will be captured in 'new_image', but also in the output console you can see that the variable name in which the return value is captured is `new_image`. So, this function will now, when it is executed, make the return value available in the kernel as the variable named `new_image`.
+
+For file arguments, you can further restrict what the user is allowed to pick in the file dialog by using the `file_filter` parameter on `@exec_task` or `@exec_ui`. The keys of the dictionary are the function argument names and the values are the filters that should be applied to that argument. This works for `FilePath` and `Path` arguments that open a file selector.
+
+[source,python]
+----
+from pathlib import Path
+from gui_executor.exec import exec_ui, FilePath
+
+@exec_ui(
+    display_name="Select a specific file type",
+    file_filter={
+        "yaml_file": "YAML Files (*.yaml *.yml)",
+        "setup_file": "SETUP*.yaml",
+    },
+)
+def select_file(yaml_file: FilePath, setup_file: Path):
+    ...
+----
+
+In this example, the `yaml_file` selector will only show YAML files, while `setup_file` will only show files that match `SETUP*.yaml`. If you prefer, you can also use a simple wildcard filter like `*.ini`.
 
 Let's go one step further and change the type of the camera name. We have only a limited number of camera's around the house and we don't like to type their name all the time, so, we are going to create a dropdown list (or ComboBox) where we can select the camera we want to capture. Luckily, we do not have to worry about coding this dropdown menu, the Task GUI understands the type hint `Enum` and will automatically create a dropdown box for this parameter. In the following code snippet, we have created a `CameraName` enumeration class and use it as a type hint for the camera parameter.
 

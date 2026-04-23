@@ -102,6 +102,7 @@ def exec_ui(
     immediate_run: bool = False,
     allow_kernel_interrupt: bool = False,
     capture_response: str | tuple[str, ...] = "response",
+    file_filter: Dict[str, str] = None,
 ):
     """
     Decorates the function as an Exec UI function. We have different kinds of UI functions. By default,
@@ -120,6 +121,7 @@ def exec_ui(
             presenting the arguments panel with the Run button
         allow_kernel_interrupt: allow this GUI to interrupt the kernel before running this task
         capture_response: replace the response to capture return values in different variables
+        file_filter: a dictionary with keys the argument names and values the file filter to apply for that argument
 
     Returns:
         The wrapper function object.
@@ -140,13 +142,12 @@ def exec_ui(
         wrapper.__ui_lineno__ = func.__code__.co_firstlineno
         wrapper.__ui_module__ = func.__module__
         wrapper.__ui_input_request__ = input_request
+        wrapper.__ui_file_filter__ = file_filter
         wrapper.__ui_immediate_run__ = immediate_run
         wrapper.__ui_icons__ = icons
         wrapper.__ui_allow_kernel_interrupt__ = allow_kernel_interrupt
         wrapper.__ui_capture_response__ = (
-            capture_response
-            if isinstance(capture_response, str)
-            else ", ".join(capture_response)
+            capture_response if isinstance(capture_response, str) else ", ".join(capture_response)
         )
         if use_script_app:
             wrapper.__ui_runnable__ = RUNNABLE_SCRIPT
@@ -189,9 +190,7 @@ def find_ui_recurring_functions(module_path: str) -> Dict[str, Callable]:
     return find_ui_functions(module_path, lambda x: x.__ui_kind__ & Kind.RECURRING)
 
 
-def find_ui_functions(
-    module_path: str, predicate: Callable = None
-) -> Dict[str, Callable]:
+def find_ui_functions(module_path: str, predicate: Callable = None) -> Dict[str, Callable]:
     """
     Returns a dictionary with function names as keys and the callable function as their value.
     The predicate is a function that returns True or False depending on some required conditions
@@ -207,9 +206,7 @@ def find_ui_functions(
     return {
         name: member
         for name, member in inspect.getmembers(mod)
-        if inspect.isfunction(member)
-        and hasattr(member, "__ui_kind__")
-        and predicate(member)
+        if inspect.isfunction(member) and hasattr(member, "__ui_kind__") and predicate(member)
     }
 
 
@@ -226,11 +223,7 @@ def find_subpackages(module_path: str) -> Dict[str, Path]:
     """
     location = get_module_location(module_path)
 
-    return {
-        item.name: item
-        for item in location.iterdir()
-        if item.is_dir() and (item / "__init__.py").exists()
-    }
+    return {item.name: item for item in location.iterdir() if item.is_dir() and (item / "__init__.py").exists()}
 
 
 def find_modules(module_path: str) -> Dict[str, Any]:
@@ -248,9 +241,7 @@ def find_modules(module_path: str) -> Dict[str, Any]:
     location = get_module_location(module_path)
 
     return {
-        item.stem: f"{module_path}.{item.stem}"
-        for item in location.glob("*.py")
-        if item.name not in ["__init__.py"]
+        item.stem: f"{module_path}.{item.stem}" for item in location.glob("*.py") if item.name not in ["__init__.py"]
     }
 
 

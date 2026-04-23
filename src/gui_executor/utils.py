@@ -378,13 +378,31 @@ def select_directory(directory: str | None = None) -> str:
     return filenames[0] if filenames is not None else ""
 
 
-def select_file(filename: str | None = None, full_path: bool = True) -> str:
+def select_file(
+    filename: str | None = None,
+    full_path: bool = True,
+    file_filter: str | None = None,
+    name_filters: List[str] | None = None,
+) -> str:
     dialog = QFileDialog()
     dialog.setDirectory(filename)
     dialog.setOption(QFileDialog.ReadOnly, True)
     dialog.setFileMode(QFileDialog.AnyFile)
     dialog.setViewMode(QFileDialog.Detail)
     dialog.setAcceptMode(QFileDialog.AcceptOpen)
+
+    # Support either a single wildcard/pattern (e.g. "*.yaml" or "SETUP*.yaml")
+    # or Qt name filters (e.g. "YAML Files (*.yaml *.yml)").
+    if file_filter:
+        if "(" in file_filter and ")" in file_filter:
+            dialog.setNameFilter(file_filter)
+        else:
+            dialog.setNameFilter(f"Filtered Files ({file_filter})")
+
+    if name_filters:
+        dialog.setNameFilters(name_filters)
+        if file_filter and file_filter in name_filters:
+            dialog.selectNameFilter(file_filter)
 
     filenames = dialog.selectedFiles() if dialog.exec() else None
 
