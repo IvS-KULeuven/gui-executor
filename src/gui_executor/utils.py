@@ -277,18 +277,18 @@ def stringify_kwargs(kwargs):
     return ", ".join([f"{k}={custom_repr(v)}" for k, v in kwargs.items()])
 
 
-def stringify_imports(args, kwargs):
-    return "\n".join(
+def stringify_imports(args, kwargs, indent: str = ""):
+    return f"\n{indent}".join(
         f"from {arg.__module__} import {arg.__class__.__name__}"
         for arg in (*args, *kwargs.values())
         if isinstance(arg, Enum)
     )
 
 
-def stringify_var_name_checks(args, kwargs):
+def stringify_var_name_checks(args, kwargs, indent: str = ""):
     from gui_executor.utypes import var_name
 
-    return "\n".join(
+    return f"\n{indent}".join(
         f"if '{arg}' not in locals(): "
         f"print(\"[red]ERROR: Variable name '{arg}' is not known in the kernel.[/]\"); error = True"
         for arg in (*args, *kwargs.values())
@@ -339,9 +339,9 @@ def create_code_snippet(func: Callable, args: List, kwargs: Dict, call_func: boo
             from rich import print
             from {func.__ui_module__} import {func.__name__}
             from pathlib import Path, PurePath, PosixPath  # might be used by argument types
-            {stringify_imports(args, kwargs)}
+            {stringify_imports(args, kwargs, indent="            ")}
             error = False
-            {stringify_var_name_checks(args, kwargs)}
+            {stringify_var_name_checks(args, kwargs, indent="            ")}
 
             def main():
                 response = {func.__name__}({stringify_args(args)}{", " if args else ""}{stringify_kwargs(kwargs)})  # [3405691582]
