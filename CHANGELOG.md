@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.25.1] - 2026-05-13
+
+### Changed
+
+- Refactored `stringify_imports` and `stringify_var_name_checks` to accept an `indent` parameter for better formatting control in generated code snippets. See issue [#95](https://github.com/IvS-KULeuven/gui-executor/issues/95).
+
+## [0.25.0] - 2026-04-23
+
+### Added
+
+- Added file filter support for file selection in UI functions.
+- Added `.vscode/` to `.gitignore`.
+- Added `tests/tasks/specific/output/convert.py` with a `convert_to_float` task used by the updated `test_run_func` test.
+
 ### Removed
 
 - Removed the unused `command.py` module (`Command`, `ScriptCommand`, `SnippetCommand`, `AppCommand`, `CommandError`) and its associated tests (`test_command.py`, `test_executor.py`, `test_environment.py`) and test data files (`scripts.yaml`, `snippets.yaml`).
@@ -21,11 +35,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Fixed a debug log statement in `view._cast_arg` that was emitting unconditionally; it is now guarded by `if VERBOSE_DEBUG`.
 - Fixed `test_file_selection.py`: replaced hardcoded absolute path with a portable `~/Desktop/` expansion, added proper assertions, and added a 1-second auto-close timer so the test does not hang.
 - Fixed `test_gui_exec.py`: replaced stale references to the removed `contingency` module with `tasks.shared.unit_tests`; replaced the non-portable `test_end_observation` test with `test_run_func` that exercises the new `convert_to_float` task.
-- Added `.vscode/` to `.gitignore`.
-
-### Added
-
-- Added `tests/tasks/specific/output/convert.py` with a `convert_to_float` task used by the updated `test_run_func` test.
 
 ## [0.24.0] - 2026-04-22
 
@@ -70,7 +79,9 @@ Other changes are not blocking and can be implemented later when needed.
 
 
 
-[Unreleased]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.25.1...HEAD
+[0.25.1]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.25.0...v0.25.1
+[0.25.0]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.22.4...v0.23.0
 [0.22.3]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.22.0...v0.22.3
