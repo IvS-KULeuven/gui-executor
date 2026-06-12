@@ -6,7 +6,7 @@ from gui_executor.utypes import Callback, DropdownList, FixedList, ListList
 
 @exec_task()
 def save_observation(
-    coordinates: FixedList([float, float], name="lat, long"),
+    coordinates: FixedList([float, float], name="lat, long"),  # type: ignore
     time: str,
     bird_name: str,
 ):
@@ -24,7 +24,7 @@ def save_observation(
 
 @exec_task()
 def save_targets(
-    targets: ListList([int, float, str], [1, 0.0, "target-A"], name="id, angle, label"),
+    targets: ListList([int, float, str], [1, 0.0, "target-A"], name="id, angle, label"),  # type: ignore
 ):
     """
     Save a dynamic number of target definitions.
@@ -42,7 +42,7 @@ def choose_filters(
         ["none", "bias", "dark", "flat"],
         defaults=["bias", "dark"],
         name="Image filters",
-    ),
+    ),  # type: ignore
 ):
     """
     Select one or more filters to apply.
@@ -70,16 +70,16 @@ def default_digit():
 
 
 @exec_task()
-def select_digit(digit: Callback(available_digits, name="digit", default=default_digit)):
+def select_digit(digit: Callback(available_digits, name="digit", default=default_digit)):  # type: ignore
     """Select a digit from values determined at runtime."""
     print(f"{digit = }")
 
 
 @exec_ui()
-def select_mode(mode: Callback(lambda: ["full", "fast"], name="mode")):
+def select_mode(mode: Callback(lambda: ["full", "fast"], name="mode")):  # type: ignore
     print(f"{mode = }")
 
 
 @exec_ui()
-def use_calibration(enabled: Callback(lambda: True, name="calibration")):
+def use_calibration(enabled: Callback(lambda: True, name="calibration")):  # type: ignore
     print(f"{enabled = }")

@@ -429,7 +429,7 @@ class FunctionRunnableKernel(FunctionRunnable):
         def flush_stream_buffer():
             if not stream_buffer:
                 return
-            self.signals.data.emit("\n".join(stream_buffer))
+            self.signals.data.emit(Text.from_ansi("\n".join(stream_buffer)))
             stream_buffer.clear()
 
         try:

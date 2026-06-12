@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.25.2] - 2026-06-12
+
+### Added
+
+- Added `tests/tasks/specific/console/` task package with a "Console" tab containing `console_output` and `print_numpy_output` tasks for testing plain and rich console output rendering.
+- Registered the new `console` subpackage in `UI_TAB_ORDER` in `tests/tasks/specific/__init__.py`.
+
+### Fixed
+
+- Fixed square-bracket content being silently discarded from console output. Stream text from the Jupyter kernel is now wrapped in `Text.from_ansi()` before display, so literal `[text]` in `print()` output is preserved while ANSI styling from `rich.print()` continues to render correctly.
+
 ## [0.25.1] - 2026-05-13
 
 ### Changed
@@ -79,7 +90,8 @@ Other changes are not blocking and can be implemented later when needed.
 
 
 
-[Unreleased]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.25.1...HEAD
+[Unreleased]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.25.2...HEAD
+[0.25.2]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.25.1...v0.25.2
 [0.25.1]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.25.0...v0.25.1
 [0.25.0]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/IvS-KULeuven/gui-executor/compare/v0.23.0...v0.24.0
